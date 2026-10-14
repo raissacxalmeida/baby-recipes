@@ -42,7 +42,11 @@ export function createStore(storage) {
       writeList('disliked', [...without(readList('disliked'), recipe.id), recipe]);
       writeList('liked', without(readList('liked'), recipe.id));
     },
-    restore: (id) => writeList('disliked', without(readList('disliked'), id)),
+    restore(id) {
+      const restored = readList('disliked').find((r) => r.id === id);
+      writeList('disliked', without(readList('disliked'), id));
+      if (restored) writeList('shown', readList('shown').filter((t) => t !== restored.title));
+    },
     getShownTitles: () => readList('shown').filter((t) => typeof t === 'string'),
     addShown(title) {
       const shown = readList('shown');

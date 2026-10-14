@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { formatAmount, scaleRecipe } from '../../shared/units.js';
 
-export default function RecipeScreen({ recipe }) {
+export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, busy = false }) {
   const [portions, setPortions] = useState(recipe.basePortions);
   const scaled = scaleRecipe(recipe, portions);
 
@@ -31,6 +31,13 @@ export default function RecipeScreen({ recipe }) {
           <li key={n}>{step}</li>
         ))}
       </ol>
+      {(onAnother || onLiked || onDisliked) && (
+        <div className="feedback">
+          {onLiked && <button type="button" onClick={onLiked}>Baby liked it</button>}
+          {onDisliked && <button type="button" disabled={busy} onClick={onDisliked}>Baby didn&apos;t like it</button>}
+          {onAnother && <button type="button" disabled={busy} onClick={onAnother}>Give me another</button>}
+        </div>
+      )}
     </article>
   );
 }

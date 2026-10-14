@@ -50,6 +50,14 @@ test('excludeTitles merges shown and disliked without duplicates', () => {
   expect(s.excludeTitles().sort()).toEqual(['Banana mash', 'Oat porridge']);
 });
 
+test('restore makes the recipe suggestible again by dropping its shown title', () => {
+  const s = createStore(memory());
+  s.addShown('Banana mash');
+  s.dislike(recipe('Banana mash'));
+  s.restore('banana-mash');
+  expect(s.excludeTitles()).toEqual([]);
+});
+
 test('corrupted JSON gives empty defaults', () => {
   const s = createStore(memory({ 'baby-recipes:liked': '{not json', 'baby-recipes:disliked': '5', 'baby-recipes:shown': '"x"' }));
   expect(s.getLiked()).toEqual([]);

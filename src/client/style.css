@@ -13,3 +13,4 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 [role='alert'] { color: #a00; }
 [role='note'] { background: #ffe9e9; padding: 0.5rem; border-radius: 0.5rem; }
 footer { margin-top: 2rem; font-size: 0.85rem; color: #666; }
+.feedback { margin-top: 1rem; }
