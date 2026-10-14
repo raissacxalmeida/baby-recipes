@@ -5,7 +5,7 @@ const memory = (initial = {}) => {
   const data = { ...initial };
   return { data, getItem: (k) => (k in data ? data[k] : null), setItem: (k, v) => { data[k] = String(v); } };
 };
-const recipe = (title) => ({ id: title.toLowerCase().replace(/\s+/g, '-'), title, basePortions: 2, ingredients: [], steps: [] });
+const recipe = (title) => ({ id: title.toLowerCase().replace(/\s+/g, '-'), title, basePortions: 2, ingredients: [], steps: [], allergens: [] });
 const now = new Date(2026, 9, 14);
 
 test('birthdate round trip', () => {
@@ -56,6 +56,18 @@ test('restore makes the recipe suggestible again by dropping its shown title', (
   s.dislike(recipe('Banana mash'));
   s.restore('banana-mash');
   expect(s.excludeTitles()).toEqual([]);
+});
+
+test('valid JSON of the wrong shape is filtered out', () => {
+  const good = recipe('Banana mash');
+  const s = createStore(memory({
+    'baby-recipes:liked': JSON.stringify([null, 5, { id: 'x' }, { ...good, allergens: undefined }, good]),
+    'baby-recipes:disliked': JSON.stringify([null, good]),
+    'baby-recipes:shown': JSON.stringify([null, 'Banana mash', 7]),
+  }));
+  expect(s.getLiked()).toEqual([good]);
+  expect(s.excludeTitles()).toEqual(['Banana mash']);
+  expect(() => s.like(recipe('Oat porridge'))).not.toThrow();
 });
 
 test('corrupted JSON gives empty defaults', () => {

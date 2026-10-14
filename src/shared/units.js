@@ -11,7 +11,7 @@ export function scaleRecipe(recipe, portions) {
   return {
     ...recipe,
     basePortions: portions,
-    ingredients: recipe.ingredients.map((i) => ({ ...i, grams: Math.round(i.grams * factor) })),
+    ingredients: recipe.ingredients.map((i) => ({ ...i, grams: Math.max(1, Math.round(i.grams * factor)) })),
   };
 }
 

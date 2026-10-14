@@ -84,3 +84,33 @@ test('callModel without a key throws missing-key and does not fetch', async () =
   await expect(callModel({ ageMonths: 7, ingredients: [], exclude: [] }, { apiKey: '', fetchImpl })).rejects.toMatchObject({ code: 'missing-key' });
   expect(fetchImpl).not.toHaveBeenCalled();
 });
+
+test('callModel with a non-OK status throws upstream-error', async () => {
+  const fetchImpl = async () => ({ ok: false, status: 401, json: async () => ({}) });
+  await expect(callModel({ ageMonths: 7, ingredients: ['banana'], exclude: [] }, { apiKey: 'k', fetchImpl })).rejects.toMatchObject({ code: 'upstream-error' });
+});
+
+test('callModel network failure throws upstream-error', async () => {
+  const fetchImpl = async () => { throw new TypeError('fetch failed'); };
+  await expect(callModel({ ageMonths: 7, ingredients: ['banana'], exclude: [] }, { apiKey: 'k', fetchImpl })).rejects.toMatchObject({ code: 'upstream-error' });
+});
+
+test('upstream-error is rethrown at once without retrying', async () => {
+  const cm = fake(new AppError('upstream-error', 'bad key'));
+  await expect(generateRecipe(input(), { callModel: cm, now })).rejects.toMatchObject({ code: 'upstream-error' });
+  expect(cm).toHaveBeenCalledTimes(1);
+});
+
+test.each([
+  ['ingredients not an array', { ingredients: 'banana' }],
+  ['ingredients with non-strings', { ingredients: [1] }],
+  ['exclude not an array', { exclude: 'x' }],
+])('%s is invalid-input', async (_n, over) => {
+  await expect(generateRecipe(input(over), { callModel: fake(raw()), now })).rejects.toMatchObject({ code: 'invalid-input' });
+});
+
+test('three unsafe answers give generation-failed', async () => {
+  const unsafe = raw({ ingredients: [{ name: 'honey', grams: 10 }] });
+  const cm = fake(unsafe, unsafe, unsafe);
+  await expect(generateRecipe(input(), { callModel: cm, now })).rejects.toMatchObject({ code: 'generation-failed' });
+});

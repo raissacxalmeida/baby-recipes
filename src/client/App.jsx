@@ -1,4 +1,4 @@
-import { useReducer, useState } from 'react';
+import { useReducer, useRef, useState } from 'react';
 import { ageInMonths } from '../shared/age.js';
 import { ageLabel } from '../shared/units.js';
 import { startScreen } from './store.js';
@@ -18,32 +18,44 @@ export default function App({ store, fetchRecipe, now = () => new Date() }) {
   const [fromLiked, setFromLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [, refresh] = useReducer((n) => n + 1, 0);
+  const requestId = useRef(0);
+
+  // Leaving a screen drops any pending request and its error.
+  function go(next) {
+    requestId.current += 1;
+    setLoading(false);
+    setError(null);
+    setScreen(next);
+  }
 
   function saveBirthday(date) {
     store.setBirthdate(date);
     setBirthdate(date);
-    setScreen(ageInMonths(date, now()) < 6 ? 'too-young' : 'home');
+    go(ageInMonths(date, now()) < 6 ? 'too-young' : 'home');
   }
 
   async function suggest() {
+    const id = ++requestId.current;
     setLoading(true);
     setError(null);
     try {
       const next = await fetchRecipe({ birthdate, ingredients, exclude: store.excludeTitles() });
+      if (id !== requestId.current) return;
       store.addShown(next.title);
       setRecipe(next);
       setFromLiked(false);
       setSaved(false);
       setScreen('recipe');
     } catch (err) {
-      setError(err.message);
+      if (id === requestId.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }
 
   function dislike() {
     store.dislike(recipe);
+    setSaved(false);
     suggest();
   }
 
@@ -55,12 +67,12 @@ export default function App({ store, fetchRecipe, now = () => new Date() }) {
   function open(liked) {
     setRecipe(liked);
     setFromLiked(true);
-    setScreen('recipe');
+    go('recipe');
   }
 
   let body;
   if (screen === 'setup') body = <SetupScreen onSave={saveBirthday} now={now} />;
-  else if (screen === 'too-young') body = <TooYoungScreen onChangeBirthday={() => setScreen('setup')} />;
+  else if (screen === 'too-young') body = <TooYoungScreen onChangeBirthday={() => go('setup')} />;
   else if (screen === 'liked') {
     body = (
       <LikedScreen
@@ -69,13 +81,13 @@ export default function App({ store, fetchRecipe, now = () => new Date() }) {
         onOpen={open}
         onUnlike={(id) => { store.unlike(id); refresh(); }}
         onRestore={(id) => { store.restore(id); refresh(); }}
-        onBack={() => setScreen('home')}
+        onBack={() => go('home')}
       />
     );
   } else if (screen === 'recipe' && recipe) {
     body = (
       <>
-        <button type="button" onClick={() => setScreen(fromLiked ? 'liked' : 'home')}>
+        <button type="button" onClick={() => go(fromLiked ? 'liked' : 'home')}>
           {fromLiked ? 'Back to liked recipes' : 'Back to ingredients'}
         </button>
         <RecipeScreen
@@ -99,7 +111,7 @@ export default function App({ store, fetchRecipe, now = () => new Date() }) {
         onSuggest={suggest}
         loading={loading}
         error={error}
-        onShowLiked={() => setScreen('liked')}
+        onShowLiked={() => go('liked')}
       />
     );
   }

@@ -1,6 +1,7 @@
 import { AppError } from './errors.js';
 
 const MODEL = 'gpt-4o-mini';
+const TIMEOUT_MS = 30_000;
 const URL = 'https://api.openai.com/v1/chat/completions';
 
 const SCHEMA = {
@@ -33,6 +34,7 @@ function prompt({ ageMonths, ingredients, exclude }) {
     'basePortions is the number of baby portions the amounts make (1 to 4).',
     'texture must suit the age: puree or mashed from 6 months, mashed or soft-pieces from 9 months, any from 12 months.',
     'Never use honey, salt, sugar or cow\'s milk under 12 months, and no whole nuts, whole grapes or popcorn under 3 years.',
+    'Do not mention honey, salt, sugar or milk at all, even to say they are left out. Do not put amounts or units in the steps; amounts belong only in the ingredient list.',
     'List the common allergens the recipe contains in allergens.',
     exclude.length ? `Do not use these titles: ${exclude.join('; ')}.` : '',
   ].filter(Boolean).join('\n');
@@ -40,9 +42,12 @@ function prompt({ ageMonths, ingredients, exclude }) {
 
 export async function callModel(input, { apiKey, fetchImpl = fetch }) {
   if (!apiKey) throw new AppError('missing-key', 'OPENAI_API_KEY is not set');
-  const res = await fetchImpl(URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+  let res;
+  try {
+    res = await fetchImpl(URL, {
+      method: 'POST',
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: MODEL,
       messages: [
@@ -51,8 +56,14 @@ export async function callModel(input, { apiKey, fetchImpl = fetch }) {
       ],
       response_format: { type: 'json_schema', json_schema: { name: 'recipe', strict: true, schema: SCHEMA } },
     }),
-  });
-  if (!res.ok) throw new Error(`OpenAI request failed with status ${res.status}`);
+    });
+  } catch {
+    throw new AppError('upstream-error', 'Could not reach OpenAI');
+  }
+  if (!res.ok) {
+    const hint = res.status === 401 || res.status === 403 ? ' Check OPENAI_API_KEY.' : '';
+    throw new AppError('upstream-error', `OpenAI rejected the request (status ${res.status}).${hint}`);
+  }
   const data = await res.json();
   return JSON.parse(data.choices[0].message.content);
 }

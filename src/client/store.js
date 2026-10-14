@@ -2,6 +2,14 @@ import { ageInMonths } from '../shared/age.js';
 
 const PREFIX = 'baby-recipes:';
 
+const isRecipe = (r) =>
+  r !== null && typeof r === 'object' &&
+  typeof r.id === 'string' && typeof r.title === 'string' &&
+  Number.isInteger(r.basePortions) && r.basePortions >= 1 && r.basePortions <= 12 &&
+  Array.isArray(r.ingredients) && r.ingredients.every((i) => i && typeof i.name === 'string' && typeof i.grams === 'number') &&
+  Array.isArray(r.steps) && r.steps.every((s) => typeof s === 'string') &&
+  Array.isArray(r.allergens);
+
 export function createStore(storage) {
   const read = (key) => {
     try {
@@ -20,7 +28,8 @@ export function createStore(storage) {
   const readList = (key) => {
     try {
       const parsed = JSON.parse(read(key));
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      return key === 'shown' ? parsed.filter((t) => typeof t === 'string') : parsed.filter(isRecipe);
     } catch {
       return [];
     }
@@ -47,13 +56,13 @@ export function createStore(storage) {
       writeList('disliked', without(readList('disliked'), id));
       if (restored) writeList('shown', readList('shown').filter((t) => t !== restored.title));
     },
-    getShownTitles: () => readList('shown').filter((t) => typeof t === 'string'),
+    getShownTitles: () => readList('shown'),
     addShown(title) {
       const shown = readList('shown');
       if (!shown.includes(title)) writeList('shown', [...shown, title]);
     },
     excludeTitles() {
-      const shown = readList('shown').filter((t) => typeof t === 'string');
+      const shown = readList('shown');
       return [...new Set([...shown, ...readList('disliked').map((r) => r.title)])];
     },
   };

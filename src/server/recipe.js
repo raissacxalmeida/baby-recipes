@@ -1,6 +1,7 @@
 export const TEXTURES = ['puree', 'mashed', 'soft-pieces', 'finger-food'];
 
 const isText = (v) => typeof v === 'string' && v.trim() !== '';
+const HAS_AMOUNT = /\d\s*(?:ml|l|oz|cups?|tbsp|tsp|tablespoons?|teaspoons?|kg|g|grams?)\b/i;
 
 export function validateRecipe(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('recipe must be an object');
@@ -21,6 +22,7 @@ export function validateRecipe(raw) {
   if (!Array.isArray(raw.steps) || raw.steps.length === 0 || !raw.steps.every(isText)) {
     throw new Error('steps must be a non-empty array of non-empty strings');
   }
+  if (raw.steps.some((s) => HAS_AMOUNT.test(s))) throw new Error('steps must not contain amounts or units');
   if (!TEXTURES.includes(raw.texture)) throw new Error(`texture must be one of ${TEXTURES.join(', ')}`);
   if (!Array.isArray(raw.allergens) || !raw.allergens.every((a) => typeof a === 'string')) {
     throw new Error('allergens must be an array of strings');

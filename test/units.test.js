@@ -23,6 +23,11 @@ test('scaleRecipe from the base is lossless', () => {
 test.each([0, 13, 1.5])('scaleRecipe rejects %s portions', (n) =>
   expect(() => scaleRecipe({ basePortions: 2, ingredients: [] }, n)).toThrow(RangeError));
 
+test('scaleRecipe never shows a tiny amount as 0 g', () => {
+  const r = { basePortions: 4, ingredients: [{ name: 'cinnamon', grams: 1, inList: false }] };
+  expect(scaleRecipe(r, 1).ingredients[0].grams).toBe(1);
+});
+
 test('ageLabel', () => {
   expect(ageLabel(1)).toBe('1 month');
   expect(ageLabel(8)).toBe('8 months');

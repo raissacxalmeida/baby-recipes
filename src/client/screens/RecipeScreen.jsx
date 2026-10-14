@@ -19,8 +19,8 @@ export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, b
         </button>
       </div>
       <ul>
-        {scaled.ingredients.map((i) => (
-          <li key={i.name}>
+        {scaled.ingredients.map((i, n) => (
+          <li key={n}>
             <span>{formatAmount(i.grams)}</span> <span>{i.name}</span>
             {!i.inList && <span className="tag"> not in your list</span>}
           </li>
@@ -33,7 +33,7 @@ export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, b
       </ol>
       {(onAnother || onLiked || onDisliked) && (
         <div className="feedback">
-          {onLiked && <button type="button" onClick={onLiked}>Baby liked it</button>}
+          {onLiked && <button type="button" disabled={busy} onClick={onLiked}>Baby liked it</button>}
           {onDisliked && <button type="button" disabled={busy} onClick={onDisliked}>Baby didn&apos;t like it</button>}
           {onAnother && <button type="button" disabled={busy} onClick={onAnother}>Give me another</button>}
         </div>

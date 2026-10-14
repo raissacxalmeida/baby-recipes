@@ -84,3 +84,43 @@ test('Restore moves a disliked recipe out of Not liked and lets it be suggested 
   expect(store.getDisliked()).toEqual([]);
   expect(store.excludeTitles()).not.toContain('Banana mash');
 });
+
+const startWith = (fetchRecipe) => {
+  const store = createStore(memory({ 'baby-recipes:birthdate': '2026-02-14' }));
+  render(<App store={store} fetchRecipe={fetchRecipe} now={now} />);
+  fireEvent.change(screen.getByLabelText('Ingredient'), { target: { value: 'banana' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+  return store;
+};
+
+test('an old error is not shown after navigating elsewhere', async () => {
+  startWith(vi.fn().mockRejectedValue(new Error('Could not reach the server')));
+  click('Suggest a recipe');
+  await waitFor(() => expect(screen.getByRole('alert')).not.toBeNull());
+  click('Liked recipes');
+  click('Back to ingredients');
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('a response that arrives after navigating away is ignored', async () => {
+  let resolve;
+  startWith(vi.fn(() => new Promise((r) => { resolve = r; })));
+  click('Suggest a recipe');
+  click('Liked recipes');
+  resolve(first);
+  await new Promise((r) => setTimeout(r, 20));
+  expect(screen.getByRole('heading', { name: 'Liked recipes' })).not.toBeNull();
+  expect(screen.queryByRole('heading', { name: 'Banana mash' })).toBeNull();
+});
+
+test('Baby liked it is disabled while another recipe is loading', async () => {
+  let resolve;
+  const fetchRecipe = vi.fn().mockResolvedValueOnce(first).mockImplementationOnce(() => new Promise((r) => { resolve = r; }));
+  startWith(fetchRecipe);
+  click('Suggest a recipe');
+  await shown('Banana mash');
+  click('Give me another');
+  expect(screen.getByRole('button', { name: 'Baby liked it' }).disabled).toBe(true);
+  resolve(second);
+  await shown('Oat porridge');
+});

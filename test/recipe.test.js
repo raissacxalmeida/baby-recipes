@@ -27,3 +27,10 @@ test('rejects an unknown texture', () => expect(() => validateRecipe({ ...valid(
 test('rejects empty steps', () => expect(() => validateRecipe({ ...valid(), steps: [] })).toThrow(/steps/));
 test('rejects 0 base portions', () => expect(() => validateRecipe({ ...valid(), basePortions: 0 })).toThrow(/basePortions/));
 test('rejects non-objects', () => expect(() => validateRecipe(null)).toThrow(/recipe/));
+
+test.each(['Add 2 tbsp water.', 'Use 30 g oats.', 'Pour 100 ml milk.', 'Add 1 cup of rice.'])('rejects amounts in steps: %s', (step) =>
+  expect(() => validateRecipe({ ...valid(), steps: [step] })).toThrow(/steps/));
+
+test('accepts cooking times in steps', () => {
+  expect(validateRecipe({ ...valid(), steps: ['Steam for 10 minutes.'] }).steps).toEqual(['Steam for 10 minutes.']);
+});

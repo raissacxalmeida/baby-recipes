@@ -7,7 +7,8 @@ import { generateRecipe } from './generate.js';
 import { callModel } from './openai.js';
 
 const MAX_BODY = 100 * 1024;
-const STATUS = { 'invalid-input': 400, 'too-young': 422, 'generation-failed': 502, 'missing-key': 500 };
+const STATUS = { 'invalid-input': 400, 'too-young': 422, 'generation-failed': 502, 'upstream-error': 502, 'missing-key': 500 };
+const LOCAL_HOSTS = ['127.0.0.1', 'localhost', '[::1]'];
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -20,7 +21,9 @@ export function loadEnv(file) {
   if (!existsSync(file)) return;
   for (const line of readFileSync(file, 'utf8').split('\n')) {
     const m = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/.exec(line);
-    if (m && !line.trim().startsWith('#') && process.env[m[1]] === undefined) process.env[m[1]] = m[2];
+    if (m && !line.trim().startsWith('#') && process.env[m[1]] === undefined) {
+      process.env[m[1]] = m[2].replace(/^(["'])(.*)\1$/, '$2');
+    }
   }
 }
 
@@ -85,8 +88,20 @@ function serveStatic(req, res, root) {
 export function createServer({ generate, staticDir }) {
   const root = path.resolve(staticDir);
   return http.createServer((req, res) => {
+    // Blocks DNS-rebinding pages; only local host names are served.
+    if (!LOCAL_HOSTS.includes((req.headers.host ?? '').replace(/:\d+$/, ''))) {
+      res.writeHead(403, { 'Content-Type': 'text/plain' });
+      res.end('Forbidden');
+      return;
+    }
     const pathname = (req.url ?? '').split('?')[0];
-    if (req.method === 'POST' && pathname === '/api/recipe') return handleRecipe(req, res, generate);
+    if (req.method === 'POST' && pathname === '/api/recipe') {
+      // A JSON content type forces a CORS preflight, so other websites cannot trigger a call.
+      if (!/^application\/json\b/i.test(req.headers['content-type'] ?? '')) {
+        return sendJson(res, 415, { error: 'invalid-input', message: 'Send the request as JSON' });
+      }
+      return handleRecipe(req, res, generate);
+    }
     if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res, root);
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not found');
@@ -94,8 +109,9 @@ export function createServer({ generate, staticDir }) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  loadEnv('.env');
-  const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../dist');
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
+  loadEnv(path.join(repoRoot, '.env'));
+  const root = path.join(repoRoot, 'dist');
   const server = createServer({
     staticDir: root,
     generate: (input) =>

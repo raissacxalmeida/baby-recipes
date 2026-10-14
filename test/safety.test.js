@@ -54,5 +54,24 @@ test('a plain safe recipe has no problems', () => expect(checkSafety(recipe(), 8
 test('detectAllergens finds keywords and keeps AI-reported ones', () => {
   expect(detectAllergens(withIngredient('eggs'))).toEqual(['egg']);
   expect(detectAllergens({ ...withIngredient('banana'), aiAllergens: ['Sesame'] })).toEqual(['sesame']);
-  expect(detectAllergens({ ...withIngredient('peanut butter'), aiAllergens: ['peanut'] })).toEqual(['peanut']);
+  expect(detectAllergens(withIngredient('peanut butter'))).toEqual(['peanut']);
+});
+
+test.each([
+  ['sugars', 7], ['salty broth', 7], ['sugary cereal', 7], ['salting water', 7], ['sugar-free jam', 7],
+  ["cow's milk", 7], ['honeyed carrots', 7], ['soy sauce', 7], ['stock cube', 7], ['bacon', 7], ['agave nectar', 7],
+  ['whole almonds', 20], ['whole-grape', 20], ['whole\u00a0grapes', 20], ['grapes', 20], ['mixed nuts', 20], ['pop corn', 20],
+  ['raw carrot sticks', 20],
+])('%s is rejected at %i months', (name, age) => {
+  expect(checkSafety(withIngredient(name), age)).not.toEqual([]);
+});
+
+test.each([
+  ['unsalted butter', 7], ['quartered grapes', 20], ['peanut butter', 20], ['mashed banana', 7],
+])('%s is accepted at %i months', (name, age) => {
+  expect(checkSafety(withIngredient(name), age)).toEqual([]);
+});
+
+test('a step that says do not add salt is still rejected (the prompt forbids mentioning it)', () => {
+  expect(checkSafety(recipe({ steps: ['Do not add salt.'] }), 7)).not.toEqual([]);
 });

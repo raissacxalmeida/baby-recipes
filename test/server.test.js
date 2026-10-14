@@ -4,6 +4,7 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer, loadEnv } from '../src/server/server.js';
+import http from 'node:http';
 import { AppError } from '../src/server/errors.js';
 
 let server;
@@ -30,7 +31,7 @@ test('POST returns the generated recipe', async () => {
 });
 
 test.each([
-  ['too-young', 422], ['invalid-input', 400], ['generation-failed', 502], ['missing-key', 500],
+  ['too-young', 422], ['invalid-input', 400], ['generation-failed', 502], ['missing-key', 500], ['upstream-error', 502],
 ])('AppError %s maps to %i', async (code, status) => {
   generate = async () => { throw new AppError(code, 'msg'); };
   const res = await post({ birthdate: 'x', ingredients: [], exclude: [] });
@@ -62,6 +63,40 @@ test('missing file and traversal attempts give 404', async () => {
   expect((await fetch(`${base}/nope.js`)).status).toBe(404);
   expect((await fetch(`${base}/..%2fsecret.txt`)).status).toBe(404);
   expect((await fetch(`${base}/%2e%2e/secret.txt`)).status).toBe(404);
+});
+
+test('POST without a JSON content type is refused', async () => {
+  const res = await fetch(`${base}/api/recipe`, { method: 'POST', headers: { 'content-type': 'text/plain' }, body: '{}' });
+  expect(res.status).toBe(415);
+});
+
+test('a foreign Host header is refused', async () => {
+  const status = await new Promise((resolve, reject) => {
+    const req = http.request(base, { headers: { Host: 'evil.example' } }, (res) => { res.resume(); resolve(res.statusCode); });
+    req.on('error', reject);
+    req.end();
+  });
+  expect(status).toBe(403);
+});
+
+test('a raw path traversal request gets 404', async () => {
+  const status = await new Promise((resolve, reject) => {
+    const req = http.request({ host: '127.0.0.1', port: server.address().port, path: '/../secret.txt' }, (res) => { res.resume(); resolve(res.statusCode); });
+    req.on('error', reject);
+    req.end();
+  });
+  expect(status).toBe(404);
+});
+
+test('loadEnv strips surrounding quotes', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'env-'));
+  const file = join(dir, '.env');
+  writeFileSync(file, 'BABY_TEST_Q="sk-abc"\nBABY_TEST_R=\'sk-def\'\n');
+  delete process.env.BABY_TEST_Q;
+  delete process.env.BABY_TEST_R;
+  loadEnv(file);
+  expect(process.env.BABY_TEST_Q).toBe('sk-abc');
+  expect(process.env.BABY_TEST_R).toBe('sk-def');
 });
 
 test('loadEnv reads a file but does not override existing variables', () => {
