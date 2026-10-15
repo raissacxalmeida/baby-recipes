@@ -44,7 +44,7 @@ export async function generateRecipe({ birthdate, ingredients, exclude }, { call
         allergens: detectAllergens(recipe),
       };
     } catch (err) {
-      if (err instanceof AppError && ['missing-key', 'upstream-error'].includes(err.code)) throw err;
+      if (err instanceof AppError && ['missing-key', 'upstream-error', 'limit-reached'].includes(err.code)) throw err;
     }
   }
   throw new AppError('generation-failed', 'Could not make a safe recipe. Please try again');
