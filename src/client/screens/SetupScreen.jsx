@@ -5,15 +5,14 @@ export default function SetupScreen({ onSave, now = () => new Date() }) {
   const [value, setValue] = useState('');
   const [error, setError] = useState(null);
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
     try {
       ageInMonths(value, now());
+      await onSave(value);
     } catch (err) {
       setError(err.message);
-      return;
     }
-    onSave(value);
   }
 
   return (

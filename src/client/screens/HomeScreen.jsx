@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { parseIngredientList } from '../../shared/ingredients.js';
 
-export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, loading, error, onShowLiked }) {
+export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, loading, error, onShowLiked, usage = null }) {
   const [text, setText] = useState('');
 
   function add(e) {
@@ -14,6 +14,7 @@ export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, 
     <section>
       <h1>What&apos;s in the fridge?</h1>
       <p>Baby is {ageText} old.</p>
+      {usage && <p>Recipes today: {usage.recipesToday} of {usage.limit}</p>}
       <form onSubmit={add}>
         <label>
           Ingredient
