@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function LoginScreen({ api, onLoggedIn }) {
+export default function LoginScreen({ api, onLoggedIn, notice = null }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
@@ -21,6 +21,7 @@ export default function LoginScreen({ api, onLoggedIn }) {
   return (
     <form onSubmit={submit}>
       <h1>Log in</h1>
+      {notice && <p>{notice}</p>}
       <label>
         Email
         <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />

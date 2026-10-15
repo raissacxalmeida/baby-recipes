@@ -11,7 +11,9 @@ export const isUuid = (s) => typeof s === 'string' && UUID.test(s);
 
 export function normalizeEmail(email) {
   const e = String(email ?? '').trim().toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+$/.test(e)) throw new AppError('invalid-input', 'Enter a valid email address');
+  if (e.length > 254 || e.includes('\u0000') || !/^[^\s@]+@[^\s@]+$/.test(e)) {
+    throw new AppError('invalid-input', 'Enter a valid email address');
+  }
   return e;
 }
 
@@ -73,6 +75,7 @@ export async function acceptInvite(db, { token, password }, now) {
       [email, passwordHash, isAdmin, now],
     );
     if (!created.rows.length) throw new AppError('conflict', 'That email already has an account');
+    await tx.query('delete from login_attempts where email = $1', [email]);
     return { id: created.rows[0].id, email, isAdmin };
   });
 }
@@ -181,6 +184,7 @@ export async function removeUser(db, userId) {
   if (user.is_admin) throw new AppError('forbidden', 'The admin cannot be removed');
   await db.transaction(async (tx) => {
     await tx.query('delete from invites where email = $1', [user.email]);
+    await tx.query('delete from login_attempts where email = $1', [user.email]);
     await tx.query('delete from users where id = $1', [userId]);
   });
 }

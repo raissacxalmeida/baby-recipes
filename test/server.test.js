@@ -113,6 +113,54 @@ test('reset flow changes the password', async () => {
   expect((await t.call('POST', '/api/login', { email: 'ana@example.com', password: 'another long password' })).status).toBe(200);
 });
 
+test('PUT and DELETE also need X-Requested-With', async () => {
+  const put = await fetch(`${t.base}/api/birthdate`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: '{}' });
+  expect(put.status).toBe(400);
+  expect((await fetch(`${t.base}/api/account`, { method: 'DELETE' })).status).toBe(400);
+});
+
+test('every response carries basic security headers', async () => {
+  for (const path of ['/', '/api/session']) {
+    const res = await fetch(`${t.base}${path}`);
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('x-frame-options')).toBe('DENY');
+    expect(res.headers.get('referrer-policy')).toBe('no-referrer');
+  }
+});
+
+test('logout clears the cookie with Max-Age=0', async () => {
+  await t.addUser('ana@example.com');
+  const jar = await t.loginAs('ana@example.com');
+  const res = await t.call('POST', '/api/logout', {}, jar);
+  expect(res.setCookie).toMatch(/Max-Age=0/);
+  expect(res.setCookie).toMatch(/HttpOnly/);
+});
+
+test('a custom ALLOWED_HOSTS list decides which Host headers are served', async () => {
+  const custom = await startTestServer({ config: { allowedHosts: ['my-mac.local'] } });
+  try {
+    const status = (host) => new Promise((resolve, reject) => {
+      const req = http.request({ host: '127.0.0.1', port: custom.port, path: '/', headers: { Host: host } }, (res) => { res.resume(); resolve(res.statusCode); });
+      req.on('error', reject);
+      req.end();
+    });
+    expect(await status('my-mac.local:3000')).toBe(200);
+    expect(await status('MY-MAC.LOCAL:3000')).toBe(200);
+    expect(await status('127.0.0.1:3000')).toBe(403);
+  } finally {
+    await custom.close();
+  }
+});
+
+test('signing up works even when the invited email has a stale lockout record', async () => {
+  const { createInvite } = await import('../src/server/users.js');
+  await t.db.query("insert into login_attempts (email, failures, first_failure_at, locked_until) values ('joao@example.com', 10, $1, $2)", [t.now, new Date(t.now.getTime() + 600000)]);
+  const { token } = await createInvite(t.db, 'joao@example.com', t.now);
+  const res = await t.call('POST', '/api/signup', { token, password: PASSWORD });
+  expect(res.status).toBe(200);
+  expect((await t.db.query("select * from login_attempts where email = 'joao@example.com'")).rows).toHaveLength(0);
+});
+
 test('bad bodies and unknown routes', async () => {
   const bad = await fetch(`${t.base}/api/login`, {
     method: 'POST', headers: { 'content-type': 'application/json', 'X-Requested-With': 'fetch' }, body: '{not json',

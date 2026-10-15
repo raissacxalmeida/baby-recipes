@@ -8,6 +8,8 @@ export { AppError };
 
 const MAX_ATTEMPTS = 3;
 const MIN_MONTHS = 6;
+const MAX_INGREDIENTS = 30;
+const MAX_INGREDIENT_LENGTH = 50;
 
 const normalizeTitle = (t) => t.trim().toLowerCase().replace(/\s+/g, ' ');
 
@@ -15,6 +17,9 @@ export async function generateRecipe({ birthdate, ingredients, exclude }, { call
   const isStrings = (v) => Array.isArray(v) && v.every((s) => typeof s === 'string');
   if (!isStrings(ingredients ?? []) || !isStrings(exclude ?? [])) {
     throw new AppError('invalid-input', 'Ingredients and excluded titles must be lists of text');
+  }
+  if ((ingredients ?? []).length > MAX_INGREDIENTS || (ingredients ?? []).some((s) => s.length > MAX_INGREDIENT_LENGTH)) {
+    throw new AppError('invalid-input', `Use at most ${MAX_INGREDIENTS} ingredients of ${MAX_INGREDIENT_LENGTH} characters each`);
   }
   let ageMonths;
   try {

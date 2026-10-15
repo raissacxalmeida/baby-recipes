@@ -61,6 +61,8 @@ export const MIGRATIONS = [
       locked_until timestamptz
     )`,
   ],
+  // Exactly one admin, enforced by the database itself.
+  ['create unique index one_admin on users (is_admin) where is_admin'],
 ];
 
 export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts'];

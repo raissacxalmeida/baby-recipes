@@ -89,7 +89,13 @@ test('a removed email can be invited again as a clean account', async () => {
   expect((await db.query('select * from recipes where user_id = $1', [again.id])).rows).toHaveLength(0);
 });
 
-test('removing also drops a pending invite for that email', async () => {
+test('removing a person also clears their lockout record', async () => {
+  for (let i = 0; i < 10; i++) await login(db, { email: 'ana@example.com', password: 'wrong password!!' }, now).catch(() => {});
+  await removeUser(db, ana.id);
+  expect((await db.query("select * from login_attempts where email = 'ana@example.com'")).rows).toHaveLength(0);
+});
+
+test('removing also drops that emails invites', async () => {
   await removeUser(db, ana.id);
   await createInvite(db, 'ana@example.com', now);
   const stale = await db.query("select count(*)::int as n from invites where email = 'ana@example.com'");

@@ -23,6 +23,7 @@ const make = (overrides = {}) => createFakeApi({ user: ADMIN, overrides: { admin
 const open = async (api, me = ADMIN) => {
   const view = render(<AdminScreen api={api} me={me} onBack={() => {}} />);
   await screen.findByRole('heading', { name: 'Invite someone' });
+  await screen.findByRole('table', { name: 'People' });
   return view;
 };
 const invitesRow = (email) => within(screen.getByRole('table', { name: 'Invites' })).getByText(email).closest('tr');
@@ -57,12 +58,13 @@ test('creating an invite shows the link once and the overview reloads', async ()
   expect(screen.queryByLabelText('Invite link for new@example.com')).toBeNull();
 });
 
-test('a conflict error is shown', async () => {
+test('a conflict error is shown and the typed email stays in the field', async () => {
   const api = make({ createInvite: vi.fn(async () => { throw new Error('That email already has an account'); }) });
   await open(api);
   fireEvent.change(screen.getByLabelText('Invite email'), { target: { value: 'ana@example.com' } });
   fireEvent.click(screen.getByRole('button', { name: 'Create invite' }));
   expect((await screen.findByRole('alert')).textContent).toMatch(/already has an account/);
+  expect(screen.getByLabelText('Invite email').value).toBe('ana@example.com');
 });
 
 test('Revoke calls the API and the overview reloads', async () => {

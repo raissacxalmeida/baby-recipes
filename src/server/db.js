@@ -2,6 +2,8 @@ import pg from 'pg';
 
 export function createPgDb(connectionString) {
   const pool = new pg.Pool({ connectionString });
+  // A database restart must not crash the app; the next query reconnects.
+  pool.on('error', (err) => console.error('Database connection error:', err.message));
   return {
     query: (text, params) => pool.query(text, params),
     async transaction(fn) {

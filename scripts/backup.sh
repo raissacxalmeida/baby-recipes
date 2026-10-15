@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Writes a Postgres dump to backups/ and keeps the 7 newest. Run from anywhere.
 set -euo pipefail
+# Dumps hold password hashes and birthdates: readable by the owner only.
+umask 077
 cd "$(dirname "$0")/.."
 
 COMPOSE=${COMPOSE:-docker compose}

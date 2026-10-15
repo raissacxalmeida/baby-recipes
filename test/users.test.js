@@ -85,6 +85,16 @@ test('createAdmin makes an admin invite; a second admin is refused', async () =>
   await expect(createAdmin(db, 'other@example.com', now)).rejects.toMatchObject({ code: 'conflict' });
 });
 
+test('invalid-input for emails that are too long or contain NUL', async () => {
+  await expect(createInvite(db, `${'a'.repeat(300)}@example.com`, now)).rejects.toMatchObject({ code: 'invalid-input' });
+  await expect(createInvite(db, 'ana\u0000@example.com', now)).rejects.toMatchObject({ code: 'invalid-input' });
+});
+
+test('the database itself refuses a second admin', async () => {
+  await db.query("insert into users (email, password_hash, is_admin) values ('a@example.com', 'h', true)");
+  await expect(db.query("insert into users (email, password_hash, is_admin) values ('b@example.com', 'h', true)")).rejects.toThrow();
+});
+
 test('normal invites never create an admin', async () => {
   const { token } = await createInvite(db, 'ana@example.com', now);
   expect((await acceptInvite(db, { token, password: PASSWORD }, now)).isAdmin).toBe(false);

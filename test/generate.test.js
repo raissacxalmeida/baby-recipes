@@ -109,6 +109,13 @@ test.each([
   await expect(generateRecipe(input(over), { callModel: fake(raw()), now })).rejects.toMatchObject({ code: 'invalid-input' });
 });
 
+test.each([
+  ['too many ingredients', Array.from({ length: 31 }, (_, i) => `food ${i}`)],
+  ['an ingredient over 50 characters', ['x'.repeat(51)]],
+])('%s is invalid-input', async (_n, ingredients) => {
+  await expect(generateRecipe(input({ ingredients }), { callModel: fake(raw()), now })).rejects.toMatchObject({ code: 'invalid-input' });
+});
+
 test('three unsafe answers give generation-failed', async () => {
   const unsafe = raw({ ingredients: [{ name: 'honey', grams: 10 }] });
   const cm = fake(unsafe, unsafe, unsafe);

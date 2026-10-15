@@ -63,6 +63,17 @@ test('an unknown email is locked exactly like a real one', async () => {
   expect(await fail('nobody@example.com', minutes(1))).toMatchObject({ code: 'locked' });
 });
 
+test('a burst of parallel wrong guesses is cut off after 10 and the rest are locked', async () => {
+  const results = await Promise.all(Array.from({ length: 30 }, () => fail()));
+  expect(results.filter((r) => r.code === 'unauthorized')).toHaveLength(10);
+  expect(results.filter((r) => r.code === 'locked')).toHaveLength(20);
+});
+
+test('a huge or NUL-containing email is a plain unauthorized, not a server error', async () => {
+  expect(await fail('a'.repeat(3000) + '@example.com')).toMatchObject({ code: 'unauthorized' });
+  expect(await fail('ana\u0000@example.com')).toMatchObject({ code: 'unauthorized' });
+});
+
 test('sessions expire after 30 days and logout ends them', async () => {
   const { token } = await login(db, { email: 'ana@example.com', password: PASSWORD }, now);
   expect(await sessionUser(db, token, days(29))).not.toBeNull();

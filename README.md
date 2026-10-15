@@ -13,7 +13,7 @@ A small website that suggests baby-friendly recipes from the ingredients you hav
    ```bash
    cp .env.example .env
    ```
-   Set `POSTGRES_PASSWORD` (letters and numbers only), `OPENAI_API_KEY`, and `PUBLIC_URL`.
+   Set `POSTGRES_PASSWORD` (letters and numbers only), `OPENAI_API_KEY`, and `PUBLIC_URL`. Choose the database password now: it is stored in the database volume on the first start, so changing it later in `.env` breaks the app (you would have to delete the volume, which deletes all data).
 2. `PUBLIC_URL` is the address other devices type to open the site, for example `http://my-mac.local:3000` or `http://192.168.1.20:3000`. Find your computer's name or address in the system network settings. Invite and reset links are built from it, so it must be reachable from your phone.
 3. Start everything:
    ```bash
@@ -23,6 +23,7 @@ A small website that suggests baby-friendly recipes from the ingredients you hav
    ```bash
    docker compose ps
    ```
+   Open the site using exactly the address in `PUBLIC_URL`. Other names or addresses get a plain "Forbidden" unless you list them in `ALLOWED_HOSTS` (a comma-separated list of host names that **replaces** the default, so include the `PUBLIC_URL` host too). `COOKIE_SECURE` stays `false` on a home network, because browsers drop `Secure` cookies on plain HTTP.
 5. Create your admin account (once). This prints a link; open it and choose a password:
    ```bash
    docker compose exec app node src/server/cli.js create-admin you@example.com
@@ -41,13 +42,14 @@ Limits: each person can get 10 recipes per day (UTC day) and the site makes at m
 scripts/backup.sh
 ```
 
-writes a dump to `backups/` and keeps the 7 newest. Run it by hand or schedule it, for example with `crontab -e`:
+writes a dump to `backups/` (readable only by you) and keeps the 7 newest. Run it by hand or schedule it, for example with `crontab -e`. Cron has a minimal `PATH`, so set it so that `docker` is found, and check the log now and then because a failure is silent:
 
 ```
-0 3 * * * cd /path/to/baby-recipes && scripts/backup.sh
+PATH=/usr/local/bin:/usr/bin:/bin
+0 3 * * * cd /path/to/baby-recipes && scripts/backup.sh >> backups/backup.log 2>&1
 ```
 
-To restore a backup (this **replaces all current data**):
+To restore a backup (this **replaces all current data**; a copy of the current data is saved first as `backups/pre-restore-<time>.sql`, and a broken backup is rolled back instead of leaving you with an empty database):
 
 ```bash
 docker compose stop app
@@ -65,6 +67,10 @@ docker compose up -d --build
 ```
 
 The database changes itself when the app starts. Your data stays in the Docker volume `pgdata`.
+
+## Privacy
+
+The site keeps, for each person: email, a hashed password, the baby's birthday, liked and not-liked recipes, and a short list of recently shown recipe titles. Nothing else about the baby is stored. Backups contain the same data, including birthdays, so keep the `backups/` folder private. Removing a person on the admin page deletes all of it. Recipe requests send the ingredients and the baby's age in months (not the birthday) to OpenAI.
 
 ## Warnings
 

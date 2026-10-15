@@ -18,8 +18,8 @@ test('the trailing slash is removed and the public host is allowed with localhos
   expect(c.allowedHosts).toEqual(['my-mac.local', 'localhost', '127.0.0.1']);
 });
 
-test('ALLOWED_HOSTS overrides the default', () => {
-  expect(loadConfig({ ...base, ALLOWED_HOSTS: ' a.test, b.test ' }).allowedHosts).toEqual(['a.test', 'b.test']);
+test('ALLOWED_HOSTS overrides the default and is lower-cased', () => {
+  expect(loadConfig({ ...base, ALLOWED_HOSTS: ' A.test, b.TEST ' }).allowedHosts).toEqual(['a.test', 'b.test']);
 });
 
 test('cookieSecure is only true for the exact word true', () => {

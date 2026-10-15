@@ -1,6 +1,6 @@
 import { test, expect, beforeEach } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -64,6 +64,12 @@ test('.gitignore keeps .env and backups out of git', () => {
   expect(lines).toContain('backups/');
 });
 
+test('app: has a healthcheck and an init process so docker stop is quick', () => {
+  const { app } = compose.services;
+  expect(app.healthcheck.test.join(' ')).toMatch(/fetch/);
+  expect(app.init).toBe(true);
+});
+
 test('Dockerfile runs the server as a non-root user from the built app', () => {
   const text = read('Dockerfile');
   expect(text).toMatch(/USER node/);
@@ -122,27 +128,52 @@ test('a failed dump leaves no partial file, keeps old backups and exits non-zero
   expect(backups()).toEqual(['babyrecipes-20261015-120000.sql']);
 });
 
+test('backup files are readable only by the owner', () => {
+  run('backup.sh', [], { BACKUP_TIMESTAMP: '20261015-120000' });
+  expect(statSync(join(dir, 'backups', backups()[0])).mode & 0o777).toBe(0o600);
+});
+
 test('restore refuses a missing file before touching the database', () => {
   expect(() => run('restore.sh', ['--yes', join(dir, 'nope.sql')])).toThrow();
   expect(existsSync(log)).toBe(false);
 });
 
-test('restore with --yes drops the schema and then loads the dump', () => {
+test('restore with --yes saves a safety copy first, then loads the dump in one transaction', () => {
   const dump = join(dir, 'x.sql');
   writeFileSync(dump, 'create table restored();\n');
   run('restore.sh', ['--yes', dump]);
+  const calls = readFileSync(log, 'utf8').split('\n').filter(Boolean);
+  expect(calls[0]).toMatch(/pg_dump/);
+  expect(calls[1]).toMatch(/psql -1 -v ON_ERROR_STOP=1/);
+  expect(backups().filter((f) => f.startsWith('pre-restore-'))).toHaveLength(1);
   const sent = readFileSync(stdin, 'utf8');
-  expect(sent.indexOf('drop schema public cascade')).toBeGreaterThanOrEqual(0);
   expect(sent.indexOf('drop schema public cascade')).toBeLessThan(sent.indexOf('create table restored();'));
+});
+
+test('restore does not touch the database when the safety copy fails', () => {
+  const dump = join(dir, 'x.sql');
+  writeFileSync(dump, 'create table restored();\n');
+  expect(() => run('restore.sh', ['--yes', dump], { STUB_FAIL: '1' })).toThrow();
+  expect(existsSync(stdin)).toBe(false);
 });
 
 test('restore without --yes asks and cancels on anything but yes', () => {
   const dump = join(dir, 'x.sql');
   writeFileSync(dump, 'create table restored();\n');
   expect(() => execFileSync('bash', [join(root, 'scripts', 'restore.sh'), dump], {
-    env: { ...process.env, COMPOSE: stub, STUB_LOG: log, STUB_STDIN: stdin }, input: 'no\n', stdio: 'pipe',
+    env: { ...process.env, COMPOSE: stub, BACKUP_DIR: join(dir, 'backups'), STUB_LOG: log, STUB_STDIN: stdin }, input: 'no\n', stdio: 'pipe',
   })).toThrow();
   expect(existsSync(stdin)).toBe(false);
+  expect(existsSync(log)).toBe(false);
+});
+
+test('pre-restore copies are not counted in the 7-file backup rotation', () => {
+  const dump = join(dir, 'x.sql');
+  writeFileSync(dump, 'create table restored();\n');
+  run('restore.sh', ['--yes', dump]);
+  for (let i = 1; i <= 8; i++) run('backup.sh', [], { BACKUP_TIMESTAMP: `20261015-12000${i}` });
+  expect(backups().filter((f) => f.startsWith('pre-restore-'))).toHaveLength(1);
+  expect(backups().filter((f) => f.startsWith('babyrecipes-'))).toHaveLength(7);
 });
 
 test('the runbook covers the essentials', () => {

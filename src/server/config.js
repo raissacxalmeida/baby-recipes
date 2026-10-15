@@ -19,7 +19,7 @@ export function loadConfig(env) {
   }
   if (problems.length) throw new Error(problems.join('; '));
 
-  const listed = (env.ALLOWED_HOSTS ?? '').split(',').map((h) => h.trim()).filter(Boolean);
+  const listed = (env.ALLOWED_HOSTS ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
   return {
     databaseUrl,
     openaiKey: env.OPENAI_API_KEY ?? '',

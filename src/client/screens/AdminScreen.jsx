@@ -44,12 +44,15 @@ function AdminPage({ api, onBack }) {
 
   async function act(action) {
     setError(null);
+    let ok = true;
     try {
       await action();
     } catch (err) {
       setError(err.message);
+      ok = false;
     }
     await load();
+    return ok;
   }
 
   const invite = (address) => act(async () => {
@@ -62,7 +65,7 @@ function AdminPage({ api, onBack }) {
       <button type="button" onClick={onBack}>Back to the app</button>
       <h1>Admin</h1>
       <h2>Invite someone</h2>
-      <form onSubmit={(e) => { e.preventDefault(); invite(email.trim()); setEmail(''); }}>
+      <form onSubmit={async (e) => { e.preventDefault(); if (await invite(email.trim())) setEmail(''); }}>
         <label>
           Invite email
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />

@@ -1,4 +1,4 @@
-import { login, logout } from '../sessions.js';
+import { login, logout, startSession } from '../sessions.js';
 import { acceptInvite, getInvite, getReset, useReset } from '../users.js';
 
 const publicUser = (u) => ({ email: u.email, isAdmin: u.isAdmin });
@@ -34,8 +34,8 @@ export const authRoutes = [
     method: 'POST', pattern: '/api/signup', access: 'public',
     async handler({ db, body, now }) {
       const created = await acceptInvite(db, { token: body.token, password: body.password }, now());
-      const { token, user } = await login(db, { email: created.email, password: body.password }, now());
-      return { body: { user: publicUser(user) }, setSession: token };
+      const token = await startSession(db, created, now());
+      return { body: { user: publicUser(created) }, setSession: token };
     },
   },
   {

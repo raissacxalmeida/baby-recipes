@@ -6,6 +6,11 @@ import { sessionUser } from './sessions.js';
 import { routes } from './routes/index.js';
 
 const MAX_BODY = 100 * 1024;
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+};
 const SESSION_MAX_AGE = 30 * 24 * 3600;
 const STATUS = {
   'invalid-input': 400, unauthorized: 401, forbidden: 403, 'not-found': 404, conflict: 409,
@@ -31,12 +36,12 @@ export function loadEnv(file) {
 }
 
 function sendJson(res, status, body, headers = {}) {
-  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers });
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...SECURITY_HEADERS, ...headers });
   res.end(JSON.stringify(body));
 }
 
 function sendText(res, status, text) {
-  res.writeHead(status, { 'Content-Type': 'text/plain' });
+  res.writeHead(status, { 'Content-Type': 'text/plain', ...SECURITY_HEADERS });
   res.end(text);
 }
 
@@ -104,7 +109,7 @@ function serveStatic(req, res, root, pathname) {
   // Pages such as /admin and /invite/<token> are drawn by the React app.
   if (!target && inside && !path.extname(pathname)) target = path.join(root, 'index.html');
   if (!target || !existsSync(target)) return sendText(res, 404, 'Not found');
-  res.writeHead(200, { 'Content-Type': TYPES[path.extname(target)] ?? 'application/octet-stream' });
+  res.writeHead(200, { 'Content-Type': TYPES[path.extname(target)] ?? 'application/octet-stream', ...SECURITY_HEADERS });
   if (req.method === 'HEAD') return res.end();
   const stream = createReadStream(target);
   stream.on('error', () => res.end());
@@ -152,7 +157,7 @@ export function createServer({ db, config, callModel, now = () => new Date(), st
 
   return http.createServer(async (req, res) => {
     // Only the configured host names are served (blocks DNS-rebinding pages).
-    const host = (req.headers.host ?? '').replace(/:\d+$/, '');
+    const host = (req.headers.host ?? '').replace(/:\d+$/, '').toLowerCase();
     if (!config.allowedHosts.includes(host)) return sendText(res, 403, 'Forbidden');
     const pathname = (req.url ?? '').split('?')[0];
     try {

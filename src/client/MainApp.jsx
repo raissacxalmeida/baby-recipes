@@ -18,7 +18,7 @@ function startScreen(birthdate, now) {
   }
 }
 
-export default function MainApp({ api, now }) {
+export default function MainApp({ api, now, onSessionLost = () => {} }) {
   const [server, setServer] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [screen, setScreen] = useState(null);
@@ -45,7 +45,7 @@ export default function MainApp({ api, now }) {
         setServer(s);
         setScreen(startScreen(s.birthdate, now()));
       })
-      .catch((err) => live && setLoadError(err.message));
+      .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err.message)));
     return () => { live = false; };
   }, [api]);
 
@@ -57,19 +57,31 @@ export default function MainApp({ api, now }) {
     setScreen(next);
   }
 
+  // A 401 means the session ended (expired, or the account was removed): back to the login form.
+  function failed(err) {
+    if (err.status === 401) onSessionLost();
+    else setError(err.message);
+  }
+
   async function guarded(action) {
     try {
       await action();
     } catch (err) {
-      setError(err.message);
+      failed(err);
     }
     rerender();
   }
 
   async function saveBirthday(date) {
-    await api.setBirthdate(date);
+    try {
+      await api.setBirthdate(date);
+    } catch (err) {
+      if (err.status === 401) return onSessionLost();
+      throw err;
+    }
     const next = await refresh();
     go(startScreen(next.birthdate, now()));
+    return undefined;
   }
 
   async function suggest() {
@@ -85,7 +97,7 @@ export default function MainApp({ api, now }) {
       setScreen('recipe');
       refresh().catch(() => {});
     } catch (err) {
-      if (id === requestId.current) setError(err.message);
+      if (id === requestId.current) failed(err);
     } finally {
       if (id === requestId.current) setLoading(false);
     }

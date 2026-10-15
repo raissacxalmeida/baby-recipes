@@ -110,6 +110,44 @@ test('/reset/<token> sets a new password and offers the login page', async () =>
   expect(navigate).toHaveBeenCalledWith('/');
 });
 
+test('a malformed invite path does not blank the page', async () => {
+  const api = createFakeApi({ overrides: { invite: vi.fn(async () => { throw new Error('This invite link is not valid'); }) } });
+  open(api, '/invite/%E0%A4%A');
+  expect((await screen.findByRole('alert')).textContent).toMatch(/not valid/);
+  expect(api.invite).toHaveBeenCalledWith('%E0%A4%A');
+});
+
+test('logging out signs out locally even when the server call fails', async () => {
+  const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false }, overrides: { logout: vi.fn(async () => { throw new Error('Could not reach the server'); }) } });
+  open(api);
+  fireEvent.click(await screen.findByRole('button', { name: 'Log out' }));
+  expect(await screen.findByRole('button', { name: 'Log in' })).not.toBeNull();
+});
+
+test('a failed account deletion shows the message and stays signed in', async () => {
+  const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false }, overrides: { deleteAccount: vi.fn(async () => { throw new Error('Could not reach the server'); }) } });
+  vi.spyOn(window, 'confirm').mockReturnValue(true);
+  open(api);
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Could not reach/);
+  expect(screen.getByRole('button', { name: 'Log out' })).not.toBeNull();
+});
+
+test('a session that ends mid-use returns to the login form with a notice', async () => {
+  const api = createFakeApi({
+    user: { email: 'ana@example.com', isAdmin: false },
+    birthdate: '2026-02-14',
+    overrides: { suggest: vi.fn(async () => { throw Object.assign(new Error('Please log in'), { status: 401 }); }) },
+  });
+  open(api);
+  await screen.findByLabelText('Ingredient');
+  type('Ingredient', 'banana');
+  click('Add');
+  click('Suggest a recipe');
+  expect(await screen.findByRole('button', { name: 'Log in' })).not.toBeNull();
+  expect(screen.getByText(/session ended/i)).not.toBeNull();
+});
+
 test('the login lockout message is shown', async () => {
   const api = createFakeApi({ overrides: { login: vi.fn(async () => { throw new Error('Too many attempts. Try again in 15 minutes'); }) } });
   open(api);
