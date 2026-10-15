@@ -1,12 +1,19 @@
 import {
   createInvite, createReset, listInvites, listPeople, removeUser, revokeInvite,
 } from '../users.js';
+import { LIMITS } from '../usage.js';
 
 export const adminRoutes = [
   {
     method: 'GET', pattern: '/api/admin/overview', access: 'admin',
     async handler({ db, now }) {
-      return { body: { invites: await listInvites(db, now()), people: await listPeople(db, now()) } };
+      return {
+        body: {
+          invites: await listInvites(db, now()),
+          people: await listPeople(db, now()),
+          limit: LIMITS.recipes,
+        },
+      };
     },
   },
   {

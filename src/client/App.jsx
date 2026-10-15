@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AccountBar from './screens/AccountBar.jsx';
+import AdminScreen from './screens/AdminScreen.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
 import ResetScreen from './screens/ResetScreen.jsx';
 import SignupScreen from './screens/SignupScreen.jsx';
@@ -49,7 +50,9 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
           onDelete={async () => { await api.deleteAccount(); signedOut(); go('/'); }}
           onAdmin={() => go('/admin')}
         />
-        <MainApp api={api} user={session.user} now={now} path={path} go={go} />
+        {path === '/admin'
+          ? <AdminScreen api={api} me={session.user} onBack={() => go('/')} />
+          : <MainApp api={api} user={session.user} now={now} />}
       </>
     );
   }

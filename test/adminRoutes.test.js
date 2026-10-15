@@ -57,6 +57,7 @@ test('overview lists invites and people and revoke removes an invite', async () 
   let overview = (await t.call('GET', '/api/admin/overview', undefined, admin)).body;
   const pending = overview.invites.find((i) => i.email === 'joao@example.com');
   expect(pending).toMatchObject({ status: 'pending', daysLeft: 7 });
+  expect(overview.limit).toBe(10);
   expect(overview.people.map((p) => p.email).sort()).toEqual(['ana@example.com', 'me@example.com']);
   expect(JSON.stringify(overview)).not.toMatch(/token_hash|password|hash/i);
   expect((await t.call('DELETE', `/api/admin/invites/${pending.id}`, undefined, admin)).status).toBe(200);

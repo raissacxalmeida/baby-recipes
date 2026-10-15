@@ -45,7 +45,7 @@ export function createFakeApi({ user = null, birthdate = null, recipes = [], ove
     }),
     deleteAccount: vi.fn(async () => { state.user = null; }),
     admin: {
-      overview: vi.fn(async () => ({ invites: [], people: [] })),
+      overview: vi.fn(async () => ({ invites: [], people: [], limit: LIMIT })),
       createInvite: vi.fn(async (email) => ({ link: `http://my-mac.local:3000/invite/${email}` })),
       revokeInvite: vi.fn(async () => {}),
       reset: vi.fn(async () => ({ link: 'http://my-mac.local:3000/reset/abc' })),

@@ -25,19 +25,19 @@ const open = async (api, me = ADMIN) => {
   await screen.findByRole('heading', { name: 'Invite someone' });
   return view;
 };
-const rowOf = (text) => screen.getByText(text).closest('tr');
+const invitesRow = (email) => within(screen.getByRole('table', { name: 'Invites' })).getByText(email).closest('tr');
 
 test('the overview renders both tables', async () => {
   await open(make());
-  expect(within(rowOf('ana@example.com')).getByText(/Pending \(6 days left\)/)).not.toBeNull();
-  expect(within(rowOf('maria@example.com')).getByText('Expired')).not.toBeNull();
-  expect(within(rowOf('joao@example.com')).getAllByText('Used').length).toBeGreaterThan(0);
+  expect(within(invitesRow('ana@example.com')).getByText('Pending (6 days left)')).not.toBeNull();
+  expect(within(invitesRow('maria@example.com')).getByText('Expired')).not.toBeNull();
+  expect(within(invitesRow('joao@example.com')).getByText('Used')).not.toBeNull();
   expect(screen.getByText('3 of 10')).not.toBeNull();
 });
 
 test('the admin row has no Reset or Remove and no figure', async () => {
   await open(make());
-  const row = screen.getAllByText('me@example.com')[0].closest('tr');
+  const row = screen.getByText('me@example.com').closest('tr');
   expect(within(row).queryByRole('button')).toBeNull();
   expect(within(row).queryByText(/of 10/)).toBeNull();
 });
