@@ -1,14 +1,17 @@
 import http from 'node:http';
-import { readFileSync, existsSync, statSync, createReadStream } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
 import { AppError } from './errors.js';
-import { generateRecipe } from './generate.js';
-import { callModel } from './openai.js';
+import { sessionUser } from './sessions.js';
+import { routes } from './routes/index.js';
 
 const MAX_BODY = 100 * 1024;
-const STATUS = { 'invalid-input': 400, 'too-young': 422, 'generation-failed': 502, 'upstream-error': 502, 'missing-key': 500 };
-const LOCAL_HOSTS = ['127.0.0.1', 'localhost', '[::1]'];
+const SESSION_MAX_AGE = 30 * 24 * 3600;
+const STATUS = {
+  'invalid-input': 400, unauthorized: 401, forbidden: 403, 'not-found': 404, conflict: 409,
+  'too-young': 422, locked: 429, 'limit-reached': 429, 'missing-key': 500,
+  'generation-failed': 502, 'upstream-error': 502,
+};
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -27,9 +30,14 @@ export function loadEnv(file) {
   }
 }
 
-function sendJson(res, status, body) {
-  res.writeHead(status, { 'Content-Type': 'application/json' });
+function sendJson(res, status, body, headers = {}) {
+  res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...headers });
   res.end(JSON.stringify(body));
+}
+
+function sendText(res, status, text) {
+  res.writeHead(status, { 'Content-Type': 'text/plain' });
+  res.end(text);
 }
 
 function readBody(req) {
@@ -48,77 +56,115 @@ function readBody(req) {
   });
 }
 
-async function handleRecipe(req, res, generate) {
-  try {
-    let input;
+function parseCookies(header = '') {
+  const cookies = {};
+  for (const part of header.split(';')) {
+    const i = part.indexOf('=');
+    if (i > 0) cookies[part.slice(0, i).trim()] = part.slice(i + 1).trim();
+  }
+  return cookies;
+}
+
+function compile(route) {
+  const keys = [];
+  const source = route.pattern.replace(/:[A-Za-z]+/g, (m) => {
+    keys.push(m.slice(1));
+    return '([^/]+)';
+  });
+  return { ...route, keys, re: new RegExp(`^${source}$`) };
+}
+
+function matchRoute(compiled, method, pathname) {
+  for (const route of compiled) {
+    if (route.method !== method) continue;
+    const m = route.re.exec(pathname);
+    if (!m) continue;
     try {
-      input = JSON.parse(await readBody(req));
-    } catch (err) {
-      if (err instanceof AppError) throw err;
-      throw new AppError('invalid-input', 'Request body must be valid JSON');
-    }
-    sendJson(res, 200, { recipe: await generate(input) });
-  } catch (err) {
-    if (err instanceof AppError) {
-      sendJson(res, STATUS[err.code] ?? 500, { error: err.code, message: err.message });
-    } else {
-      console.error(err);
-      sendJson(res, 500, { error: 'server-error', message: 'Something went wrong' });
+      return { route, params: Object.fromEntries(route.keys.map((k, i) => [k, decodeURIComponent(m[i + 1])])) };
+    } catch {
+      return null;
     }
   }
+  return null;
 }
 
-function serveStatic(req, res, root) {
-  let pathname;
+function sessionCookie(token, maxAge, secure) {
+  return `session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
+}
+
+function serveStatic(req, res, root, pathname) {
+  let file = null;
   try {
-    pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+    file = path.resolve(root, `.${decodeURIComponent(pathname) === '/' ? '/index.html' : decodeURIComponent(pathname)}`);
   } catch {
-    pathname = null;
+    file = null;
   }
-  const file = pathname === null ? null : path.resolve(root, `.${pathname === '/' ? '/index.html' : pathname}`);
-  if (!file || !file.startsWith(root + path.sep) || !existsSync(file) || !statSync(file).isFile()) {
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not found');
-    return;
-  }
-  res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] ?? 'application/octet-stream' });
-  createReadStream(file).pipe(res);
+  const inside = file && file.startsWith(root + path.sep);
+  let target = inside && existsSync(file) && statSync(file).isFile() ? file : null;
+  // Pages such as /admin and /invite/<token> are drawn by the React app.
+  if (!target && inside && !path.extname(pathname)) target = path.join(root, 'index.html');
+  if (!target || !existsSync(target)) return sendText(res, 404, 'Not found');
+  res.writeHead(200, { 'Content-Type': TYPES[path.extname(target)] ?? 'application/octet-stream' });
+  if (req.method === 'HEAD') return res.end();
+  const stream = createReadStream(target);
+  stream.on('error', () => res.end());
+  return stream.pipe(res);
 }
 
-export function createServer({ generate, staticDir }) {
+export function createServer({ db, config, callModel, now = () => new Date(), staticDir }) {
   const root = path.resolve(staticDir);
-  return http.createServer((req, res) => {
-    // Blocks DNS-rebinding pages; only local host names are served.
-    if (!LOCAL_HOSTS.includes((req.headers.host ?? '').replace(/:\d+$/, ''))) {
-      res.writeHead(403, { 'Content-Type': 'text/plain' });
-      res.end('Forbidden');
-      return;
-    }
-    const pathname = (req.url ?? '').split('?')[0];
-    if (req.method === 'POST' && pathname === '/api/recipe') {
-      // A JSON content type forces a CORS preflight, so other websites cannot trigger a call.
-      if (!/^application\/json\b/i.test(req.headers['content-type'] ?? '')) {
-        return sendJson(res, 415, { error: 'invalid-input', message: 'Send the request as JSON' });
-      }
-      return handleRecipe(req, res, generate);
-    }
-    if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res, root);
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not found');
-  });
-}
+  const compiled = routes.map(compile);
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-  loadEnv(path.join(repoRoot, '.env'));
-  const root = path.join(repoRoot, 'dist');
-  const server = createServer({
-    staticDir: root,
-    generate: (input) =>
-      generateRecipe(input, {
-        callModel: (i) => callModel(i, { apiKey: process.env.OPENAI_API_KEY }),
-        now: () => new Date(),
-      }),
+  async function handleApi(req, res, pathname) {
+    const found = matchRoute(compiled, req.method, pathname);
+    if (!found) throw new AppError('not-found', 'Not found');
+    const { route, params } = found;
+    if (req.method !== 'GET' && req.headers['x-requested-with'] !== 'fetch') {
+      throw new AppError('invalid-input', 'Missing X-Requested-With header');
+    }
+    let body = {};
+    if (req.method !== 'GET') {
+      const raw = await readBody(req);
+      if (raw.trim()) {
+        try {
+          body = JSON.parse(raw);
+        } catch {
+          throw new AppError('invalid-input', 'Request body must be valid JSON');
+        }
+        if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+          throw new AppError('invalid-input', 'Request body must be a JSON object');
+        }
+      }
+    }
+    const sessionToken = parseCookies(req.headers.cookie).session;
+    let user = null;
+    if (route.access !== 'public') {
+      user = await sessionUser(db, sessionToken, now());
+      if (!user) throw new AppError('unauthorized', 'Please log in');
+      if (route.access === 'admin' && !user.isAdmin) throw new AppError('forbidden', 'Not allowed');
+    }
+    const result = await route.handler({ db, user, params, body, now, config, callModel, sessionToken });
+    const headers = {};
+    if (result.setSession) headers['Set-Cookie'] = sessionCookie(result.setSession, SESSION_MAX_AGE, config.cookieSecure);
+    if (result.clearSession) headers['Set-Cookie'] = sessionCookie('', 0, config.cookieSecure);
+    sendJson(res, result.status ?? 200, result.body ?? {}, headers);
+  }
+
+  return http.createServer(async (req, res) => {
+    // Only the configured host names are served (blocks DNS-rebinding pages).
+    const host = (req.headers.host ?? '').replace(/:\d+$/, '');
+    if (!config.allowedHosts.includes(host)) return sendText(res, 403, 'Forbidden');
+    const pathname = (req.url ?? '').split('?')[0];
+    try {
+      if (pathname.startsWith('/api/')) return await handleApi(req, res, pathname);
+      if (req.method === 'GET' || req.method === 'HEAD') return serveStatic(req, res, root, pathname);
+      return sendText(res, 404, 'Not found');
+    } catch (err) {
+      if (err instanceof AppError) {
+        return sendJson(res, STATUS[err.code] ?? 500, { error: err.code, message: err.message });
+      }
+      console.error('Unhandled error:', err.name, err.message);
+      return sendJson(res, 500, { error: 'server-error', message: 'Something went wrong' });
+    }
   });
-  server.listen(3000, '127.0.0.1', () => console.log('Open http://127.0.0.1:3000'));
 }
