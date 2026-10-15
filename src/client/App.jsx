@@ -1,118 +1,56 @@
-import { useReducer, useRef, useState } from 'react';
-import { ageInMonths } from '../shared/age.js';
-import { ageLabel } from '../shared/units.js';
-import { startScreen } from './store.js';
-import SetupScreen from './screens/SetupScreen.jsx';
-import TooYoungScreen from './screens/TooYoungScreen.jsx';
-import HomeScreen from './screens/HomeScreen.jsx';
-import RecipeScreen from './screens/RecipeScreen.jsx';
-import LikedScreen from './screens/LikedScreen.jsx';
+import { useEffect, useState } from 'react';
+import AccountBar from './screens/AccountBar.jsx';
+import LoginScreen from './screens/LoginScreen.jsx';
+import ResetScreen from './screens/ResetScreen.jsx';
+import SignupScreen from './screens/SignupScreen.jsx';
+import MainApp from './MainApp.jsx';
 
-export default function App({ store, fetchRecipe, now = () => new Date() }) {
-  const [screen, setScreen] = useState(() => startScreen(store, now()));
-  const [birthdate, setBirthdate] = useState(() => store.getBirthdate());
-  const [ingredients, setIngredients] = useState([]);
-  const [recipe, setRecipe] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [fromLiked, setFromLiked] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [, refresh] = useReducer((n) => n + 1, 0);
-  const requestId = useRef(0);
+const defaultNavigate = (path) => window.history.pushState({}, '', path);
 
-  // Leaving a screen drops any pending request and its error.
+export default function App({ api, now = () => new Date(), path: initialPath, navigate = defaultNavigate }) {
+  const [path, setPath] = useState(() => initialPath ?? window.location.pathname);
+  const [session, setSession] = useState({ status: 'loading', user: null });
+
+  const invite = /^\/invite\/([^/]+)$/.exec(path);
+  const reset = /^\/reset\/([^/]+)$/.exec(path);
+  const special = Boolean(invite || reset);
+
+  useEffect(() => {
+    if (special) return undefined;
+    let live = true;
+    api.session()
+      .then((r) => live && setSession(r ? { status: 'ready', user: r.user } : { status: 'anon', user: null }))
+      .catch(() => live && setSession({ status: 'anon', user: null }));
+    return () => { live = false; };
+  }, [api, special]);
+
   function go(next) {
-    requestId.current += 1;
-    setLoading(false);
-    setError(null);
-    setScreen(next);
+    navigate(next);
+    setPath(next);
   }
-
-  function saveBirthday(date) {
-    store.setBirthdate(date);
-    setBirthdate(date);
-    go(ageInMonths(date, now()) < 6 ? 'too-young' : 'home');
-  }
-
-  async function suggest() {
-    const id = ++requestId.current;
-    setLoading(true);
-    setError(null);
-    try {
-      const next = await fetchRecipe({ birthdate, ingredients, exclude: store.excludeTitles() });
-      if (id !== requestId.current) return;
-      store.addShown(next.title);
-      setRecipe(next);
-      setFromLiked(false);
-      setSaved(false);
-      setScreen('recipe');
-    } catch (err) {
-      if (id === requestId.current) setError(err.message);
-    } finally {
-      if (id === requestId.current) setLoading(false);
-    }
-  }
-
-  function dislike() {
-    store.dislike(recipe);
-    setSaved(false);
-    suggest();
-  }
-
-  function like() {
-    store.like(recipe);
-    setSaved(true);
-  }
-
-  function open(liked) {
-    setRecipe(liked);
-    setFromLiked(true);
-    go('recipe');
-  }
+  const signedIn = (user) => setSession({ status: 'ready', user });
+  const signedOut = () => setSession({ status: 'anon', user: null });
 
   let body;
-  if (screen === 'setup') body = <SetupScreen onSave={saveBirthday} now={now} />;
-  else if (screen === 'too-young') body = <TooYoungScreen onChangeBirthday={() => go('setup')} />;
-  else if (screen === 'liked') {
-    body = (
-      <LikedScreen
-        liked={store.getLiked()}
-        disliked={store.getDisliked()}
-        onOpen={open}
-        onUnlike={(id) => { store.unlike(id); refresh(); }}
-        onRestore={(id) => { store.restore(id); refresh(); }}
-        onBack={() => go('home')}
-      />
-    );
-  } else if (screen === 'recipe' && recipe) {
-    body = (
-      <>
-        <button type="button" onClick={() => go(fromLiked ? 'liked' : 'home')}>
-          {fromLiked ? 'Back to liked recipes' : 'Back to ingredients'}
-        </button>
-        <RecipeScreen
-          key={recipe.id}
-          recipe={recipe}
-          busy={loading}
-          onAnother={fromLiked ? undefined : suggest}
-          onLiked={fromLiked ? undefined : like}
-          onDisliked={fromLiked ? undefined : dislike}
-        />
-        {saved && <p>Saved to liked recipes.</p>}
-        {error && <p role="alert">{error}</p>}
-      </>
-    );
+  if (invite) {
+    body = <SignupScreen api={api} token={decodeURIComponent(invite[1])} onDone={(user) => { signedIn(user); go('/'); }} />;
+  } else if (reset) {
+    body = <ResetScreen api={api} token={decodeURIComponent(reset[1])} onDone={() => go('/')} />;
+  } else if (session.status === 'loading') {
+    body = <p>Loading...</p>;
+  } else if (session.status === 'anon') {
+    body = <LoginScreen api={api} onLoggedIn={signedIn} />;
   } else {
     body = (
-      <HomeScreen
-        ageText={ageLabel(ageInMonths(birthdate, now()))}
-        ingredients={ingredients}
-        onChange={setIngredients}
-        onSuggest={suggest}
-        loading={loading}
-        error={error}
-        onShowLiked={() => go('liked')}
-      />
+      <>
+        <AccountBar
+          user={session.user}
+          onLogout={async () => { await api.logout(); signedOut(); go('/'); }}
+          onDelete={async () => { await api.deleteAccount(); signedOut(); go('/'); }}
+          onAdmin={() => go('/admin')}
+        />
+        <MainApp api={api} user={session.user} now={now} path={path} go={go} />
+      </>
     );
   }
 
