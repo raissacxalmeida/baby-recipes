@@ -14,7 +14,7 @@ function checkRecipe(recipe) {
 export async function getState(db, userId) {
   const user = await db.query("select to_char(birthdate, 'YYYY-MM-DD') as birthdate from users where id = $1", [userId]);
   const recipes = await db.query(
-    'select id, data, status, saved_from_shared from recipes where user_id = $1 order by updated_at, id', [userId],
+    'select id, data, status, copied_from from recipes where user_id = $1 order by updated_at, id', [userId],
   );
   const shared = await db.query('select recipe_id from shared_recipes where user_id = $1 order by created_at, id', [userId]);
   const by = (status) => recipes.rows.filter((r) => r.status === status).map((r) => r.data);
@@ -23,7 +23,7 @@ export async function getState(db, userId) {
     liked: by('liked'),
     disliked: by('disliked'),
     sharedIds: shared.rows.map((r) => r.recipe_id),
-    copiedIds: recipes.rows.filter((r) => r.status === 'liked' && r.saved_from_shared).map((r) => r.id),
+    copiedIds: recipes.rows.filter((r) => r.status === 'liked' && r.copied_from).map((r) => r.id),
   };
 }
 
@@ -40,7 +40,7 @@ async function save(db, userId, recipe, status) {
   checkRecipe(recipe);
   await db.query(
     `insert into recipes (user_id, id, data, status) values ($1, $2, $3, $4)
-     on conflict (user_id, id) do update set data = $3, status = $4, saved_from_shared = false, updated_at = now()`,
+     on conflict (user_id, id) do update set data = $3, status = $4, copied_from = null, updated_at = now()`,
     [userId, recipe.id, JSON.stringify(recipe), status],
   );
 }
@@ -56,16 +56,13 @@ export async function dislike(db, userId, recipe) {
 export async function unlike(db, userId, id) {
   await db.transaction(async (tx) => {
     const removed = await tx.query(
-      "delete from recipes where user_id = $1 and id = $2 and status = 'liked' returning saved_from_shared",
+      "delete from recipes where user_id = $1 and id = $2 and status = 'liked' returning copied_from",
       [userId, String(id)],
     );
     if (!removed.rows.length) return;
     await tx.query('delete from shared_recipes where user_id = $1 and recipe_id = $2', [userId, String(id)]);
-    if (removed.rows[0].saved_from_shared) {
-      await tx.query(
-        'delete from shared_likes where user_id = $1 and shared_id in (select id from shared_recipes where recipe_id = $2)',
-        [userId, String(id)],
-      );
+    if (removed.rows[0].copied_from) {
+      await tx.query('delete from shared_likes where user_id = $1 and shared_id = $2', [userId, removed.rows[0].copied_from]);
     }
   });
 }

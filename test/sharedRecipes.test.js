@@ -215,3 +215,26 @@ test('disliking a recipe you shared unshares it', async () => {
   await dislike(db, a, banana);
   expect(await listShared(db, b)).toEqual([]);
 });
+
+test('with two sharers of the same recipe id, taking back one like keeps the copy from the other', async () => {
+  await shareLiked(a, recipe('Banana mash', 'A way.'));
+  await shareLiked(b, recipe('Banana mash', 'B way.'));
+  const byWay = async (way) => (await listShared(db, c)).find((r) => r.recipe.steps[0] === way);
+  await likeShared(db, c, (await byWay('A way.')).id);
+  await likeShared(db, c, (await byWay('B way.')).id);
+  await unlikeShared(db, c, (await byWay('B way.')).id);
+  expect((await getState(db, c)).liked.map((r) => r.steps[0])).toEqual(['A way.']);
+  expect((await byWay('A way.')).likes).toBe(1);
+  expect((await byWay('B way.')).likes).toBe(0);
+});
+
+test('removing the copy from your liked list only takes back the like it came from', async () => {
+  await shareLiked(a, recipe('Banana mash', 'A way.'));
+  await shareLiked(b, recipe('Banana mash', 'B way.'));
+  const byWay = async (way) => (await listShared(db, c)).find((r) => r.recipe.steps[0] === way);
+  await likeShared(db, c, (await byWay('A way.')).id);
+  await likeShared(db, c, (await byWay('B way.')).id);
+  await unlike(db, c, 'banana-mash');
+  expect((await byWay('A way.')).likes).toBe(0);
+  expect((await byWay('B way.')).likes).toBe(1);
+});
