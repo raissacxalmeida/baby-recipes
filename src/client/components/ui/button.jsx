@@ -9,9 +9,9 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground shadow-primary-edge hover:brightness-105 active:translate-y-0.5 active:shadow-none disabled:active:translate-y-0',
-        outline: 'border border-input bg-card text-foreground hover:bg-muted/60',
+        outline: 'border border-input bg-card text-foreground hover:bg-muted',
         destructive: 'bg-destructive text-destructive-foreground shadow-[0_3px_0_#a83720] hover:brightness-105 active:translate-y-0.5 active:shadow-none',
-        ghost: 'text-foreground hover:bg-muted/70',
+        ghost: 'text-foreground hover:bg-muted',
       },
       size: {
         default: 'min-h-11 px-5 py-2',

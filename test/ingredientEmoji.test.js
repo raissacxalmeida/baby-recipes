@@ -19,3 +19,9 @@ test('falls back to a bowl for unknown, empty or non-string input', () => {
     expect(ingredientEmoji(value)).toBe('🥣');
   }
 });
+
+test('names that match inherited object keys fall back instead of returning non-strings', () => {
+  for (const value of ['__proto__', 'constructor', 'constructors', 'toString', 'hasOwnProperty']) {
+    expect(ingredientEmoji(value)).toBe('🥣');
+  }
+});

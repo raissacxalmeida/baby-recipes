@@ -9,7 +9,7 @@ export const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 export const AlertDialogContent = forwardRef(function AlertDialogContent({ className, ...props }, ref) {
   return (
     <AlertDialogPrimitive.Portal>
-      <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-foreground/45" />
+      <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgba(59,42,26,0.45)]" />
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(
@@ -35,7 +35,7 @@ export const AlertDialogTitle = forwardRef(function AlertDialogTitle({ className
 });
 
 export const AlertDialogDescription = forwardRef(function AlertDialogDescription({ className, ...props }, ref) {
-  return <AlertDialogPrimitive.Description ref={ref} className={cn('m-0 text-sm text-muted-foreground', className)} {...props} />;
+  return <AlertDialogPrimitive.Description ref={ref} className={cn('m-0 text-sm text-muted-foreground wrap-anywhere', className)} {...props} />;
 });
 
 export const AlertDialogAction = forwardRef(function AlertDialogAction({ className, ...props }, ref) {

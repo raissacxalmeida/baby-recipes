@@ -74,3 +74,12 @@ test('double-clicking the confirm button confirms once, and a later open confirm
   fireEvent.click(within(again).getByRole('button', { name: 'Yes, delete' }));
   expect(onConfirm).toHaveBeenCalledTimes(2);
 });
+
+test('long unbroken text (emails) wraps inside a Field label and a dialog description', async () => {
+  render(<Field label="Invite link for a-very-long-address@example.com" readOnly value="x" />);
+  expect(screen.getByLabelText(/Invite link for/).closest('label').className).toContain('wrap-anywhere');
+  cleanup();
+  setup();
+  const dialog = await openDialog();
+  expect(within(dialog).getByText('This cannot be undone.').className).toContain('wrap-anywhere');
+});

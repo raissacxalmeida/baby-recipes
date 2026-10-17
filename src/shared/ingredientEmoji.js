@@ -45,7 +45,7 @@ export function ingredientEmoji(name) {
   const word = name.trim().toLowerCase().replace(/\s+/g, ' ');
   if (!word) return FALLBACK;
   for (const candidate of singulars(word)) {
-    if (EMOJI[candidate]) return EMOJI[candidate];
+    if (Object.prototype.hasOwnProperty.call(EMOJI, candidate)) return EMOJI[candidate];
   }
   return FALLBACK;
 }
