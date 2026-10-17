@@ -52,11 +52,12 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
     return () => { live = false; };
   }, [api]);
 
-  // Leaving a screen drops any pending request and its error.
+  // Leaving a screen drops any pending request and its error. Arriving home starts a fresh ingredient list.
   function go(next) {
     requestId.current += 1;
     setLoading(false);
     setError(null);
+    if (next === 'home') setIngredients([]);
     setScreen(next);
   }
 
@@ -147,7 +148,7 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
       <>
         <Button variant="ghost" size="sm" className="self-start" onClick={() => go(fromLiked ? 'liked' : 'home')}>
           <Emoji>←</Emoji>
-          {fromLiked ? 'Back to liked recipes' : 'Back to ingredients'}
+          {fromLiked ? 'Back to liked recipes' : 'New recipe'}
         </Button>
         <RecipeScreen
           key={recipe.id}

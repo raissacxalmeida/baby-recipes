@@ -10,7 +10,7 @@ test('Home shows how many recipes were used today', async () => {
   addIngredient('banana');
   click('Suggest a recipe');
   await shown('Banana mash');
-  click('Back to ingredients');
+  click('New recipe');
   await waitFor(() => expect(screen.getByText('Recipes today: 1 of 10')).not.toBeNull());
   expect(api.state).toHaveBeenCalledTimes(2);
 });

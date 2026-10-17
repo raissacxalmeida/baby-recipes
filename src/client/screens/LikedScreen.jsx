@@ -17,7 +17,7 @@ export default function LikedScreen({ liked, disliked, onOpen, onUnlike, onResto
     <section className="grid gap-4">
       <Button variant="ghost" size="sm" className="justify-self-start" onClick={onBack}>
         <Emoji>←</Emoji>
-        Back to ingredients
+        New recipe
       </Button>
       <h1><Emoji>♡</Emoji> Liked recipes</h1>
       <Card>
