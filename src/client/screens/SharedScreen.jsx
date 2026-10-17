@@ -8,7 +8,9 @@ import { Notice } from '@/components/ui/notice.jsx';
 const emojiFor = (name) => GROUPS.find((g) => g.name === name)?.emoji;
 const likesText = (n) => (n === 1 ? '1 like' : `${n} likes`);
 
-export default function SharedScreen({ recipes, group, onGroup, onOpen, onToggleLike, onBack }) {
+export default function SharedScreen({
+  recipes, group, onGroup, onOpen, onToggleLike, onBack, error = null,
+}) {
   const present = GROUPS.filter((g) => recipes.some((r) => r.group === g.name));
   const selected = present.some((g) => g.name === group) ? group : 'All';
   const shown = selected === 'All' ? recipes : recipes.filter((r) => r.group === selected);
@@ -20,6 +22,7 @@ export default function SharedScreen({ recipes, group, onGroup, onOpen, onToggle
         New recipe
       </Button>
       <h1><Emoji>🌍</Emoji> Community recipes</h1>
+      {error && <Notice kind="error">{error}</Notice>}
       {recipes.length === 0 && <Notice kind="note">Nothing has been shared yet.</Notice>}
       {present.length > 0 && (
         <div className="flex flex-wrap gap-2">
