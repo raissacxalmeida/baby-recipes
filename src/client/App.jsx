@@ -5,6 +5,7 @@ import LoginScreen from './screens/LoginScreen.jsx';
 import ResetScreen from './screens/ResetScreen.jsx';
 import SignupScreen from './screens/SignupScreen.jsx';
 import MainApp from './MainApp.jsx';
+import { Notice } from '@/components/ui/notice.jsx';
 
 const defaultNavigate = (path) => window.history.pushState({}, '', path);
 const safeDecode = (s) => {
@@ -48,7 +49,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   } else if (reset) {
     body = <ResetScreen api={api} token={safeDecode(reset[1])} onDone={() => go('/')} />;
   } else if (session.status === 'loading') {
-    body = <p>Loading...</p>;
+    body = <Notice>Loading...</Notice>;
   } else if (session.status === 'anon') {
     body = <LoginScreen api={api} onLoggedIn={signedIn} notice={notice} />;
   } else {
@@ -73,7 +74,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
           }}
           onAdmin={() => go('/admin')}
         />
-        {accountError && <p role="alert">{accountError}</p>}
+        {accountError && <Notice kind="error">{accountError}</Notice>}
         {path === '/admin'
           ? <AdminScreen api={api} me={session.user} onBack={() => go('/')} />
           : <MainApp api={api} user={session.user} now={now} onSessionLost={sessionLost} />}
@@ -82,9 +83,11 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   }
 
   return (
-    <main>
+    <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-6">
       {body}
-      <footer>This is not medical advice. Check with your paediatrician if unsure.</footer>
+      <footer className="mt-4 text-center text-xs text-muted-foreground">
+        This is not medical advice. Check with your paediatrician if unsure.
+      </footer>
     </main>
   );
 }
