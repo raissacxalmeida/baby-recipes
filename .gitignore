@@ -4,3 +4,4 @@ dist/
 .superpowers/
 backups/
 .claude/worktrees/
+.claude/skills/deploy-docker/.last-deploy
