@@ -13,7 +13,7 @@ export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, b
 
   return (
     <article className="grid gap-4">
-      <h1 className="break-words">{recipe.title}</h1>
+      <h1 className="wrap-anywhere">{recipe.title}</h1>
       {recipe.allergens.length > 0 && (
         <Notice kind="note">
           <Emoji>⚠️</Emoji> Allergens: {recipe.allergens.join(', ')}
@@ -37,7 +37,7 @@ export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, b
             <li key={n} className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0">
               <span className="flex min-w-0 flex-wrap items-center gap-2">
                 <Emoji>{ingredientEmoji(i.name)}</Emoji>
-                <span className="break-words">{i.name}</span>
+                <span className="wrap-anywhere">{i.name}</span>
                 {!i.inList && <Badge variant="warm">not in your list</Badge>}
               </span>
               <span className="shrink-0 font-semibold">{formatAmount(i.grams)}</span>
@@ -53,7 +53,7 @@ export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, b
               <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-chip text-xs font-bold">
                 {n + 1}
               </span>
-              <span className="min-w-0 break-words">{step}</span>
+              <span className="min-w-0 wrap-anywhere">{step}</span>
             </li>
           ))}
         </ol>

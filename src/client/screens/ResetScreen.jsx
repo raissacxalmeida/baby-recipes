@@ -61,7 +61,7 @@ export default function ResetScreen({ api, token, onDone }) {
     <Card>
       <form onSubmit={submit} className="grid gap-4">
         <h1>Reset password</h1>
-        <Notice className="break-words">New password for {email}.</Notice>
+        <Notice className="wrap-anywhere">New password for {email}.</Notice>
         <Field label="New password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <Notice kind="error">{error}</Notice>}
         <Button type="submit" disabled={busy}>Change password</Button>

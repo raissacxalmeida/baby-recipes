@@ -34,7 +34,7 @@ export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, 
             {ingredients.map((name) => (
               <li key={name} className="flex max-w-full items-center gap-1 rounded-full bg-chip py-1 pl-3 pr-1 text-sm font-semibold">
                 <Emoji>{ingredientEmoji(name)}</Emoji>
-                <span className="min-w-0 break-words">{name}</span>
+                <span className="min-w-0 wrap-anywhere">{name}</span>
                 <Button
                   variant="ghost"
                   size="icon"

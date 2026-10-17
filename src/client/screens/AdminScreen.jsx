@@ -13,31 +13,31 @@ const statusText = (invite) => {
   return invite.status === 'used' ? 'Used' : 'Expired';
 };
 
-// On a phone each row becomes a small card: cells stack and show their label before the value.
+// Each row is a small card: cells stack and show their label before the value (the app column is narrow at every width).
 // The explicit roles keep the table semantics when the display is overridden.
-const cellClass = 'block empty:hidden before:mr-1 before:text-xs before:font-semibold before:text-muted-foreground before:content-[attr(data-label)] sm:table-cell sm:py-2 sm:pr-3 sm:align-middle sm:before:hidden';
+const cellClass = 'block empty:hidden before:text-xs before:font-semibold before:text-muted-foreground before:content-[attr(data-label)]';
 
 function Table({ label, headings, children }) {
   return (
-    <table aria-label={label} role="table" className="block w-full border-collapse text-left text-sm sm:table">
-      <thead role="rowgroup" className="sr-only sm:not-sr-only sm:table-header-group">
+    <table aria-label={label} role="table" className="block w-full text-left text-sm">
+      <thead role="rowgroup" className="sr-only">
         <tr role="row">
           {headings.map((h, n) => (
             <th key={n} role="columnheader" scope="col" className="py-2 pr-3 text-xs font-semibold uppercase text-muted-foreground">{h}</th>
           ))}
         </tr>
       </thead>
-      <tbody role="rowgroup" className="block sm:table-row-group">{children}</tbody>
+      <tbody role="rowgroup" className="block">{children}</tbody>
     </table>
   );
 }
 
 function Tr(props) {
-  return <tr role="row" className="grid gap-1 border-b border-border py-3 last:border-0 sm:table-row sm:py-0" {...props} />;
+  return <tr role="row" className="grid gap-1 border-b border-border py-3 last:border-0" {...props} />;
 }
 
 function Td({ label, className, ...props }) {
-  return <td role="cell" data-label={label ? `${label}:` : undefined} className={cn(cellClass, className)} {...props} />;
+  return <td role="cell" data-label={label ? `${label}:` : undefined} className={cn(cellClass, label && 'before:mr-1', className)} {...props} />;
 }
 
 function IssuedLink({ issued }) {
@@ -61,7 +61,7 @@ function IssuedLink({ issued }) {
         <Button variant="outline" onClick={copy}>Copy</Button>
         {copied && <span className="text-sm font-semibold"> Copied</span>}
       </div>
-      <Notice className="break-words">Shown only once. Send it to {issued.email} yourself.</Notice>
+      <Notice className="wrap-anywhere">Shown only once. Send it to {issued.email} yourself.</Notice>
     </Card>
   );
 }
@@ -117,7 +117,7 @@ function AdminPage({ api, onBack }) {
                   <Td className="break-all font-semibold">{i.email}</Td>
                   <Td label="Status"><Badge>{statusText(i)}</Badge></Td>
                   <Td label="Created">{day(i.createdAt)}</Td>
-                  <Td className="sm:text-right">
+                  <Td>
                     {i.status === 'pending' && (
                       <Button size="sm" variant="outline" aria-label={`Revoke invite for ${i.email}`} onClick={() => act(() => api.admin.revokeInvite(i.id))}>
                         Revoke
@@ -143,9 +143,9 @@ function AdminPage({ api, onBack }) {
                   <Td label="Joined">{day(p.joinedAt)}</Td>
                   <Td label="Last login">{day(p.lastLoginAt)}</Td>
                   <Td label="Recipes today">{p.recipesToday === null ? null : `${p.recipesToday} of ${data.limit}`}</Td>
-                  <Td className="sm:text-right">
+                  <Td>
                     {!p.isAdmin && (
-                      <div className="flex flex-wrap gap-2 sm:justify-end">
+                      <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
                           variant="outline"

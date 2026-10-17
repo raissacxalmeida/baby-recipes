@@ -49,7 +49,7 @@ export default function SignupScreen({ api, token, onDone }) {
     <Card>
       <form onSubmit={submit} className="grid gap-4">
         <h1>Create your account</h1>
-        <Notice className="break-words">You were invited as {email}.</Notice>
+        <Notice className="wrap-anywhere">You were invited as {email}.</Notice>
         <Field label="Choose a password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <Notice kind="error">{error}</Notice>}
         <Button type="submit" disabled={busy}>Create account</Button>

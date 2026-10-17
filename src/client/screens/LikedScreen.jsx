@@ -6,7 +6,7 @@ import { Notice } from '@/components/ui/notice.jsx';
 function Row({ title, children }) {
   return (
     <li className="flex items-center justify-between gap-2 border-b border-border py-2 last:border-0">
-      <span className="min-w-0 flex-1 break-words font-semibold">{title}</span>
+      <span className="min-w-0 flex-1 wrap-anywhere font-semibold">{title}</span>
       <div className="flex shrink-0 gap-1">{children}</div>
     </li>
   );
