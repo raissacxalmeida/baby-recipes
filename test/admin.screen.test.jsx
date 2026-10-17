@@ -93,15 +93,50 @@ test('Reset password shows a reset link once', async () => {
   expect(api.admin.reset).toHaveBeenCalledWith('p1');
 });
 
+const openRemoveDialog = async (email = 'joao@example.com') => {
+  fireEvent.click(screen.getByRole('button', { name: `Remove ${email}` }));
+  return screen.findByRole('alertdialog');
+};
+
 test('Remove does nothing until the confirmation naming the person is accepted', async () => {
   const api = make();
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
   await open(api);
-  fireEvent.click(screen.getByRole('button', { name: 'Remove joao@example.com' }));
+  const dialog = await openRemoveDialog();
+  expect(dialog.textContent).toMatch(/joao@example\.com/);
   expect(api.admin.remove).not.toHaveBeenCalled();
-  expect(confirm.mock.calls[0][0]).toMatch(/joao@example\.com/);
-  fireEvent.click(screen.getByRole('button', { name: 'Remove joao@example.com' }));
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+  await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+  expect(api.admin.remove).not.toHaveBeenCalled();
+  fireEvent.click(within(await openRemoveDialog()).getByRole('button', { name: 'Yes, remove' }));
   await waitFor(() => expect(api.admin.remove).toHaveBeenCalledWith('p1'));
+  expect(api.admin.remove).toHaveBeenCalledTimes(1);
+});
+
+test('Escape closes the remove dialog without removing', async () => {
+  const api = make();
+  await open(api);
+  fireEvent.keyDown(await openRemoveDialog(), { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+  expect(api.admin.remove).not.toHaveBeenCalled();
+});
+
+test('after a confirmed removal the page is not locked', async () => {
+  const withoutJoao = { ...overview(), people: overview().people.slice(0, 1) };
+  const overviews = [overview(), withoutJoao];
+  const api = make({ overview: vi.fn(async () => overviews.shift() ?? withoutJoao) });
+  await open(api);
+  fireEvent.click(within(await openRemoveDialog()).getByRole('button', { name: 'Yes, remove' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: 'Remove joao@example.com' })).toBeNull());
+  expect(document.body.style.pointerEvents).not.toBe('none');
+  expect(screen.getByRole('button', { name: 'Create invite' })).not.toBeNull();
+});
+
+test('the admin row has an empty usage cell, so no stray label shows on a phone', async () => {
+  await open(make());
+  const cells = within(screen.getByText('me@example.com').closest('tr')).getAllByRole('cell');
+  expect(cells).toHaveLength(5);
+  expect(cells[3].textContent).toBe('');
+  expect(cells[4].textContent).toBe('');
 });
 
 test('a non-admin sees Not found and nothing is requested', async () => {

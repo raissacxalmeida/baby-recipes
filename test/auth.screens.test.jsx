@@ -1,5 +1,5 @@
 import { test, expect, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import App from '../src/client/App.jsx';
 import { createFakeApi } from './helpers/fakeApi.js';
 
@@ -49,16 +49,30 @@ test('logging out returns to the login form', async () => {
   expect(api.logout).toHaveBeenCalled();
 });
 
+const openDeleteDialog = async () => {
+  fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+  return screen.findByRole('alertdialog');
+};
+
 test('Delete my account asks first and only then deletes', async () => {
   const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false } });
-  const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
   open(api);
-  fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+  const dialog = await openDeleteDialog();
+  expect(dialog.textContent).toMatch(/ana@example\.com/);
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+  await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
   expect(api.deleteAccount).not.toHaveBeenCalled();
-  expect(confirm.mock.calls[0][0]).toMatch(/ana@example\.com/);
-  click('Delete my account');
+  fireEvent.click(within(await openDeleteDialog()).getByRole('button', { name: 'Yes, delete my account' }));
   await waitFor(() => expect(api.deleteAccount).toHaveBeenCalledTimes(1));
   expect(await screen.findByRole('button', { name: 'Log in' })).not.toBeNull();
+});
+
+test('after the account is deleted the page is not locked', async () => {
+  const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false } });
+  open(api);
+  fireEvent.click(within(await openDeleteDialog()).getByRole('button', { name: 'Yes, delete my account' }));
+  expect(await screen.findByRole('button', { name: 'Log in' })).not.toBeNull();
+  expect(document.body.style.pointerEvents).not.toBe('none');
 });
 
 test('only the admin sees the Admin link and no Delete button', async () => {
@@ -126,9 +140,8 @@ test('logging out signs out locally even when the server call fails', async () =
 
 test('a failed account deletion shows the message and stays signed in', async () => {
   const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false }, overrides: { deleteAccount: vi.fn(async () => { throw new Error('Could not reach the server'); }) } });
-  vi.spyOn(window, 'confirm').mockReturnValue(true);
   open(api);
-  fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+  fireEvent.click(within(await openDeleteDialog()).getByRole('button', { name: 'Yes, delete my account' }));
   expect((await screen.findByRole('alert')).textContent).toMatch(/Could not reach/);
   expect(screen.getByRole('button', { name: 'Log out' })).not.toBeNull();
 });

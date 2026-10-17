@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Card } from '@/components/ui/card.jsx';
+import { Field } from '@/components/ui/field.jsx';
+import { Button } from '@/components/ui/button.jsx';
+import { Notice } from '@/components/ui/notice.jsx';
 
 const MIN_PASSWORD = 10;
 
@@ -33,18 +37,23 @@ export default function SignupScreen({ api, token, onDone }) {
     }
   }
 
-  if (invalid) return <section><h1>Invite</h1><p role="alert">{error}</p></section>;
-  if (email === null) return <p>Checking your invite...</p>;
+  if (invalid) {
+    return (
+      <Card>
+        <section className="grid gap-4"><h1>Invite</h1><Notice kind="error">{error}</Notice></section>
+      </Card>
+    );
+  }
+  if (email === null) return <Notice>Checking your invite...</Notice>;
   return (
-    <form onSubmit={submit}>
-      <h1>Create your account</h1>
-      <p>You were invited as {email}.</p>
-      <label>
-        Choose a password
-        <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      </label>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={busy}>Create account</button>
-    </form>
+    <Card>
+      <form onSubmit={submit} className="grid gap-4">
+        <h1>Create your account</h1>
+        <Notice className="wrap-anywhere">You were invited as {email}.</Notice>
+        <Field label="Choose a password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        {error && <Notice kind="error">{error}</Notice>}
+        <Button type="submit" disabled={busy}>Create account</Button>
+      </form>
+    </Card>
   );
 }

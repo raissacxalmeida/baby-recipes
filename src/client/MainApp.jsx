@@ -6,6 +6,9 @@ import LikedScreen from './screens/LikedScreen.jsx';
 import RecipeScreen from './screens/RecipeScreen.jsx';
 import SetupScreen from './screens/SetupScreen.jsx';
 import TooYoungScreen from './screens/TooYoungScreen.jsx';
+import { Button } from '@/components/ui/button.jsx';
+import { Emoji } from '@/components/ui/emoji.jsx';
+import { Notice } from '@/components/ui/notice.jsx';
 
 const MIN_MONTHS = 6;
 
@@ -122,8 +125,8 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
     go('recipe');
   }
 
-  if (loadError) return <p role="alert">{loadError}</p>;
-  if (!server || !screen) return <p>Loading...</p>;
+  if (loadError) return <Notice kind="error">{loadError}</Notice>;
+  if (!server || !screen) return <Notice>Loading...</Notice>;
 
   if (screen === 'setup') return <SetupScreen onSave={saveBirthday} now={now} />;
   if (screen === 'too-young') return <TooYoungScreen onChangeBirthday={() => go('setup')} />;
@@ -142,9 +145,10 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
   if (screen === 'recipe' && recipe) {
     return (
       <>
-        <button type="button" onClick={() => go(fromLiked ? 'liked' : 'home')}>
+        <Button variant="ghost" size="sm" className="self-start" onClick={() => go(fromLiked ? 'liked' : 'home')}>
+          <Emoji>←</Emoji>
           {fromLiked ? 'Back to liked recipes' : 'Back to ingredients'}
-        </button>
+        </Button>
         <RecipeScreen
           key={recipe.id}
           recipe={recipe}
@@ -153,8 +157,8 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
           onLiked={fromLiked ? undefined : like}
           onDisliked={fromLiked ? undefined : dislike}
         />
-        {saved && <p>Saved to liked recipes.</p>}
-        {error && <p role="alert">{error}</p>}
+        {saved && <Notice>Saved to liked recipes.</Notice>}
+        {error && <Notice kind="error">{error}</Notice>}
       </>
     );
   }
