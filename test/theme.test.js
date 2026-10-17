@@ -16,3 +16,34 @@ test('no opacity suffix is used on the CSS-variable palette colours', () => {
     .flatMap((f) => (readFileSync(f, 'utf8').match(suffixed) ?? []).map((m) => `${f}: ${m}`));
   expect(hits).toEqual([]);
 });
+
+const tokens = Object.fromEntries(
+  [...readFileSync('src/client/style.css', 'utf8').matchAll(/--([a-z-]+):\s*(#[0-9a-f]{6});/gi)].map((m) => [m[1], m[2]]),
+);
+const luminance = (hex) => {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+const ERROR_NOTICE_BACKGROUND = '#fdeae5'; // bg-[#fdeae5] in components/ui/notice.jsx
+
+test('button labels meet 4.5:1 contrast', () => {
+  expect(contrast(tokens['primary-foreground'], tokens.primary)).toBeGreaterThanOrEqual(4.5);
+  expect(contrast(tokens['destructive-foreground'], tokens.destructive)).toBeGreaterThanOrEqual(4.5);
+});
+
+test('error and destructive text meets 4.5:1 on the page, card and error notice backgrounds', () => {
+  for (const background of [tokens.background, tokens.card, ERROR_NOTICE_BACKGROUND]) {
+    expect(contrast(tokens.destructive, background)).toBeGreaterThanOrEqual(4.5);
+  }
+});
+
+test('the focus ring meets 3:1 on the page and card backgrounds', () => {
+  for (const background of [tokens.background, tokens.card]) {
+    expect(contrast(tokens.ring, background)).toBeGreaterThanOrEqual(3);
+  }
+});

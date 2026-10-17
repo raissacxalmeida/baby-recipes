@@ -10,12 +10,12 @@
   --input: #e8d3b5;
   --primary: #f08a3c;
   --primary-edge: #c96a22;
-  --primary-foreground: #ffffff;
+  --primary-foreground: #3b2a1a;
   --muted: #f3e3cc;
   --muted-foreground: #7a6650;
-  --destructive: #d9482b;
+  --destructive: #bf3a1f;
   --destructive-foreground: #ffffff;
-  --ring: #f08a3c;
+  --ring: #c96a22;
   --chip: #ffe1bd;
   --note: #fff1e0;
   --note-border: #f5d3a8;
