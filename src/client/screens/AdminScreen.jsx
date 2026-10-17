@@ -1,10 +1,44 @@
 import { useEffect, useState } from 'react';
+import { cn } from '@/lib/utils.js';
+import { Badge } from '@/components/ui/badge.jsx';
+import { Button } from '@/components/ui/button.jsx';
+import { Card } from '@/components/ui/card.jsx';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
+import { Field } from '@/components/ui/field.jsx';
+import { Notice } from '@/components/ui/notice.jsx';
 
 const day = (iso) => (iso ? iso.slice(0, 10) : 'never');
 const statusText = (invite) => {
   if (invite.status === 'pending') return `Pending (${invite.daysLeft} ${invite.daysLeft === 1 ? 'day' : 'days'} left)`;
   return invite.status === 'used' ? 'Used' : 'Expired';
 };
+
+// On a phone each row becomes a small card: cells stack and show their label before the value.
+// The explicit roles keep the table semantics when the display is overridden.
+const cellClass = 'block empty:hidden before:mr-1 before:text-xs before:font-semibold before:text-muted-foreground before:content-[attr(data-label)] sm:table-cell sm:py-2 sm:pr-3 sm:align-middle sm:before:hidden';
+
+function Table({ label, headings, children }) {
+  return (
+    <table aria-label={label} role="table" className="block w-full border-collapse text-left text-sm sm:table">
+      <thead role="rowgroup" className="sr-only sm:not-sr-only sm:table-header-group">
+        <tr role="row">
+          {headings.map((h, n) => (
+            <th key={n} role="columnheader" scope="col" className="py-2 pr-3 text-xs font-semibold uppercase text-muted-foreground">{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody role="rowgroup" className="block sm:table-row-group">{children}</tbody>
+    </table>
+  );
+}
+
+function Tr(props) {
+  return <tr role="row" className="grid gap-1 border-b border-border py-3 last:border-0 sm:table-row sm:py-0" {...props} />;
+}
+
+function Td({ label, className, ...props }) {
+  return <td role="cell" data-label={label ? `${label}:` : undefined} className={cn(cellClass, className)} {...props} />;
+}
 
 function IssuedLink({ issued }) {
   const label = `${issued.kind === 'invite' ? 'Invite' : 'Reset'} link for ${issued.email}`;
@@ -21,15 +55,14 @@ function IssuedLink({ issued }) {
   }
 
   return (
-    <div className="issued">
-      <label>
-        {label}
-        <input readOnly value={issued.link} ref={setField} onFocus={(e) => e.target.select()} />
-      </label>
-      <button type="button" onClick={copy}>Copy</button>
-      {copied && <span> Copied</span>}
-      <p>Shown only once. Send it to {issued.email} yourself.</p>
-    </div>
+    <Card className="grid gap-3 border-note-border bg-note">
+      <Field label={label} readOnly value={issued.link} ref={setField} onFocus={(e) => e.target.select()} />
+      <div className="flex items-center gap-3">
+        <Button variant="outline" onClick={copy}>Copy</Button>
+        {copied && <span className="text-sm font-semibold"> Copied</span>}
+      </div>
+      <Notice className="break-words">Shown only once. Send it to {issued.email} yourself.</Notice>
+    </Card>
   );
 }
 
@@ -61,63 +94,61 @@ function AdminPage({ api, onBack }) {
   });
 
   return (
-    <section>
-      <button type="button" onClick={onBack}>Back to the app</button>
+    <section className="grid gap-4">
+      <Button variant="ghost" size="sm" className="justify-self-start" onClick={onBack}>Back to the app</Button>
       <h1>Admin</h1>
       <h2>Invite someone</h2>
-      <form onSubmit={async (e) => { e.preventDefault(); if (await invite(email.trim())) setEmail(''); }}>
-        <label>
-          Invite email
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
-        <button type="submit">Create invite</button>
-      </form>
-      {error && <p role="alert">{error}</p>}
+      <Card>
+        <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (await invite(email.trim())) setEmail(''); }}>
+          <Field label="Invite email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Button type="submit">Create invite</Button>
+        </form>
+      </Card>
+      {error && <Notice kind="error">{error}</Notice>}
       {issued && <IssuedLink issued={issued} />}
 
       {data && (
         <>
           <h2>Invites</h2>
-          <table aria-label="Invites">
-            <thead><tr><th>Email</th><th>Status</th><th>Created</th><th /></tr></thead>
-            <tbody>
+          <Card className="py-2">
+            <Table label="Invites" headings={['Email', 'Status', 'Created', '']}>
               {data.invites.map((i) => (
-                <tr key={i.id}>
-                  <td>{i.email}</td>
-                  <td>{statusText(i)}</td>
-                  <td>{day(i.createdAt)}</td>
-                  <td>
+                <Tr key={i.id}>
+                  <Td className="break-all font-semibold">{i.email}</Td>
+                  <Td label="Status"><Badge>{statusText(i)}</Badge></Td>
+                  <Td label="Created">{day(i.createdAt)}</Td>
+                  <Td className="sm:text-right">
                     {i.status === 'pending' && (
-                      <button type="button" aria-label={`Revoke invite for ${i.email}`} onClick={() => act(() => api.admin.revokeInvite(i.id))}>
+                      <Button size="sm" variant="outline" aria-label={`Revoke invite for ${i.email}`} onClick={() => act(() => api.admin.revokeInvite(i.id))}>
                         Revoke
-                      </button>
+                      </Button>
                     )}
                     {i.status === 'expired' && (
-                      <button type="button" aria-label={`Invite ${i.email} again`} onClick={() => invite(i.email)}>
+                      <Button size="sm" variant="outline" aria-label={`Invite ${i.email} again`} onClick={() => invite(i.email)}>
                         Invite again
-                      </button>
+                      </Button>
                     )}
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
-            </tbody>
-          </table>
+            </Table>
+          </Card>
 
           <h2>People</h2>
-          <table aria-label="People">
-            <thead><tr><th>Email</th><th>Joined</th><th>Last login</th><th>Recipes today</th><th /></tr></thead>
-            <tbody>
+          <Card className="py-2">
+            <Table label="People" headings={['Email', 'Joined', 'Last login', 'Recipes today', '']}>
               {data.people.map((p) => (
-                <tr key={p.id}>
-                  <td><span>{p.email}</span>{p.isAdmin && <span> (admin)</span>}</td>
-                  <td>{day(p.joinedAt)}</td>
-                  <td>{day(p.lastLoginAt)}</td>
-                  <td>{p.recipesToday === null ? '' : `${p.recipesToday} of ${data.limit}`}</td>
-                  <td>
+                <Tr key={p.id}>
+                  <Td className="break-all font-semibold"><span>{p.email}</span>{p.isAdmin && <span> (admin)</span>}</Td>
+                  <Td label="Joined">{day(p.joinedAt)}</Td>
+                  <Td label="Last login">{day(p.lastLoginAt)}</Td>
+                  <Td label="Recipes today">{p.recipesToday === null ? null : `${p.recipesToday} of ${data.limit}`}</Td>
+                  <Td className="sm:text-right">
                     {!p.isAdmin && (
-                      <>
-                        <button
-                          type="button"
+                      <div className="flex flex-wrap gap-2 sm:justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
                           aria-label={`Reset password for ${p.email}`}
                           onClick={() => act(async () => {
                             const { link } = await api.admin.reset(p.id);
@@ -125,25 +156,21 @@ function AdminPage({ api, onBack }) {
                           })}
                         >
                           Reset password
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`Remove ${p.email}`}
-                          onClick={() => {
-                            if (window.confirm(`Remove ${p.email} and delete all their data? This cannot be undone.`)) {
-                              act(() => api.admin.remove(p.id));
-                            }
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </>
+                        </Button>
+                        <ConfirmDialog
+                          trigger={<Button size="sm" variant="ghost" className="text-destructive" aria-label={`Remove ${p.email}`}>Remove</Button>}
+                          title="Remove this person?"
+                          description={`Remove ${p.email} and delete all their data? This cannot be undone.`}
+                          confirmLabel="Yes, remove"
+                          onConfirm={() => act(() => api.admin.remove(p.id))}
+                        />
+                      </div>
                     )}
-                  </td>
-                </tr>
+                  </Td>
+                </Tr>
               ))}
-            </tbody>
-          </table>
+            </Table>
+          </Card>
         </>
       )}
     </section>
