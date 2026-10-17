@@ -30,12 +30,13 @@
     color: var(--foreground);
     font-family: var(--font-sans);
   }
+  h1 { font-size: 22px; font-weight: 700; line-height: 1.25; }
+  h2 { font-size: 18px; font-weight: 700; line-height: 1.3; }
 }
 
 /* legacy: delete in Task 9 (the old element styles, kept so screens not yet migrated still work) */
 @layer components {
   main { max-width: 32rem; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
-  h1 { font-size: 1.5rem; }
   ul, ol { padding-left: 1.25rem; }
   ul { list-style: disc; }
   ol { list-style: decimal; }

@@ -1,4 +1,9 @@
 import { useState } from 'react';
+import { Card } from '@/components/ui/card.jsx';
+import { Field } from '@/components/ui/field.jsx';
+import { Button } from '@/components/ui/button.jsx';
+import { Notice } from '@/components/ui/notice.jsx';
+import { Emoji } from '@/components/ui/emoji.jsx';
 import { ageInMonths } from '../../shared/age.js';
 
 export default function SetupScreen({ onSave, now = () => new Date() }) {
@@ -16,15 +21,14 @@ export default function SetupScreen({ onSave, now = () => new Date() }) {
   }
 
   return (
-    <form onSubmit={submit}>
-      <h1>Welcome</h1>
-      <p>Tell me your baby&apos;s birthday so recipes fit their age.</p>
-      <label>
-        Baby&apos;s birthday
-        <input type="date" value={value} onChange={(e) => setValue(e.target.value)} />
-      </label>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit">Continue</button>
-    </form>
+    <Card>
+      <form onSubmit={submit} className="grid gap-4">
+        <h1><Emoji>🍼</Emoji> Welcome</h1>
+        <Notice>Tell me your baby&apos;s birthday so recipes fit their age.</Notice>
+        <Field label="Baby's birthday" type="date" value={value} onChange={(e) => setValue(e.target.value)} />
+        {error && <Notice kind="error">{error}</Notice>}
+        <Button type="submit">Continue</Button>
+      </form>
+    </Card>
   );
 }

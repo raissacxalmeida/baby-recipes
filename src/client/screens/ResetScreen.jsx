@@ -1,4 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Card } from '@/components/ui/card.jsx';
+import { Field } from '@/components/ui/field.jsx';
+import { Button } from '@/components/ui/button.jsx';
+import { Notice } from '@/components/ui/notice.jsx';
 
 const MIN_PASSWORD = 10;
 
@@ -35,26 +39,33 @@ export default function ResetScreen({ api, token, onDone }) {
     }
   }
 
-  if (invalid) return <section><h1>Reset password</h1><p role="alert">{error}</p></section>;
-  if (changed) {
+  if (invalid) {
     return (
-      <section>
-        <h1>Password changed</h1>
-        <button type="button" onClick={() => onDone()}>Go to log in</button>
-      </section>
+      <Card>
+        <section className="grid gap-4"><h1>Reset password</h1><Notice kind="error">{error}</Notice></section>
+      </Card>
     );
   }
-  if (email === null) return <p>Checking your link...</p>;
+  if (changed) {
+    return (
+      <Card>
+        <section className="grid gap-4">
+          <h1>Password changed</h1>
+          <Button variant="outline" onClick={() => onDone()}>Go to log in</Button>
+        </section>
+      </Card>
+    );
+  }
+  if (email === null) return <Notice>Checking your link...</Notice>;
   return (
-    <form onSubmit={submit}>
-      <h1>Reset password</h1>
-      <p>New password for {email}.</p>
-      <label>
-        New password
-        <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      </label>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={busy}>Change password</button>
-    </form>
+    <Card>
+      <form onSubmit={submit} className="grid gap-4">
+        <h1>Reset password</h1>
+        <Notice className="break-words">New password for {email}.</Notice>
+        <Field label="New password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        {error && <Notice kind="error">{error}</Notice>}
+        <Button type="submit" disabled={busy}>Change password</Button>
+      </form>
+    </Card>
   );
 }

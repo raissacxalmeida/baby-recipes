@@ -1,4 +1,8 @@
 import { useState } from 'react';
+import { Card } from '@/components/ui/card.jsx';
+import { Field } from '@/components/ui/field.jsx';
+import { Button } from '@/components/ui/button.jsx';
+import { Notice } from '@/components/ui/notice.jsx';
 
 export default function LoginScreen({ api, onLoggedIn, notice = null }) {
   const [email, setEmail] = useState('');
@@ -19,19 +23,15 @@ export default function LoginScreen({ api, onLoggedIn, notice = null }) {
   }
 
   return (
-    <form onSubmit={submit}>
-      <h1>Log in</h1>
-      {notice && <p>{notice}</p>}
-      <label>
-        Email
-        <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
-      </label>
-      <label>
-        Password
-        <input type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-      </label>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={busy}>Log in</button>
-    </form>
+    <Card>
+      <form onSubmit={submit} className="grid gap-4">
+        <h1>Log in</h1>
+        {notice && <Notice>{notice}</Notice>}
+        <Field label="Email" type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Field label="Password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        {error && <Notice kind="error">{error}</Notice>}
+        <Button type="submit" disabled={busy}>Log in</Button>
+      </form>
+    </Card>
   );
 }
