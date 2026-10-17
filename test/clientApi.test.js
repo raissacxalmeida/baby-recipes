@@ -89,3 +89,28 @@ test('invite, signup and reset calls', async () => {
     'GET /api/invite/tok', 'POST /api/signup', 'GET /api/reset/tok', 'POST /api/reset',
   ]);
 });
+
+test('listShared returns the recipes array; share and unshare use the recipe id', async () => {
+  const fetchImpl = reply(200, { recipes: [{ id: 'x' }] });
+  const api = createApi(fetchImpl);
+  expect(await api.listShared()).toEqual([{ id: 'x' }]);
+  expect(fetchImpl.mock.calls[0][0]).toBe('/api/shared');
+  expect(fetchImpl.mock.calls[0][1].method).toBe('GET');
+  await api.share('banana mash');
+  expect(fetchImpl.mock.calls[1][0]).toBe('/api/shared');
+  expect(fetchImpl.mock.calls[1][1].method).toBe('POST');
+  expect(JSON.parse(fetchImpl.mock.calls[1][1].body)).toEqual({ id: 'banana mash' });
+  await api.unshare('banana mash');
+  expect(fetchImpl.mock.calls[2][0]).toBe('/api/shared/banana%20mash');
+  expect(fetchImpl.mock.calls[2][1].method).toBe('DELETE');
+});
+
+test('likeShared and unlikeShared hit the like path of the shared id', async () => {
+  const fetchImpl = reply(200, { ok: true });
+  const api = createApi(fetchImpl);
+  await api.likeShared('abc');
+  await api.unlikeShared('abc');
+  expect(fetchImpl.mock.calls.map(([url, init]) => `${init.method} ${url}`)).toEqual([
+    'POST /api/shared/abc/like', 'DELETE /api/shared/abc/like',
+  ]);
+});
