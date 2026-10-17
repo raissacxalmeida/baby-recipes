@@ -1,0 +1,110 @@
+<h2>Which look feels right? (home screen)</h2>
+<p class="subtitle">Same screen, three "playful but clean" directions. All built from shadcn-style cards, buttons, badges and inputs, with generous spacing.</p>
+
+<style>
+  .phones { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  .pick { cursor:pointer; border:3px solid transparent; border-radius:20px; padding:6px; }
+  .pick.selected { border-color:#2563eb; }
+  .pk-label { text-align:center; font-weight:600; margin:8px 0 2px; }
+  .pk-sub { text-align:center; font-size:13px; opacity:.7; margin:0 0 6px; max-width:300px; }
+  .ph { width:300px; padding:20px 16px; border-radius:16px; min-height:520px; box-sizing:border-box; }
+  .ph * { box-sizing:border-box; }
+  .ph h1 { font-size:22px; margin:0 0 4px; }
+  .ph .sm { font-size:13px; margin:0 0 18px; }
+  .ph .card { border-radius:var(--r); padding:16px; margin-bottom:14px; }
+  .ph .lbl { font-size:13px; font-weight:600; display:block; margin-bottom:8px; }
+  .ph .inp { width:100%; height:40px; border-radius:calc(var(--r) - 4px); padding:0 12px; font-size:14px; display:flex; align-items:center; }
+  .ph .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .ph .chip { font-size:13px; padding:5px 12px; border-radius:999px; font-weight:500; }
+  .ph .btn { width:100%; height:44px; border:0; border-radius:calc(var(--r) - 4px); font-size:15px; font-weight:600; margin-top:14px; }
+  .ph .btn2 { width:100%; height:40px; border-radius:calc(var(--r) - 4px); font-size:14px; font-weight:500; background:transparent; margin-top:10px; }
+  .ph .meta { display:flex; justify-content:space-between; align-items:center; font-size:12px; margin-bottom:16px; }
+  .ph .bar { height:6px; border-radius:99px; margin-top:6px; }
+  .ph .bar i { display:block; height:100%; width:30%; border-radius:99px; }
+  .ph .foot { font-size:11px; text-align:center; margin-top:18px; opacity:.6; }
+</style>
+
+<div class="phones">
+
+  <!-- A: Warm cream & peach -->
+  <div>
+    <div class="pick" data-choice="a" onclick="toggleSelect(this)">
+      <div class="ph" style="--r:18px;background:#fff8ef;color:#3b2a1a;font-family:'Nunito',system-ui,sans-serif;">
+        <div class="meta"><span>🍼 Baby is 8 months old</span><span style="background:#ffe8cc;padding:4px 10px;border-radius:99px;">Log out</span></div>
+        <h1>What's in the kitchen?</h1>
+        <p class="sm" style="opacity:.7">Add what you have and we'll suggest a recipe.</p>
+        <div class="card" style="background:#fff;border:1px solid #f0dfc8;box-shadow:0 2px 10px rgba(180,120,40,.08)">
+          <span class="lbl">Ingredients</span>
+          <div class="inp" style="border:1px solid #e8d3b5;background:#fffdf9;color:#a8957c">e.g. sweet potato</div>
+          <div class="chips">
+            <span class="chip" style="background:#ffe1bd">🥕 Carrot ✕</span>
+            <span class="chip" style="background:#ffe1bd">🍠 Sweet potato ✕</span>
+            <span class="chip" style="background:#ffe1bd">🥦 Broccoli ✕</span>
+          </div>
+        </div>
+        <button class="btn" style="background:#f08a3c;color:#fff;box-shadow:0 3px 0 #c96a22">✨ Suggest a recipe</button>
+        <button class="btn2" style="border:1px solid #e8d3b5;color:#3b2a1a">♡ Liked recipes</button>
+        <div class="meta" style="margin:16px 0 0"><span>Recipes today: 3 of 10</span></div>
+        <div class="bar" style="background:#f3e3cc"><i style="background:#f08a3c"></i></div>
+        <div class="foot">Not medical advice.</div>
+      </div>
+    </div>
+    <p class="pk-label">A · Warm &amp; cozy</p>
+    <p class="pk-sub">Keeps your current cream background, adds peach/orange, big rounded corners, emoji.</p>
+  </div>
+
+  <!-- B: Fresh sage -->
+  <div>
+    <div class="pick" data-choice="b" onclick="toggleSelect(this)">
+      <div class="ph" style="--r:14px;background:#f6faf6;color:#1d2b22;font-family:system-ui,sans-serif;">
+        <div class="meta"><span style="color:#4b6b57">● Baby is 8 months old</span><span style="border:1px solid #d5e3d8;padding:4px 10px;border-radius:8px;background:#fff">Log out</span></div>
+        <h1>What's in the kitchen?</h1>
+        <p class="sm" style="color:#6b8374">Add what you have and we'll suggest a recipe.</p>
+        <div class="card" style="background:#fff;border:1px solid #dfeadf;">
+          <span class="lbl">Ingredients</span>
+          <div class="inp" style="border:1px solid #d5e3d8;color:#9bb0a2">e.g. sweet potato</div>
+          <div class="chips">
+            <span class="chip" style="background:#e3f1e6;color:#2f6b43">Carrot ✕</span>
+            <span class="chip" style="background:#e3f1e6;color:#2f6b43">Sweet potato ✕</span>
+            <span class="chip" style="background:#e3f1e6;color:#2f6b43">Broccoli ✕</span>
+          </div>
+        </div>
+        <button class="btn" style="background:#2f7d4f;color:#fff">Suggest a recipe</button>
+        <button class="btn2" style="border:1px solid #d5e3d8;color:#1d2b22">Liked recipes</button>
+        <div class="meta" style="margin:16px 0 0;color:#6b8374"><span>Recipes today: 3 of 10</span></div>
+        <div class="bar" style="background:#e3eee5"><i style="background:#2f7d4f"></i></div>
+        <div class="foot">Not medical advice.</div>
+      </div>
+    </div>
+    <p class="pk-label">B · Fresh &amp; calm</p>
+    <p class="pk-sub">Closest to default shadcn. Sage green, subtle borders, no emoji. Cleanest, least playful.</p>
+  </div>
+
+  <!-- C: Pastel playful -->
+  <div>
+    <div class="pick" data-choice="c" onclick="toggleSelect(this)">
+      <div class="ph" style="--r:24px;background:#fffdf5;color:#2a2640;font-family:'Nunito',system-ui,sans-serif;">
+        <div class="meta"><span style="background:#d9f2e6;padding:4px 10px;border-radius:99px">🌱 8 months old</span><span style="background:#ede7ff;padding:4px 10px;border-radius:99px">Log out</span></div>
+        <h1 style="font-size:24px">What's in the kitchen?</h1>
+        <p class="sm" style="color:#6e6a8a">Add what you have and we'll suggest a recipe.</p>
+        <div class="card" style="background:#fff;border:2px solid #f3ecc8;">
+          <span class="lbl">Ingredients</span>
+          <div class="inp" style="border:2px solid #ece7ff;color:#a9a5c4">e.g. sweet potato</div>
+          <div class="chips">
+            <span class="chip" style="background:#ffd9c7">🥕 Carrot ✕</span>
+            <span class="chip" style="background:#fff0b3">🍠 Sweet potato ✕</span>
+            <span class="chip" style="background:#d4f0dc">🥦 Broccoli ✕</span>
+          </div>
+        </div>
+        <button class="btn" style="background:#7c5cff;color:#fff;border-radius:99px">✨ Suggest a recipe</button>
+        <button class="btn2" style="border:2px solid #ece7ff;color:#2a2640;border-radius:99px">♡ Liked recipes</button>
+        <div class="meta" style="margin:16px 0 0;color:#6e6a8a"><span>Recipes today: 3 of 10</span></div>
+        <div class="bar" style="background:#ece7ff"><i style="background:#7c5cff"></i></div>
+        <div class="foot">Not medical advice.</div>
+      </div>
+    </div>
+    <p class="pk-label">C · Bright &amp; friendly</p>
+    <p class="pk-sub">Multi-color pastel chips, pill buttons, purple accent. Most playful, more opinionated.</p>
+  </div>
+
+</div>
