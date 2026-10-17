@@ -6,7 +6,7 @@ function singular(word) {
 }
 
 export function normalizeIngredient(s) {
-  return s.trim().toLowerCase().split(/\s+/).filter(Boolean).map(singular).join(' ');
+  return s.toLowerCase().split(/[\s,;:()/]+/).filter(Boolean).map(singular).join(' ');
 }
 
 export function parseIngredientList(raw) {
