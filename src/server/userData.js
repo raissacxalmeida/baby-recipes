@@ -14,10 +14,17 @@ function checkRecipe(recipe) {
 export async function getState(db, userId) {
   const user = await db.query("select to_char(birthdate, 'YYYY-MM-DD') as birthdate from users where id = $1", [userId]);
   const recipes = await db.query(
-    'select data, status from recipes where user_id = $1 order by updated_at, id', [userId],
+    'select id, data, status, saved_from_shared from recipes where user_id = $1 order by updated_at, id', [userId],
   );
+  const shared = await db.query('select recipe_id from shared_recipes where user_id = $1 order by created_at, id', [userId]);
   const by = (status) => recipes.rows.filter((r) => r.status === status).map((r) => r.data);
-  return { birthdate: user.rows[0]?.birthdate ?? null, liked: by('liked'), disliked: by('disliked') };
+  return {
+    birthdate: user.rows[0]?.birthdate ?? null,
+    liked: by('liked'),
+    disliked: by('disliked'),
+    sharedIds: shared.rows.map((r) => r.recipe_id),
+    copiedIds: recipes.rows.filter((r) => r.status === 'liked' && r.saved_from_shared).map((r) => r.id),
+  };
 }
 
 export async function setBirthdate(db, userId, birthdate, now) {
@@ -33,16 +40,34 @@ async function save(db, userId, recipe, status) {
   checkRecipe(recipe);
   await db.query(
     `insert into recipes (user_id, id, data, status) values ($1, $2, $3, $4)
-     on conflict (user_id, id) do update set data = $3, status = $4, updated_at = now()`,
+     on conflict (user_id, id) do update set data = $3, status = $4, saved_from_shared = false, updated_at = now()`,
     [userId, recipe.id, JSON.stringify(recipe), status],
   );
 }
 
 export const like = (db, userId, recipe) => save(db, userId, recipe, 'liked');
-export const dislike = (db, userId, recipe) => save(db, userId, recipe, 'disliked');
+export async function dislike(db, userId, recipe) {
+  await save(db, userId, recipe, 'disliked');
+  // A recipe that is no longer liked cannot stay shared.
+  await db.query('delete from shared_recipes where user_id = $1 and recipe_id = $2', [userId, recipe.id]);
+}
 
+// Removing a liked recipe also unshares it, and takes back the like if it was saved from the community.
 export async function unlike(db, userId, id) {
-  await db.query("delete from recipes where user_id = $1 and id = $2 and status = 'liked'", [userId, String(id)]);
+  await db.transaction(async (tx) => {
+    const removed = await tx.query(
+      "delete from recipes where user_id = $1 and id = $2 and status = 'liked' returning saved_from_shared",
+      [userId, String(id)],
+    );
+    if (!removed.rows.length) return;
+    await tx.query('delete from shared_recipes where user_id = $1 and recipe_id = $2', [userId, String(id)]);
+    if (removed.rows[0].saved_from_shared) {
+      await tx.query(
+        'delete from shared_likes where user_id = $1 and shared_id in (select id from shared_recipes where recipe_id = $2)',
+        [userId, String(id)],
+      );
+    }
+  });
 }
 
 export async function restore(db, userId, id) {
