@@ -1,0 +1,2114 @@
+[
+  {
+    "sourceId": "suesskartoffelmus",
+    "id": "sweet-potato-pur-e",
+    "title": "Sweet Potato Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "sweet potato",
+        "grams": 250
+      },
+      {
+        "name": "water",
+        "grams": 100
+      }
+    ],
+    "steps": [
+      "Wash and peel the sweet potato, then chop it into chunky pieces.",
+      "Put the pieces in a small covered pot with half of the water, bring to a boil and cook gently for about 15 minutes, until tender.",
+      "Take the pot off the heat and mash to a purée, stirring in the rest of the water a little at a time until the texture is soft and creamy.",
+      "Spoon into an ice cube tray and freeze. To serve, reheat a couple of cubes per portion in a small pot over low heat until lukewarm.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "pastinakenmus",
+    "id": "parsnip-pur-e",
+    "title": "Parsnip Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "parsnip",
+        "grams": 250
+      },
+      {
+        "name": "fennel seeds",
+        "grams": 1
+      },
+      {
+        "name": "water",
+        "grams": 100
+      }
+    ],
+    "steps": [
+      "Pour boiling water over the fennel seeds, steep for 5 minutes and strain. While they steep, wash and peel the parsnips and cut them into large chunks.",
+      "Put the parsnip in a pot with half of the fennel water and bring to a boil. Cover and cook for 15-20 minutes, until soft.",
+      "Remove from the heat and purée, pouring in the rest of the fennel water bit by bit until the purée is soft.",
+      "Freeze in portions in an ice cube tray. To serve, reheat a couple of cubes per portion in a small pot over low heat until lukewarm.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "moehren-kartoffel-brei",
+    "id": "carrot-and-potato-pur-e",
+    "title": "Carrot and Potato Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "carrot",
+        "grams": 150
+      },
+      {
+        "name": "potato",
+        "grams": 100
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 14
+      },
+      {
+        "name": "water",
+        "grams": 100
+      }
+    ],
+    "steps": [
+      "Wash and peel the carrots and potatoes and cut them into pieces of similar size so they cook evenly.",
+      "Bring them to a boil in a small covered pot with the water and cook for 15-20 minutes until soft.",
+      "Add the oil and blend, thinning with a little cooled boiled water if needed.",
+      "Freeze in portions in an ice cube tray. To serve, reheat a couple of cubes per portion in a small pot over low heat until lukewarm.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "gemuese-getreide-brei",
+    "id": "vegetable-and-oat-pur-e",
+    "title": "Vegetable and Oat Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "parsnip",
+        "grams": 150
+      },
+      {
+        "name": "fennel",
+        "grams": 100
+      },
+      {
+        "name": "fine rolled oats",
+        "grams": 6
+      },
+      {
+        "name": "butter",
+        "grams": 14
+      },
+      {
+        "name": "water",
+        "grams": 100
+      }
+    ],
+    "steps": [
+      "Wash and peel the parsnip. Wash the fennel and cut out the core in a wedge. Chop both coarsely, and chop the fennel fronds separately.",
+      "Bring the vegetables to a boil with the water in a small pot, cover and simmer for about 15 minutes. Shortly before they are done, stir in the fennel fronds, oats and butter.",
+      "Take off the heat, add a splash of water and blend to a creamy, soft purée.",
+      "Freeze in portions in an ice cube tray. To serve, gently warm a couple of cubes per portion in a small pot over low heat.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "gemuese-kartoffel-fleisch-brei",
+    "id": "vegetable-potato-and-beef-pur-e",
+    "title": "Vegetable, Potato and Beef Purée",
+    "ageFromMonths": 6,
+    "basePortions": 12,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 500
+      },
+      {
+        "name": "lean beef",
+        "grams": 200
+      },
+      {
+        "name": "carrot",
+        "grams": 1000
+      },
+      {
+        "name": "apple juice",
+        "grams": 300
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 90
+      },
+      {
+        "name": "water",
+        "grams": 250
+      }
+    ],
+    "steps": [
+      "Scrub the potatoes and cook them in their skins in a little water for 20-25 minutes, until done.",
+      "Slice the beef into thin strips. Wash the carrots and cut them into rounds.",
+      "Bring the carrots and beef to a boil with the water in a pot, then cover and cook for 15-20 minutes until tender.",
+      "Drain the potatoes, let the steam escape for a moment, then peel them. Press them through a potato ricer into the beef and carrot mixture, or cut them up and stir them in.",
+      "Add the apple juice and oil and blend everything with a hand blender. Let it cool, divide into portions and freeze in containers or bags.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "zucchinibrei-mit-lachs",
+    "id": "zucchini-and-salmon-pur-e",
+    "title": "Zucchini and Salmon Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 250
+      },
+      {
+        "name": "zucchini",
+        "grams": 300
+      },
+      {
+        "name": "salmon",
+        "grams": 100
+      },
+      {
+        "name": "tomato",
+        "grams": 300
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 70
+      },
+      {
+        "name": "water",
+        "grams": 75
+      }
+    ],
+    "steps": [
+      "Cook the scrubbed potatoes in their skins in a little water for 20-25 minutes.",
+      "Wash, trim and chop the zucchini and cook it covered in a pot with the water for about 15 minutes. Rinse the salmon, pat it dry and cube it, then add it to the pot once the zucchini has had 10 minutes.",
+      "Quarter the tomatoes, cut out the stem bases and dice the flesh. If your baby gets a sore bottom easily, peel the tomatoes first. Drain the potatoes, let them steam off, peel them and press them through a ricer.",
+      "Add the tomatoes and oil to the zucchini and salmon, bring to a boil and blend. Stir in the potatoes. Divide into portions and freeze in containers or bags.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": [
+      "fish"
+    ]
+  },
+  {
+    "sourceId": "gemuesebrei-mit-hirse",
+    "id": "vegetable-pur-e-with-millet",
+    "title": "Vegetable Purée with Millet",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "parsnip",
+        "grams": 250
+      },
+      {
+        "name": "potato",
+        "grams": 250
+      },
+      {
+        "name": "broccoli",
+        "grams": 250
+      },
+      {
+        "name": "millet flakes",
+        "grams": 50
+      },
+      {
+        "name": "apple juice",
+        "grams": 150
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 70
+      },
+      {
+        "name": "water",
+        "grams": 100
+      }
+    ],
+    "steps": [
+      "Wash, peel and coarsely cube the parsnips and potatoes. Wash the broccoli, divide it into florets and dice the stems finely.",
+      "Cook the parsnips and potatoes covered in a little water over low heat for 12-15 minutes. After 5 minutes, set the broccoli florets in a steamer insert above the pot so they cook along.",
+      "Stir in the millet flakes and bring to a boil, stirring constantly. Take off the heat, mix in the apple juice and oil, and blend with a hand blender, adding water as needed. Divide into portions and freeze.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "kohlrabibrei-mit-huhn",
+    "id": "kohlrabi-and-chicken-pur-e",
+    "title": "Kohlrabi and Chicken Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 250
+      },
+      {
+        "name": "kohlrabi",
+        "grams": 500
+      },
+      {
+        "name": "chicken breast",
+        "grams": 100
+      },
+      {
+        "name": "parsley",
+        "grams": 2
+      },
+      {
+        "name": "apple juice",
+        "grams": 60
+      },
+      {
+        "name": "butter",
+        "grams": 56
+      },
+      {
+        "name": "water",
+        "grams": 50
+      }
+    ],
+    "steps": [
+      "Cook the potatoes in their skins in a little water for 20-25 minutes.",
+      "Peel and dice the kohlrabi and chop the tender leaves. Rinse the chicken, pat it dry and cut it into strips. Cook everything covered in the water for 15 minutes, adding a little more water if it dries out.",
+      "Add the parsley, apple juice and butter to the kohlrabi mixture and blend.",
+      "Drain the potatoes, let them steam off and press them through a ricer into the purée. Divide into portions and freeze.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "pastinakenbrei-mit-pute",
+    "id": "parsnip-and-turkey-pur-e",
+    "title": "Parsnip and Turkey Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 250
+      },
+      {
+        "name": "parsnip",
+        "grams": 250
+      },
+      {
+        "name": "turkey breast",
+        "grams": 100
+      },
+      {
+        "name": "fennel tea",
+        "grams": 250
+      },
+      {
+        "name": "cucumber",
+        "grams": 250
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 70
+      }
+    ],
+    "steps": [
+      "Wash, peel and dice the potatoes and parsnips. Rinse the turkey, pat it dry and slice it thinly.",
+      "Bring the potatoes, parsnips and turkey to a boil in the very weak fennel tea, then cover and simmer on low heat for about 15 minutes.",
+      "Wash and dry the cucumber, halve it lengthwise and scoop out the seeds. Dice the flesh. Add the cucumber and oil to the pot, bring back to a boil briefly and blend, but not for too long. Divide into portions and freeze in containers or bags.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "kuerbis-kartoffel-brei-mit-rind",
+    "id": "squash-potato-and-beef-pur-e",
+    "title": "Squash, Potato and Beef Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 250
+      },
+      {
+        "name": "carrot",
+        "grams": 250
+      },
+      {
+        "name": "hokkaido squash",
+        "grams": 250
+      },
+      {
+        "name": "beef",
+        "grams": 100
+      },
+      {
+        "name": "orange juice",
+        "grams": 75
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 70
+      },
+      {
+        "name": "water",
+        "grams": 100
+      }
+    ],
+    "steps": [
+      "Cook the potatoes in their skins for 20-25 minutes until done.",
+      "Wash, peel and chop the carrots. Wash the squash, remove seeds and fibers and chop it small too. Dice the beef. Simmer the vegetables and meat gently, covered, in the water for about 15 minutes, until the squash has fallen apart.",
+      "Drain the potatoes, let them steam off, peel them and press them through a ricer.",
+      "Add the orange juice and oil to the meat mixture and blend with a hand blender, then fold in the potatoes. Freeze in portions.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "brokkoli-hafer-brei",
+    "id": "broccoli-and-oat-pur-e",
+    "title": "Broccoli and Oat Purée",
+    "ageFromMonths": 6,
+    "basePortions": 5,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "broccoli",
+        "grams": 500
+      },
+      {
+        "name": "potato",
+        "grams": 250
+      },
+      {
+        "name": "fine rolled oats",
+        "grams": 50
+      },
+      {
+        "name": "apple juice",
+        "grams": 75
+      },
+      {
+        "name": "butter",
+        "grams": 70
+      },
+      {
+        "name": "water",
+        "grams": 250
+      }
+    ],
+    "steps": [
+      "Wash and trim the broccoli. Divide it into florets, then peel and finely dice the stems. Wash, peel and dice the potatoes small as well.",
+      "Heat the water in a small pot and cook the broccoli stems and potatoes in it, covered, for 15 minutes, adding the florets after 10 minutes.",
+      "Stir in the oats and bring back to a boil. Off the heat, add the juice and butter and blend until creamy. Divide into portions and freeze in containers or bags.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "huehnersuppentopf",
+    "id": "chicken-soup-pot",
+    "title": "Chicken Soup Pot",
+    "ageFromMonths": 6,
+    "basePortions": 3,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "chicken",
+        "grams": 300
+      },
+      {
+        "name": "potato",
+        "grams": 170
+      },
+      {
+        "name": "carrot",
+        "grams": 170
+      },
+      {
+        "name": "celery",
+        "grams": 170
+      },
+      {
+        "name": "onion",
+        "grams": 35
+      },
+      {
+        "name": "garlic",
+        "grams": 3
+      },
+      {
+        "name": "tomato paste",
+        "grams": 16
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 14
+      },
+      {
+        "name": "apple juice",
+        "grams": 45
+      },
+      {
+        "name": "celery leaves",
+        "grams": 5
+      },
+      {
+        "name": "water",
+        "grams": 330
+      }
+    ],
+    "steps": [
+      "Rinse the chicken, pat it dry and cut it into pieces. Peel and chop the onion and garlic. Wash and peel the potatoes and carrots, wash the celery and put the leaves aside. Cut the potatoes into wedges and the carrots and celery into thin slices.",
+      "Brown the chicken pieces with the tomato paste in a little of the oil. Add the onion and garlic and pour in the water. Add the potatoes and bring to a boil. After 5 minutes add the carrots, and 5 minutes after that the celery. Cook everything covered for 10 more minutes, until done.",
+      "Take the chicken meat off the bones, discarding skin and bones carefully. Chop the celery leaves. Blend the meat and vegetables with a little of the celery leaf, the remaining oil and the apple juice, divide into portions and freeze.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "spinat-fisch-pasta",
+    "id": "spinach-and-fish-pasta",
+    "title": "Spinach and Fish Pasta",
+    "ageFromMonths": 6,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "whole-grain pasta",
+        "grams": 25
+      },
+      {
+        "name": "spinach",
+        "grams": 100
+      },
+      {
+        "name": "white fish",
+        "grams": 25
+      },
+      {
+        "name": "butter",
+        "grams": 7
+      },
+      {
+        "name": "apple juice",
+        "grams": 15
+      },
+      {
+        "name": "water",
+        "grams": 15
+      }
+    ],
+    "steps": [
+      "Cook the pasta in plain water until very soft, according to the packet. Drain and keep some of the cooking water.",
+      "Wash, pick over and roughly chop the spinach. Rinse the fish, pat it dry and cut it into small cubes, checking carefully for bones. Melt the butter in a pan, add the spinach and cover until it wilts. Pour in a little pasta water, lay the fish on top of the spinach, cover and cook on low heat for 3-4 minutes.",
+      "Blend the pasta, spinach and fish with the apple juice and a little pasta water.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": [
+      "fish",
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "milch-getreide-brei",
+    "id": "oat-porridge-with-fruit-pur-e",
+    "title": "Oat Porridge with Fruit Purée",
+    "ageFromMonths": 6,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "breast milk or formula",
+        "grams": 200
+      },
+      {
+        "name": "oat flakes",
+        "grams": 25
+      },
+      {
+        "name": "fruit purée",
+        "grams": 30
+      }
+    ],
+    "steps": [
+      "Warm the breast milk or formula in a small pot and whisk in the flakes.",
+      "Bring to a boil while whisking constantly, then simmer on low heat for 1-2 minutes, depending on the type of flakes.",
+      "Take the pot off the heat and stir in the fruit purée. Let the porridge cool to lukewarm and swell for another 1-2 minutes.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "moehren-dinkel-brei",
+    "id": "carrot-and-spelt-porridge",
+    "title": "Carrot and Spelt Porridge",
+    "ageFromMonths": 6,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "carrot",
+        "grams": 100
+      },
+      {
+        "name": "breast milk or formula",
+        "grams": 200
+      },
+      {
+        "name": "spelt semolina",
+        "grams": 20
+      }
+    ],
+    "steps": [
+      "Wash, peel and grate the carrots. Bring the breast milk or formula and grated carrot to a boil in a small pot.",
+      "Whisk in the spelt semolina and simmer on low heat for 5 minutes, stirring. Let it swell for 2-3 more minutes, then blend with a hand blender.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "beeren-getreide-brei",
+    "id": "berry-and-grain-porridge",
+    "title": "Berry and Grain Porridge",
+    "ageFromMonths": 6,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "breast milk or formula",
+        "grams": 200
+      },
+      {
+        "name": "baby whole-grain cereal flakes",
+        "grams": 20
+      },
+      {
+        "name": "raspberry",
+        "grams": 80
+      }
+    ],
+    "steps": [
+      "Warm the breast milk or formula in a small pot and whisk in the flakes. Bring to a boil once, then simmer on low heat for 1-2 minutes (follow the packet), stirring.",
+      "Blend the berries finely and press the purée through a fine sieve to remove the seeds. Stir the berry purée into the porridge. Strawberries work too.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "trinkbrei-mit-birne",
+    "id": "pear-porridge",
+    "title": "Pear Porridge",
+    "ageFromMonths": 6,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "breast milk or formula",
+        "grams": 200
+      },
+      {
+        "name": "baby multigrain cereal flakes",
+        "grams": 20
+      },
+      {
+        "name": "pear juice",
+        "grams": 30
+      }
+    ],
+    "steps": [
+      "Warm the breast milk or formula in a small pot and whisk in the flakes. Bring to a boil once and simmer on low heat, stirring, for about 2 minutes (check the packet).",
+      "Stir in the pear juice, let the porridge swell for a minute and serve lukewarm from a spoon. Instead of the juice you can briefly cook some peeled, grated pear in the porridge.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "apfel-griess-brei",
+    "id": "apple-semolina-porridge",
+    "title": "Apple Semolina Porridge",
+    "ageFromMonths": 6,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "breast milk or formula",
+        "grams": 200
+      },
+      {
+        "name": "whole-grain semolina",
+        "grams": 20
+      },
+      {
+        "name": "apple",
+        "grams": 50
+      }
+    ],
+    "steps": [
+      "Warm the breast milk or formula in a small pot and whisk in the semolina. Bring to a boil, then simmer on low heat for 3 minutes, stirring.",
+      "Wash and dry the apple, grate it finely with the skin on and stir it into the porridge. If the apple is tart, pair it with a ripe banana.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "getreide-obst-brei",
+    "id": "grain-and-fruit-porridge",
+    "title": "Grain and Fruit Porridge",
+    "ageFromMonths": 7,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "fine rolled oats",
+        "grams": 20
+      },
+      {
+        "name": "apple",
+        "grams": 100
+      },
+      {
+        "name": "butter",
+        "grams": 5
+      },
+      {
+        "name": "water",
+        "grams": 125
+      }
+    ],
+    "steps": [
+      "Warm the water in a small pot and whisk in the oats. Bring to a boil and simmer on low heat for 1-2 minutes, stirring, then take the pot off the heat.",
+      "Wash and dry the apple, quarter it and remove the core. Slice the quarters in small pieces straight into the pot.",
+      "Add the butter and blend everything.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "obst-kompott-mix",
+    "id": "cooked-fruit-mix",
+    "title": "Cooked Fruit Mix",
+    "ageFromMonths": 7,
+    "basePortions": 10,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "apple",
+        "grams": 500
+      },
+      {
+        "name": "dried fig",
+        "grams": 20
+      },
+      {
+        "name": "pear",
+        "grams": 300
+      },
+      {
+        "name": "banana",
+        "grams": 200
+      },
+      {
+        "name": "water",
+        "grams": 50
+      }
+    ],
+    "steps": [
+      "Wash and dry the apples, quarter them and cut out the cores. Chop the quarters with the skin on. Chop the figs. Cook the apples and figs with the water, covered, on low heat for 5-7 minutes until soft.",
+      "Meanwhile, wash and dry the pears, quarter and core them. Peel them if you like and chop small. Chop the banana as well.",
+      "Add the raw fruit to the apple compote and blend. Fill an ice cube tray, freeze, then move the frozen cubes to freezer containers or a bag.",
+      "Stir a cube or two into a cooked grain porridge, or add a single cube to a porridge made with breast milk or formula, after cooking.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "roher-obst-mix",
+    "id": "raw-fruit-mix",
+    "title": "Raw Fruit Mix",
+    "ageFromMonths": 7,
+    "basePortions": 10,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "strawberry",
+        "grams": 150
+      },
+      {
+        "name": "raspberry",
+        "grams": 150
+      },
+      {
+        "name": "peach",
+        "grams": 200
+      },
+      {
+        "name": "melon",
+        "grams": 500
+      }
+    ],
+    "steps": [
+      "Rinse the berries, pat them dry and chop them. Wash and dry the peach, cut the flesh off the stone and add it to the berries. Cut the melon into large chunks.",
+      "Blend the fruit with a hand blender, fill an ice cube tray and freeze. Transfer the frozen cubes to freezer containers or a bag.",
+      "Stir a cube or two into a cooked grain porridge, or add a single cube to a porridge made with breast milk or formula, after cooking.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "gemuesenockerl-mit-spinat",
+    "id": "vegetable-dumplings-with-spinach",
+    "title": "Vegetable Dumplings with Spinach",
+    "ageFromMonths": 9,
+    "basePortions": 1,
+    "texture": "soft-pieces",
+    "ingredients": [
+      {
+        "name": "spinach",
+        "grams": 62
+      },
+      {
+        "name": "carrot",
+        "grams": 25
+      },
+      {
+        "name": "flour",
+        "grams": 10
+      },
+      {
+        "name": "whole-grain semolina",
+        "grams": 10
+      },
+      {
+        "name": "egg",
+        "grams": 14
+      },
+      {
+        "name": "parmesan",
+        "grams": 5
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 7
+      }
+    ],
+    "steps": [
+      "Thaw the spinach. Meanwhile, purée the cooked carrot finely and mix it with the flour, semolina, egg and Parmesan. Let the mixture rest for 10 minutes.",
+      "Heat the oil in a pot and add the spinach, heating it through.",
+      "Bring water to a boil. Using two wet teaspoons, shape small dumplings and let them simmer uncovered for about 2 minutes, until they float.",
+      "Cut the dumplings small and add them to the spinach."
+    ],
+    "allergens": [
+      "egg",
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "gruenkernbrei-und-puffer",
+    "id": "green-spelt-porridge-with-egg",
+    "title": "Green Spelt Porridge with Egg",
+    "ageFromMonths": 8,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "green spelt",
+        "grams": 25
+      },
+      {
+        "name": "carrot",
+        "grams": 30
+      },
+      {
+        "name": "celery",
+        "grams": 15
+      },
+      {
+        "name": "leek",
+        "grams": 15
+      },
+      {
+        "name": "egg",
+        "grams": 30
+      },
+      {
+        "name": "orange juice",
+        "grams": 15
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 14
+      },
+      {
+        "name": "water",
+        "grams": 60
+      }
+    ],
+    "steps": [
+      "Wash, trim and finely chop the carrot, celery and leek. Beat the egg.",
+      "Boil the cracked green spelt in the water and simmer for 15 minutes, adding the chopped vegetables for the last 5.",
+      "Bring the grain and vegetables to a boil again with a little of the beaten egg, stirring well so the egg is cooked through.",
+      "Blend with the orange juice and oil.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": [
+      "egg"
+    ]
+  },
+  {
+    "sourceId": "rinder-gemuese-curry",
+    "id": "beef-and-vegetable-curry",
+    "title": "Beef and Vegetable Curry",
+    "ageFromMonths": 7,
+    "basePortions": 3,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 200
+      },
+      {
+        "name": "parsnip",
+        "grams": 135
+      },
+      {
+        "name": "hokkaido squash",
+        "grams": 135
+      },
+      {
+        "name": "beef",
+        "grams": 50
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 42
+      },
+      {
+        "name": "mild curry powder",
+        "grams": 2
+      },
+      {
+        "name": "orange juice",
+        "grams": 45
+      },
+      {
+        "name": "water",
+        "grams": 170
+      }
+    ],
+    "steps": [
+      "Wash the vegetables. Peel the potatoes and parsnips and remove the seeds and fibers from the squash. Cut everything into cubes.",
+      "Cut the beef into thin strips. Brown them in a little of the hot oil in a pot, then cover and cook for 5 minutes. Add the potatoes, dust with the curry powder and fry for 5 more minutes. Add the parsnips and squash.",
+      "Pour in the water and braise, covered, for 15-20 minutes, until everything is soft.",
+      "Blend with the remaining oil and the orange juice, adding water if you like, and freeze in portions.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "puten-geschnetzeltes",
+    "id": "sliced-turkey-with-vegetables-and-pasta",
+    "title": "Sliced Turkey with Vegetables and Pasta",
+    "ageFromMonths": 8,
+    "basePortions": 3,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "chinese cabbage",
+        "grams": 230
+      },
+      {
+        "name": "snap peas",
+        "grams": 65
+      },
+      {
+        "name": "turkey breast",
+        "grams": 65
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 42
+      },
+      {
+        "name": "whole-grain pasta",
+        "grams": 65
+      },
+      {
+        "name": "orange juice",
+        "grams": 45
+      },
+      {
+        "name": "water",
+        "grams": 30
+      }
+    ],
+    "steps": [
+      "Wash the vegetables. Slice the Chinese cabbage finely. Snap the ends off the snap peas and halve them on the diagonal. Rinse the turkey, pat it dry and cut it into strips.",
+      "Brown the turkey all over in a little of the oil, add the cabbage and snap peas and cook covered for about 5 minutes. Cook the pasta very soft in boiling water according to the packet.",
+      "Blend the turkey mix with the pasta, the orange juice and the remaining oil, adding water if needed. Freeze in portions.",
+      "Adjust the texture to your baby: blend until completely smooth for a baby just starting solids, and for an older baby blend for less time or mash with a fork, leaving small soft lumps."
+    ],
+    "allergens": [
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "ofengemuese-mit-linsen-hummus",
+    "id": "oven-vegetables-with-lentil-hummus",
+    "title": "Oven Vegetables with Lentil Hummus",
+    "ageFromMonths": 8,
+    "basePortions": 3,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 360
+      },
+      {
+        "name": "sweet potato",
+        "grams": 240
+      },
+      {
+        "name": "zucchini",
+        "grams": 240
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 34
+      },
+      {
+        "name": "rosemary",
+        "grams": 2
+      },
+      {
+        "name": "red lentils",
+        "grams": 36
+      },
+      {
+        "name": "lemon juice",
+        "grams": 27
+      },
+      {
+        "name": "tahini",
+        "grams": 18
+      },
+      {
+        "name": "water",
+        "grams": 150
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 °C. Wash, peel and cut the potatoes and sweet potatoes into wedges. Wash the zucchini, trim the ends, halve lengthwise and then crosswise, and set aside.",
+      "Toss the potatoes and sweet potatoes with about two thirds of the oil and the rosemary. Spread on a baking tray lined with parchment and roast in the middle of the oven for 25-30 minutes until soft. Add the zucchini after the first 15 minutes.",
+      "Meanwhile, boil the lentils in the water for about 20 minutes. Blend the cooked lentils with the lemon juice, the remaining oil and the tahini until creamy.",
+      "Mash the roasted vegetables roughly with some of the hummus, adding a little water as needed. Freeze the rest in portions."
+    ],
+    "allergens": [
+      "sesame"
+    ]
+  },
+  {
+    "sourceId": "orangenmoehren",
+    "id": "orange-roasted-carrots",
+    "title": "Orange Roasted Carrots",
+    "ageFromMonths": 12,
+    "basePortions": 2,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "carrot",
+        "grams": 200
+      },
+      {
+        "name": "orange juice",
+        "grams": 15
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 5
+      },
+      {
+        "name": "sweet paprika",
+        "grams": 1
+      }
+    ],
+    "steps": [
+      "Heat the oven to 200 °C. Wash and trim the carrots. Halve them lengthwise or crosswise depending on their length, and quarter thicker ones.",
+      "Spread the carrots on a baking tray, drizzle with the orange juice and oil and sprinkle with paprika. Roast in the middle of the oven for about 20 minutes, until just tender. They taste good warm or cold."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "linsenfalafel",
+    "id": "lentil-falafel",
+    "title": "Lentil Falafel",
+    "ageFromMonths": 12,
+    "basePortions": 6,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "red lentils",
+        "grams": 100
+      },
+      {
+        "name": "egg",
+        "grams": 55
+      },
+      {
+        "name": "tomato paste",
+        "grams": 32
+      },
+      {
+        "name": "turmeric",
+        "grams": 1
+      },
+      {
+        "name": "coriander",
+        "grams": 1
+      },
+      {
+        "name": "ground almonds",
+        "grams": 60
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 28
+      },
+      {
+        "name": "water",
+        "grams": 250
+      }
+    ],
+    "steps": [
+      "Boil the lentils in the water, covered, for about 15 minutes until soft, stirring now and then. Let them cool.",
+      "Add the egg, tomato paste, turmeric and coriander and blend. Mix in the almonds gradually until the mixture can be shaped but is still soft.",
+      "Heat the oil in a pan, drop in small portions of the mixture and fry for about 4 minutes on each side until cooked through. Let cool. They keep in the fridge for about 1 week."
+    ],
+    "allergens": [
+      "egg",
+      "tree nut"
+    ]
+  },
+  {
+    "sourceId": "muesliballchen",
+    "id": "muesli-bites",
+    "title": "Muesli Bites",
+    "ageFromMonths": 12,
+    "basePortions": 5,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "banana",
+        "grams": 60
+      },
+      {
+        "name": "blueberry",
+        "grams": 100
+      },
+      {
+        "name": "egg",
+        "grams": 55
+      },
+      {
+        "name": "puffed amaranth",
+        "grams": 80
+      },
+      {
+        "name": "fine rolled oats",
+        "grams": 30
+      },
+      {
+        "name": "sesame seeds",
+        "grams": 18
+      },
+      {
+        "name": "vanilla",
+        "grams": 1
+      },
+      {
+        "name": "ground nuts",
+        "grams": 14
+      }
+    ],
+    "steps": [
+      "Heat the oven to 180 °C. Peel the banana and mash it with the blueberries. Mix in the egg, amaranth, oats and sesame and flavor with the vanilla. Add the ground nuts gradually until the dough holds together.",
+      "Use an ice cream scoop to set mounds on a baking sheet lined with parchment and bake for about 20 minutes. Kept chilled, they stay fresh for about 5 days."
+    ],
+    "allergens": [
+      "egg",
+      "sesame"
+    ]
+  },
+  {
+    "sourceId": "doppeldecker",
+    "id": "sweet-potato-sandwiches",
+    "title": "Sweet Potato Sandwiches",
+    "ageFromMonths": 12,
+    "basePortions": 3,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "sweet potato",
+        "grams": 200
+      },
+      {
+        "name": "cashew butter",
+        "grams": 16
+      },
+      {
+        "name": "dates",
+        "grams": 25
+      },
+      {
+        "name": "water",
+        "grams": 20
+      }
+    ],
+    "steps": [
+      "Wash and peel the sweet potato and cut it crosswise into slices half a centimetre thick. Cook them covered in a nonstick pan with a little water, turning occasionally.",
+      "Blend the cashew butter and dates in a mini chopper to a fine paste.",
+      "Sandwich the sweet potato slices together with the date cream. They keep in the fridge for 2-3 days."
+    ],
+    "allergens": [
+      "tree nut"
+    ]
+  },
+  {
+    "sourceId": "stampfkartoffeln-mit-ente",
+    "id": "mashed-potato-and-squash-with-duck",
+    "title": "Mashed Potato and Squash with Duck",
+    "ageFromMonths": 9,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "duck breast",
+        "grams": 20
+      },
+      {
+        "name": "potato",
+        "grams": 80
+      },
+      {
+        "name": "hokkaido squash",
+        "grams": 80
+      },
+      {
+        "name": "butter",
+        "grams": 10
+      },
+      {
+        "name": "orange juice",
+        "grams": 15
+      },
+      {
+        "name": "water",
+        "grams": 70
+      }
+    ],
+    "steps": [
+      "Wash the potatoes and squash, peel the potatoes, deseed the squash and dice both. Remove the skin from a small piece of duck breast.",
+      "In a pot, gently cook the duck in some of the butter, add the vegetables and the water, cover and cook for 15-20 minutes. Remove the meat and mash the vegetables.",
+      "Chop the duck finely, mix it into the mash, and stir in the remaining butter and the orange juice."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "zucchini-lachs-mit-bulgur",
+    "id": "zucchini-and-salmon-with-bulgur",
+    "title": "Zucchini and Salmon with Bulgur",
+    "ageFromMonths": 9,
+    "basePortions": 1,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "water",
+        "grams": 50
+      },
+      {
+        "name": "bulgur",
+        "grams": 25
+      },
+      {
+        "name": "zucchini",
+        "grams": 75
+      },
+      {
+        "name": "salmon",
+        "grams": 38
+      },
+      {
+        "name": "lemon juice",
+        "grams": 8
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 4
+      },
+      {
+        "name": "sour cream",
+        "grams": 12
+      }
+    ],
+    "steps": [
+      "Bring the water to a boil. Rain in the bulgur while stirring, cover and let it swell on low heat for about 15 minutes (follow the packet).",
+      "Meanwhile, wash the zucchini, quarter it lengthwise and slice it into small pieces. Cut the salmon into small cubes, checking carefully for bones.",
+      "Heat the oil in a nonstick pan and sauté the zucchini until soft. Add the sour cream and lemon juice. Scatter the salmon on top, cover and let it cook gently for 3-4 minutes.",
+      "Mash the zucchini and salmon with the bulgur and a little of the pan liquid."
+    ],
+    "allergens": [
+      "fish",
+      "milk"
+    ]
+  },
+  {
+    "sourceId": "gemuesebolognese",
+    "id": "vegetable-bolognese",
+    "title": "Vegetable Bolognese",
+    "ageFromMonths": 10,
+    "basePortions": 2,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "onion",
+        "grams": 20
+      },
+      {
+        "name": "carrot",
+        "grams": 40
+      },
+      {
+        "name": "parsley root",
+        "grams": 40
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 6
+      },
+      {
+        "name": "ground beef",
+        "grams": 40
+      },
+      {
+        "name": "red lentils",
+        "grams": 20
+      },
+      {
+        "name": "passata",
+        "grams": 200
+      },
+      {
+        "name": "water",
+        "grams": 40
+      },
+      {
+        "name": "cooked pasta",
+        "grams": 80
+      }
+    ],
+    "steps": [
+      "Peel and finely chop the onion. Wash, peel and coarsely grate the vegetables. Heat the oil in a deep pan and soften the onion, then add the ground beef and brown it until crumbly. Stir in the vegetables and fry them briefly.",
+      "Add the water and the lentils, cover and simmer for 20-25 minutes. Add the passata after 10 minutes. Meanwhile, cook the pasta in plain water until very soft, according to the packet.",
+      "Mash the sauce with the cooked pasta (rice works too) and split into portions."
+    ],
+    "allergens": [
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "gemuesebechamel",
+    "id": "vegetable-b-chamel",
+    "title": "Vegetable Béchamel",
+    "ageFromMonths": 10,
+    "basePortions": 2,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "leek",
+        "grams": 30
+      },
+      {
+        "name": "broccoli",
+        "grams": 60
+      },
+      {
+        "name": "fennel",
+        "grams": 60
+      },
+      {
+        "name": "butter",
+        "grams": 6
+      },
+      {
+        "name": "flour",
+        "grams": 6
+      },
+      {
+        "name": "water",
+        "grams": 120
+      },
+      {
+        "name": "tahini",
+        "grams": 20
+      },
+      {
+        "name": "cream cheese",
+        "grams": 30
+      },
+      {
+        "name": "lemon juice",
+        "grams": 5
+      },
+      {
+        "name": "cooked pasta",
+        "grams": 80
+      }
+    ],
+    "steps": [
+      "Trim the leek, halve it lengthwise, wash it well and slice thinly. Wash the other vegetables. Cut off the broccoli florets and slice the stems thinly. Halve the fennel lengthwise, remove the core and slice thinly. Chop the fennel fronds and set them aside.",
+      "Melt the butter and sauté all the vegetables except the florets for 2-3 minutes. Dust with the flour, pour in the water, cover and cook for 10-15 minutes until soft.",
+      "Add the tahini, cream cheese and broccoli florets and bring to a boil. Add the fennel fronds and lemon juice.",
+      "Mash the sauce with the cooked pasta (rice works too) and split into portions."
+    ],
+    "allergens": [
+      "milk",
+      "sesame",
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "konfettireis",
+    "id": "confetti-rice",
+    "title": "Confetti Rice",
+    "ageFromMonths": 10,
+    "basePortions": 1,
+    "texture": "soft-pieces",
+    "ingredients": [
+      {
+        "name": "carrot",
+        "grams": 40
+      },
+      {
+        "name": "kohlrabi",
+        "grams": 50
+      },
+      {
+        "name": "parboiled whole-grain rice",
+        "grams": 30
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 6
+      },
+      {
+        "name": "ground almonds",
+        "grams": 5
+      },
+      {
+        "name": "peas",
+        "grams": 20
+      },
+      {
+        "name": "cream cheese",
+        "grams": 20
+      },
+      {
+        "name": "water",
+        "grams": 60
+      }
+    ],
+    "steps": [
+      "Wash the vegetables, peel them if needed and dice them into small pieces. Chop the kohlrabi leaves.",
+      "Sauté the diced vegetables and rice in the oil, pour in the water, bring to a boil, cover and cook on low heat for 15 minutes.",
+      "Fold the kohlrabi leaves, ground almonds, peas and cream cheese into the rice and bring it to a boil again. Let it cool to lukewarm."
+    ],
+    "allergens": [
+      "milk",
+      "tree nut"
+    ]
+  },
+  {
+    "sourceId": "mie-nudeln-mit-huhn",
+    "id": "mie-noodles-with-chicken",
+    "title": "Mie Noodles with Chicken",
+    "ageFromMonths": 10,
+    "basePortions": 1,
+    "texture": "soft-pieces",
+    "ingredients": [
+      {
+        "name": "red bell pepper",
+        "grams": 40
+      },
+      {
+        "name": "zucchini",
+        "grams": 50
+      },
+      {
+        "name": "spring onion",
+        "grams": 20
+      },
+      {
+        "name": "chicken breast",
+        "grams": 40
+      },
+      {
+        "name": "butter",
+        "grams": 3
+      },
+      {
+        "name": "coconut cream",
+        "grams": 20
+      },
+      {
+        "name": "mie noodles",
+        "grams": 40
+      },
+      {
+        "name": "water",
+        "grams": 60
+      }
+    ],
+    "steps": [
+      "Wash and trim the vegetables. Halve the pepper and remove the white ribs and seeds. Cut the zucchini and pepper into small pieces and the spring onions into fine rings. Dice the chicken very small.",
+      "Heat the butter in a deep nonstick pan and brown the chicken, then add the vegetables and cook for 5-6 minutes. Pour in the coconut cream and the water and bring to a boil.",
+      "Add the noodles, cover and let stand for 2 minutes. Cut the noodles short and let it cool to lukewarm."
+    ],
+    "allergens": [
+      "milk"
+    ]
+  },
+  {
+    "sourceId": "dinkel-pilz-topf",
+    "id": "spelt-and-mushroom-pot",
+    "title": "Spelt and Mushroom Pot",
+    "ageFromMonths": 10,
+    "basePortions": 1,
+    "texture": "soft-pieces",
+    "ingredients": [
+      {
+        "name": "mushroom",
+        "grams": 80
+      },
+      {
+        "name": "onion",
+        "grams": 14
+      },
+      {
+        "name": "olive oil",
+        "grams": 8
+      },
+      {
+        "name": "tomato paste",
+        "grams": 6
+      },
+      {
+        "name": "thyme",
+        "grams": 0.5
+      },
+      {
+        "name": "chopped tomatoes",
+        "grams": 80
+      },
+      {
+        "name": "quick-cooking spelt",
+        "grams": 28
+      },
+      {
+        "name": "water",
+        "grams": 40
+      }
+    ],
+    "steps": [
+      "Clean the mushrooms and slice them thinly. Peel the onion and dice it finely. Sauté it in a pan with most of the oil and the tomato paste, then add the mushrooms and thyme and brown them all over for 2-3 minutes.",
+      "Add the tomatoes and the water and bring to a boil. Stir in the spelt and cook until soft, about 12 minutes.",
+      "Stir in the remaining oil and let it cool to lukewarm."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "polenta-mit-ei",
+    "id": "polenta-with-egg",
+    "title": "Polenta with Egg",
+    "ageFromMonths": 10,
+    "basePortions": 1,
+    "texture": "soft-pieces",
+    "ingredients": [
+      {
+        "name": "broccoli",
+        "grams": 60
+      },
+      {
+        "name": "butter",
+        "grams": 6
+      },
+      {
+        "name": "instant polenta",
+        "grams": 28
+      },
+      {
+        "name": "water",
+        "grams": 100
+      },
+      {
+        "name": "corn",
+        "grams": 40
+      },
+      {
+        "name": "sour cream",
+        "grams": 20
+      },
+      {
+        "name": "egg",
+        "grams": 55
+      }
+    ],
+    "steps": [
+      "Wash and trim the broccoli. Cut the florets very small. Peel the stems, dice them small and sauté them in the butter for 3 minutes. Add the polenta and water, bring to a boil, cover and let swell on low heat for about 10 minutes.",
+      "Remove the husks and silk from the corn and cut the kernels off the cob. Stir the corn, broccoli florets and sour cream into the polenta and heat for 2-3 minutes.",
+      "Boil the egg for 8 minutes so the yolk stays soft, then peel and quarter it. Serve with the polenta once it is lukewarm."
+    ],
+    "allergens": [
+      "egg",
+      "milk"
+    ]
+  },
+  {
+    "sourceId": "couscous-apfel-schmarren",
+    "id": "couscous-and-apple-schmarrn",
+    "title": "Couscous and Apple Schmarrn",
+    "ageFromMonths": 10,
+    "basePortions": 1,
+    "texture": "soft-pieces",
+    "ingredients": [
+      {
+        "name": "couscous",
+        "grams": 25
+      },
+      {
+        "name": "cinnamon",
+        "grams": 0.5
+      },
+      {
+        "name": "apple juice",
+        "grams": 65
+      },
+      {
+        "name": "apple",
+        "grams": 130
+      },
+      {
+        "name": "egg",
+        "grams": 55
+      },
+      {
+        "name": "spelt flour",
+        "grams": 20
+      },
+      {
+        "name": "ground walnuts",
+        "grams": 8
+      },
+      {
+        "name": "butter",
+        "grams": 9
+      }
+    ],
+    "steps": [
+      "Mix the couscous with the cinnamon in a bowl, pour the apple juice over it and let it swell. Wash, dry and quarter the apple, remove the core and cut it into thin wedges.",
+      "Separate the egg. Stir the yolk together with the flour, nuts and couscous. Whip the white until stiff and fold it in.",
+      "In a nonstick pan, soften the apple wedges in half of the butter. Pour in the batter, cover and cook, then break it into pieces, flip and finish the other side in the rest of the butter. Let it cool and cut into small pieces."
+    ],
+    "allergens": [
+      "egg",
+      "tree nut",
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "obstreis-mit-mango",
+    "id": "fruit-rice-with-mango",
+    "title": "Fruit Rice with Mango",
+    "ageFromMonths": 10,
+    "basePortions": 1,
+    "texture": "soft-pieces",
+    "ingredients": [
+      {
+        "name": "cashew",
+        "grams": 30
+      },
+      {
+        "name": "whole-grain rice",
+        "grams": 70
+      },
+      {
+        "name": "white grape juice",
+        "grams": 75
+      },
+      {
+        "name": "vanilla",
+        "grams": 0.5
+      },
+      {
+        "name": "mango",
+        "grams": 250
+      },
+      {
+        "name": "lemon juice",
+        "grams": 10
+      },
+      {
+        "name": "water",
+        "grams": 50
+      }
+    ],
+    "steps": [
+      "Toast the cashews in a dry pan, take them out and grind them to a fine meal. Bring the rice to a boil with the grape juice, water, ground cashews and vanilla, then let it swell on low heat for about 30 minutes (follow the packet), adding water if needed.",
+      "Meanwhile, peel the mango and cut the flesh off the stone. Dice half of the flesh very small. Blend the other half of the mango with the lemon juice until smooth.",
+      "Stir the mango purée into the rice and add the diced mango. Serve lukewarm."
+    ],
+    "allergens": [
+      "tree nut"
+    ]
+  },
+  {
+    "sourceId": "apfel-hafer-broetchen",
+    "id": "apple-oat-rolls",
+    "title": "Apple-Oat Rolls",
+    "ageFromMonths": 12,
+    "basePortions": 10,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "apple juice",
+        "grams": 125
+      },
+      {
+        "name": "butter",
+        "grams": 100
+      },
+      {
+        "name": "apple",
+        "grams": 300
+      },
+      {
+        "name": "flour",
+        "grams": 300
+      },
+      {
+        "name": "fine rolled oats",
+        "grams": 200
+      },
+      {
+        "name": "dry yeast",
+        "grams": 7
+      },
+      {
+        "name": "vanilla",
+        "grams": 0.5
+      }
+    ],
+    "steps": [
+      "Warm the apple juice and melt the butter in it. Wash and dry the apples and grate them coarsely, skin on, down to the core.",
+      "Mix the flour, oats and yeast. Knead with the juice and butter mixture, grated apple and vanilla until the dough is elastic. Add a little more liquid if needed, as the dough keeps swelling. Cover and let it rise in a warm place for 30 minutes, until doubled in volume.",
+      "Heat the oven to 200 °C and line 2 baking trays with parchment. Knead the dough once more. With floured hands, pinch off plum-sized pieces, shape them and set them well apart on the trays. Let them rest another 10-15 minutes.",
+      "Brush the rolls with a little water. Bake in the middle of the oven for about 12 minutes, then bake the second tray."
+    ],
+    "allergens": [
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "weiche-nusswaffeln",
+    "id": "soft-nut-waffles",
+    "title": "Soft Nut Waffles",
+    "ageFromMonths": 12,
+    "basePortions": 3,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "butter",
+        "grams": 50
+      },
+      {
+        "name": "egg",
+        "grams": 55
+      },
+      {
+        "name": "carob powder",
+        "grams": 12
+      },
+      {
+        "name": "flour",
+        "grams": 120
+      },
+      {
+        "name": "ground nuts",
+        "grams": 50
+      },
+      {
+        "name": "water",
+        "grams": 200
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 5
+      }
+    ],
+    "steps": [
+      "Cream the butter until fluffy and beat in the egg. Mix the carob, flour and nuts. Add this dry mix and the water to the butter and egg mixture in alternating batches. Let the batter swell for about 10 minutes.",
+      "Preheat the waffle iron and brush its plates with a little oil. Pour some batter into the middle, close the lid and bake for 3-5 minutes until golden. Repeat until the batter is used up. Let cool before serving."
+    ],
+    "allergens": [
+      "egg",
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "moehrenaufstrich",
+    "id": "carrot-spread",
+    "title": "Carrot Spread",
+    "ageFromMonths": 10,
+    "basePortions": 6,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "carrot",
+        "grams": 100
+      },
+      {
+        "name": "sunflower seeds",
+        "grams": 18
+      },
+      {
+        "name": "dates",
+        "grams": 25
+      },
+      {
+        "name": "crème fraîche",
+        "grams": 15
+      },
+      {
+        "name": "ground ginger",
+        "grams": 0.5
+      }
+    ],
+    "steps": [
+      "Peel and coarsely grate the carrots. Toast the sunflower seeds in a dry pan until fragrant. Add the grated carrots and cook until soft. Let cool slightly.",
+      "Meanwhile, chop the dates. Add them to the carrots with the crème fraîche and ginger and blend finely. It keeps in the fridge for 3-4 days."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "paprikacreme",
+    "id": "red-pepper-spread",
+    "title": "Red Pepper Spread",
+    "ageFromMonths": 10,
+    "basePortions": 6,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "red bell pepper",
+        "grams": 600
+      },
+      {
+        "name": "tomato paste",
+        "grams": 32
+      },
+      {
+        "name": "tahini",
+        "grams": 30
+      },
+      {
+        "name": "instant cereal flakes",
+        "grams": 18
+      },
+      {
+        "name": "water",
+        "grams": 150
+      }
+    ],
+    "steps": [
+      "Wash and halve the peppers and remove the white ribs and seeds. Cook the halves in a covered pot with the water for 20-25 minutes until soft, then let cool.",
+      "Scrape the flesh from the skins with a spoon. Blend it with the tomato paste and tahini. Stir in the cereal flakes and let them swell briefly; use more flakes for a firmer spread. It keeps in the fridge for 7 days."
+    ],
+    "allergens": [
+      "sesame"
+    ]
+  },
+  {
+    "sourceId": "fruchtaufstrich",
+    "id": "fruit-spread",
+    "title": "Fruit Spread",
+    "ageFromMonths": 10,
+    "basePortions": 6,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "dried apricot",
+        "grams": 90
+      },
+      {
+        "name": "raisins",
+        "grams": 30
+      },
+      {
+        "name": "apple juice",
+        "grams": 200
+      },
+      {
+        "name": "cinnamon",
+        "grams": 0.5
+      }
+    ],
+    "steps": [
+      "The evening before, chop the apricots and raisins roughly and soak them in the apple juice.",
+      "The next morning, blend the softened fruit and season with a pinch of cinnamon.",
+      "Fill a clean screw-top jar and keep it in the fridge. It stays fresh for about 7 days."
+    ],
+    "allergens": []
+  },
+  {
+    "sourceId": "schokostreich",
+    "id": "chocolate-style-banana-spread",
+    "title": "Chocolate-Style Banana Spread",
+    "ageFromMonths": 10,
+    "basePortions": 6,
+    "texture": "mashed",
+    "ingredients": [
+      {
+        "name": "banana",
+        "grams": 90
+      },
+      {
+        "name": "cocoa powder",
+        "grams": 3
+      },
+      {
+        "name": "ground hazelnuts",
+        "grams": 30
+      }
+    ],
+    "steps": [
+      "Peel the banana and blend it with the cocoa powder and hazelnuts until creamy.",
+      "Spoon into a clean screw-top jar and keep it in the fridge. It stays fresh for about 7 days. If the spread gets too firm, stir in a little water the next day."
+    ],
+    "allergens": [
+      "tree nut"
+    ]
+  },
+  {
+    "sourceId": "blini-mit-tomatensauce",
+    "id": "buckwheat-blini-with-tomato-sauce",
+    "title": "Buckwheat Blini with Tomato Sauce",
+    "ageFromMonths": 12,
+    "basePortions": 1,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "buckwheat flour",
+        "grams": 40
+      },
+      {
+        "name": "ground almonds",
+        "grams": 7
+      },
+      {
+        "name": "breast milk or formula",
+        "grams": 50
+      },
+      {
+        "name": "water",
+        "grams": 50
+      },
+      {
+        "name": "dry yeast",
+        "grams": 1
+      },
+      {
+        "name": "carrot",
+        "grams": 67
+      },
+      {
+        "name": "celery",
+        "grams": 27
+      },
+      {
+        "name": "tomato paste",
+        "grams": 5
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 14
+      },
+      {
+        "name": "chopped tomatoes",
+        "grams": 83
+      },
+      {
+        "name": "sour cream",
+        "grams": 10
+      }
+    ],
+    "steps": [
+      "Stir the flour and almonds with the breast milk or formula and hot water into a thick, pourable batter. Add the yeast, cover and let it rise for at least 30 minutes.",
+      "Meanwhile, wash the carrots, peel them if needed and grate them coarsely. Wash the celery and slice it thinly. Fry both briefly with the tomato paste and a little of the oil, then pour in the tomatoes. Simmer for about 5 minutes and stir in the sour cream.",
+      "Fry small blini in the remaining oil, turning to brown both sides. Drain on paper towels. Serve with the tomato and carrot sauce."
+    ],
+    "allergens": [
+      "milk",
+      "tree nut",
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "roesti-mit-gruener-sauce",
+    "id": "vegetable-r-sti-with-avocado-dip",
+    "title": "Vegetable Rösti with Avocado Dip",
+    "ageFromMonths": 12,
+    "basePortions": 1,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "potato",
+        "grams": 167
+      },
+      {
+        "name": "carrot",
+        "grams": 83
+      },
+      {
+        "name": "zucchini",
+        "grams": 83
+      },
+      {
+        "name": "egg",
+        "grams": 18
+      },
+      {
+        "name": "whole-wheat flour",
+        "grams": 11
+      },
+      {
+        "name": "marjoram",
+        "grams": 0.5
+      },
+      {
+        "name": "avocado",
+        "grams": 50
+      },
+      {
+        "name": "lemon juice",
+        "grams": 10
+      },
+      {
+        "name": "plain yogurt",
+        "grams": 33
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 9
+      }
+    ],
+    "steps": [
+      "Wash the potatoes and vegetables. Peel the potatoes and trim the vegetables, peeling only if necessary. Grate everything coarsely, ideally with a food processor. Mix in the egg, flour and marjoram.",
+      "Meanwhile, halve the avocado, remove the stone and scoop the flesh out with a spoon. Blend with the lemon juice, then fold in the yogurt.",
+      "Cut a piece of parchment to the size of the pan, lay it in the pan and brush it with a little oil. Spread the potato mixture on it and fry for 3-4 minutes, then flip using the parchment and finish cooking. Serve with the avocado dip."
+    ],
+    "allergens": [
+      "egg",
+      "milk",
+      "wheat"
+    ]
+  },
+  {
+    "sourceId": "family-quiche",
+    "id": "polenta-quiche",
+    "title": "Polenta Quiche",
+    "ageFromMonths": 12,
+    "basePortions": 4,
+    "texture": "finger-food",
+    "ingredients": [
+      {
+        "name": "carrot",
+        "grams": 83
+      },
+      {
+        "name": "rapeseed oil",
+        "grams": 18
+      },
+      {
+        "name": "mild curry powder",
+        "grams": 1
+      },
+      {
+        "name": "oat drink",
+        "grams": 250
+      },
+      {
+        "name": "polenta",
+        "grams": 83
+      },
+      {
+        "name": "zucchini",
+        "grams": 167
+      },
+      {
+        "name": "cherry tomato",
+        "grams": 33
+      },
+      {
+        "name": "basil",
+        "grams": 7
+      },
+      {
+        "name": "egg",
+        "grams": 110
+      },
+      {
+        "name": "tomato paste",
+        "grams": 27
+      },
+      {
+        "name": "frozen peas",
+        "grams": 100
+      }
+    ],
+    "steps": [
+      "Wash the carrots, peel them if needed and grate finely. Sauté them in the oil with the curry powder, pour in the oat drink, add the polenta and bring to a boil. Let it swell on low heat for about 15 minutes.",
+      "Meanwhile, wash and trim the remaining vegetables. Dice the zucchini into small cubes and slice the tomatoes.",
+      "Heat the oven to 200 °C and line a deep baking tray with parchment. Spread the polenta on it. Wash the basil, stems included, and blend it with the eggs.",
+      "Spread the tomato paste over the polenta. Scatter the peas, zucchini and tomatoes on top and press them in, then pour the egg mixture over. Bake in the middle of the oven for about 30 minutes. Cut into pieces, let it cool completely before portioning and freezing."
+    ],
+    "allergens": [
+      "egg"
+    ]
+  }
+]
