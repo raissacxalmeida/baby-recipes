@@ -93,6 +93,32 @@ test('before the birthday is set the menu only has the account actions', async (
   expect(item('Community recipes')).toBeNull();
 });
 
+test('the admin page menu has the same page links as the rest of the app', async () => {
+  await startApp({ user: { email: 'me@example.com', isAdmin: true } });
+  goTo('Admin');
+  await screen.findByRole('heading', { name: 'Admin' });
+  openMenu();
+  ['Home', 'Liked recipes', 'Community recipes', 'Admin', 'Log out'].forEach((name) => expect(item(name)).not.toBeNull());
+});
+
+test('from the admin page the menu goes straight to the community page', async () => {
+  await startApp({ user: { email: 'me@example.com', isAdmin: true }, shared: community });
+  goTo('Admin');
+  await screen.findByRole('heading', { name: 'Admin' });
+  goTo('Community recipes');
+  expect(await screen.findByRole('heading', { name: 'Community recipes' })).not.toBeNull();
+  expect(screen.getByText('Pear mash')).not.toBeNull();
+  expect(screen.queryByRole('heading', { name: 'Admin' })).toBeNull();
+});
+
+test('from the admin page the menu goes straight to the liked page', async () => {
+  await startApp({ user: { email: 'me@example.com', isAdmin: true } });
+  goTo('Admin');
+  await screen.findByRole('heading', { name: 'Admin' });
+  goTo('Liked recipes');
+  expect(await screen.findByRole('heading', { name: 'Liked recipes' })).not.toBeNull();
+});
+
 test('an admin reaches the admin page from the menu and Home brings them back', async () => {
   await startApp({ user: { email: 'me@example.com', isAdmin: true } });
   goTo('Admin');

@@ -30,7 +30,7 @@ function startScreen(birthdate, now) {
   }
 }
 
-export default function MainApp({ api, user, now, onSessionLost = () => {}, onLogout, onDelete, onAdmin }) {
+export default function MainApp({ api, user, now, landOn = null, onSessionLost = () => {}, onLogout, onDelete, onAdmin }) {
   const [server, setServer] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [screen, setScreen] = useState(null);
@@ -54,10 +54,14 @@ export default function MainApp({ api, user, now, onSessionLost = () => {}, onLo
   useEffect(() => {
     let live = true;
     api.state()
-      .then((s) => {
+      .then(async (s) => {
+        const start = startScreen(s.birthdate, now());
+        // Arriving from another page (the admin page) can ask for the liked or community page instead of Home.
+        const list = start === 'home' && landOn === 'shared' ? await api.listShared() : null;
         if (!live) return;
         setServer(s);
-        setScreen(startScreen(s.birthdate, now()));
+        if (list) setCommunity(list);
+        setScreen(start === 'home' && landOn ? landOn : start);
       })
       .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err.message)));
     return () => { live = false; };

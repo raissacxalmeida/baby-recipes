@@ -21,6 +21,8 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   const [session, setSession] = useState({ status: 'loading', user: null });
   const [notice, setNotice] = useState(null);
   const [accountError, setAccountError] = useState(null);
+  // Which page the app should open on when it comes back from the admin page.
+  const [landOn, setLandOn] = useState(null);
 
   const invite = /^\/invite\/([^/]+)$/.exec(path);
   const reset = /^\/reset\/([^/]+)$/.exec(path);
@@ -40,7 +42,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
     setPath(next);
   }
   const signedIn = (user) => { setNotice(null); setSession({ status: 'ready', user }); };
-  const signedOut = () => setSession({ status: 'anon', user: null });
+  const signedOut = () => { setLandOn(null); setSession({ status: 'anon', user: null }); };
   const sessionLost = () => { setNotice('Your session ended. Please log in again.'); signedOut(); };
 
   let body;
@@ -70,12 +72,13 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
           setAccountError(err.message);
         }
       },
-      onAdmin: () => go('/admin'),
+      onAdmin: () => { setLandOn(null); go('/admin'); },
     };
+    const land = (page) => () => { setLandOn(page); go('/'); };
     body = path === '/admin'
       ? (
         <>
-          <Menu {...account} current="admin" onHome={() => go('/')} />
+          <Menu {...account} current="admin" onHome={land(null)} onLiked={land('liked')} onCommunity={land('shared')} />
           {accountError && <Notice kind="error">{accountError}</Notice>}
           <AdminScreen api={api} me={session.user} onBack={() => go('/')} />
         </>
@@ -83,7 +86,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
       : (
         <>
           {accountError && <Notice kind="error">{accountError}</Notice>}
-          <MainApp api={api} now={now} onSessionLost={sessionLost} {...account} />
+          <MainApp api={api} now={now} landOn={landOn} onSessionLost={sessionLost} {...account} />
         </>
       );
   }
