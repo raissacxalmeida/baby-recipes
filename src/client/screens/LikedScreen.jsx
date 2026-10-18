@@ -13,15 +13,11 @@ function Row({ title, children }) {
 }
 
 export default function LikedScreen({
-  liked, disliked, onOpen, onUnlike, onRestore, onBack,
+  liked, disliked, onOpen, onUnlike, onRestore,
   sharedIds = [], copiedIds = [], onShare, onUnshare, error = null,
 }) {
   return (
     <section className="grid gap-4">
-      <Button variant="ghost" size="sm" className="justify-self-start" onClick={onBack}>
-        <Emoji>←</Emoji>
-        New recipe
-      </Button>
       <h1><Emoji>♡</Emoji> Liked recipes</h1>
       {error && <Notice kind="error">{error}</Notice>}
       <Card>

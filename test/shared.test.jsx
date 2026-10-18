@@ -67,7 +67,6 @@ test('liking a community recipe saves it to Liked, and liking again removes it',
   goTo('Liked recipes');
   await screen.findByRole('button', { name: 'Open Pear mash' });
   expect(screen.queryByRole('button', { name: 'Share Pear mash' })).toBeNull();
-  click('New recipe');
   await openCommunity();
   click('Like Pear mash');
   await screen.findByText('2 likes');
@@ -96,7 +95,6 @@ test('your own shared recipe shows on the community page with a badge', async ()
   await startWithLikedBanana();
   click('Share Banana mash');
   await screen.findByRole('button', { name: 'Unshare Banana mash' });
-  click('New recipe');
   await openCommunity();
   const card = screen.getByRole('button', { name: 'Open Banana mash' }).closest('li');
   expect(within(card).getByText('Shared by you')).not.toBeNull();

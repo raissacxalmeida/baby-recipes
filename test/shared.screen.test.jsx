@@ -13,7 +13,7 @@ const cake = item('Banana cake', { group: 'Cake', likes: 3, ageMonths: 10 });
 const soup = item('Pea soup', { group: 'Soup' });
 
 function renderScreen(props = {}) {
-  const handlers = { onGroup: vi.fn(), onOpen: vi.fn(), onToggleLike: vi.fn(), onBack: vi.fn() };
+  const handlers = { onGroup: vi.fn(), onOpen: vi.fn(), onToggleLike: vi.fn() };
   render(<SharedScreen recipes={[soup, cake, fish]} group="All" {...handlers} {...props} />);
   return handlers;
 }
@@ -47,10 +47,10 @@ test('a selected group with no recipes shows everything, with All pressed', () =
   expect(screen.getAllByRole('button', { name: /^Open / })).toHaveLength(3);
 });
 
-test('an empty list shows a note and only the back button', () => {
+test('an empty list shows a note and no buttons', () => {
   renderScreen({ recipes: [] });
   expect(screen.getByRole('note').textContent).toBe('Nothing has been shared yet.');
-  expect(screen.getAllByRole('button').map((b) => b.textContent.replace('←', '').trim())).toEqual(['New recipe']);
+  expect(screen.queryAllByRole('button')).toEqual([]);
 });
 
 test('a card shows the baby age and a like count with the right wording', () => {
@@ -78,12 +78,11 @@ test('your own shared recipe has a badge and no like button', () => {
   expect(screen.queryByRole('button', { name: /^Like / })).toBeNull();
 });
 
-test('Open and back call their handlers', () => {
-  const { onOpen, onBack } = renderScreen();
+test('Open calls its handler, and there is no back button (the menu is the way out)', () => {
+  const { onOpen } = renderScreen();
   fireEvent.click(screen.getByRole('button', { name: 'Open Banana cake' }));
   expect(onOpen).toHaveBeenCalledWith(cake);
-  fireEvent.click(screen.getByRole('button', { name: /New recipe/ }));
-  expect(onBack).toHaveBeenCalled();
+  expect(screen.queryByRole('button', { name: /New recipe/ })).toBeNull();
 });
 
 test('a very long unbroken title wraps instead of stretching the card', () => {

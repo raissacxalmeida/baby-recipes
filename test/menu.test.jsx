@@ -78,10 +78,31 @@ test('Home starts a fresh ingredient list', async () => {
   expect(screen.queryByText('banana')).toBeNull();
 });
 
-test('the recipe page keeps its back button and gains the menu', async () => {
+test('pages no longer have New recipe or Back to the app buttons, the menu is the way out', async () => {
   await readingARecipe();
-  expect(screen.getByRole('button', { name: 'New recipe' })).not.toBeNull();
-  expect(screen.getByRole('button', { name: 'Menu' })).not.toBeNull();
+  expect(item('New recipe')).toBeNull();
+  goTo('Liked recipes');
+  await screen.findByRole('heading', { name: 'Liked recipes' });
+  expect(item('New recipe')).toBeNull();
+  goTo('Community recipes');
+  await screen.findByRole('heading', { name: 'Community recipes' });
+  expect(item('New recipe')).toBeNull();
+});
+
+test('the admin page has no Back to the app button', async () => {
+  await startApp({ user: { email: 'me@example.com', isAdmin: true } });
+  goTo('Admin');
+  await screen.findByRole('heading', { name: 'Admin' });
+  expect(item('Back to the app')).toBeNull();
+});
+
+test('a recipe opened from Liked still has its way back to Liked', async () => {
+  await readingARecipe();
+  click('Baby liked it');
+  await screen.findByText('Saved to liked recipes.');
+  goTo('Liked recipes');
+  click('Open Banana mash');
+  expect(await screen.findByRole('button', { name: 'Back to liked recipes' })).not.toBeNull();
 });
 
 test('before the birthday is set the menu only has the account actions', async () => {

@@ -70,7 +70,7 @@ test('an old error is not shown after navigating elsewhere', async () => {
   click('Suggest a recipe');
   await waitFor(() => expect(screen.getByRole('alert')).not.toBeNull());
   goTo('Liked recipes');
-  click('New recipe');
+  goTo('Home');
   expect(screen.queryByRole('alert')).toBeNull();
 });
 
@@ -112,7 +112,7 @@ test('a failed Give me another keeps the recipe and shows the message', async ()
 
 test('the ingredient list is empty after coming back from a recipe', async () => {
   await suggestFirst();
-  click('New recipe');
+  goTo('Home');
   expect(screen.queryByText('banana')).toBeNull();
   expect(screen.getByRole('button', { name: 'Suggest a recipe' }).disabled).toBe(true);
 });
@@ -121,7 +121,7 @@ test('the ingredient list is empty after visiting liked recipes without generati
   await startApp();
   addIngredient('banana');
   goTo('Liked recipes');
-  click('New recipe');
+  goTo('Home');
   expect(screen.queryByText('banana')).toBeNull();
 });
 

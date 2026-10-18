@@ -80,7 +80,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
         <>
           <Menu {...account} current="admin" onHome={land(null)} onLiked={land('liked')} onCommunity={land('shared')} />
           {accountError && <Notice kind="error">{accountError}</Notice>}
-          <AdminScreen api={api} me={session.user} onBack={() => go('/')} />
+          <AdminScreen api={api} me={session.user} />
         </>
       )
       : (

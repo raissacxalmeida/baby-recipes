@@ -66,7 +66,7 @@ function IssuedLink({ issued }) {
   );
 }
 
-function AdminPage({ api, onBack }) {
+function AdminPage({ api }) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [issued, setIssued] = useState(null);
@@ -95,7 +95,6 @@ function AdminPage({ api, onBack }) {
 
   return (
     <section className="grid gap-4">
-      <Button variant="ghost" size="sm" className="justify-self-start" onClick={onBack}>Back to the app</Button>
       <h1>Admin</h1>
       <h2>Invite someone</h2>
       <Card>
@@ -177,7 +176,7 @@ function AdminPage({ api, onBack }) {
   );
 }
 
-export default function AdminScreen({ api, me, onBack }) {
+export default function AdminScreen({ api, me }) {
   if (!me.isAdmin) return <p>Not found</p>;
-  return <AdminPage api={api} onBack={onBack} />;
+  return <AdminPage api={api} />;
 }

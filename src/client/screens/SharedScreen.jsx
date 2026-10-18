@@ -9,7 +9,7 @@ const emojiFor = (name) => GROUPS.find((g) => g.name === name)?.emoji;
 const likesText = (n) => (n === 1 ? '1 like' : `${n} likes`);
 
 export default function SharedScreen({
-  recipes, group, onGroup, onOpen, onToggleLike, onBack, error = null,
+  recipes, group, onGroup, onOpen, onToggleLike, error = null,
 }) {
   const present = GROUPS.filter((g) => recipes.some((r) => r.group === g.name));
   const selected = present.some((g) => g.name === group) ? group : 'All';
@@ -17,10 +17,6 @@ export default function SharedScreen({
 
   return (
     <section className="grid gap-4">
-      <Button variant="ghost" size="sm" className="justify-self-start" onClick={onBack}>
-        <Emoji>←</Emoji>
-        New recipe
-      </Button>
       <h1><Emoji>🌍</Emoji> Community recipes</h1>
       {error && <Notice kind="error">{error}</Notice>}
       {recipes.length === 0 && <Notice kind="note">Nothing has been shared yet.</Notice>}

@@ -14,9 +14,8 @@ import { Notice } from '@/components/ui/notice.jsx';
 
 const MIN_MONTHS = 6;
 
-// Where the recipe screen's back button goes, by where the recipe was opened from.
+// Where the recipe screen's back button goes, by where the recipe was opened from. A freshly suggested recipe has none: the menu leads out.
 const BACK = {
-  home: { screen: 'home', label: 'New recipe' },
   liked: { screen: 'liked', label: 'Back to liked recipes' },
   shared: { screen: 'shared', label: 'Back to community recipes' },
 };
@@ -172,7 +171,6 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
           onUnshare={(r) => guarded(async () => { await api.unshare(r.id); await refresh(); })}
           onUnlike={(id) => guarded(async () => { await api.unlike(id); await refresh(); })}
           onRestore={(id) => guarded(async () => { await api.restore(id); await refresh(); })}
-          onBack={() => go('home')}
         />
       );
     }
@@ -185,17 +183,18 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
           error={error}
           onOpen={(item) => open(item.recipe, 'shared')}
           onToggleLike={toggleCommunityLike}
-          onBack={() => go('home')}
         />
       );
     }
     if (screen === 'recipe' && recipe) {
       return (
         <>
-          <Button variant="ghost" size="sm" className="self-start" onClick={() => go(BACK[origin].screen)}>
-            <Emoji>←</Emoji>
-            {BACK[origin].label}
-          </Button>
+          {BACK[origin] && (
+            <Button variant="ghost" size="sm" className="self-start" onClick={() => go(BACK[origin].screen)}>
+              <Emoji>←</Emoji>
+              {BACK[origin].label}
+            </Button>
+          )}
           <RecipeScreen
             key={recipe.id}
             recipe={recipe}
