@@ -26,6 +26,9 @@ const PROTEINS = [
   ['Meat', ['chicken', 'beef', 'pork', 'turkey', 'lamb', 'veal', 'duck', 'meat', 'mince']],
 ];
 
+// Every fish and meat word, plus egg: the foods that always count as the point of a recipe.
+export const PROTEIN_WORDS = [...PROTEINS.flatMap(([, words]) => words), 'egg'];
+
 // Otherwise the heaviest remaining ingredient decides.
 const INGREDIENTS = [
   ['Eggs', ['egg']],
