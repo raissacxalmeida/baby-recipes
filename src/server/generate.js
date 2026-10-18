@@ -11,7 +11,7 @@ const MIN_MONTHS = 6;
 const MAX_INGREDIENTS = 30;
 const MAX_INGREDIENT_LENGTH = 50;
 
-const normalizeTitle = (t) => t.trim().toLowerCase().replace(/\s+/g, ' ');
+export const normalizeTitle = (t) => t.trim().toLowerCase().replace(/\s+/g, ' ');
 
 export async function generateRecipe({ birthdate, ingredients, exclude }, { callModel, now }) {
   const isStrings = (v) => Array.isArray(v) && v.every((s) => typeof s === 'string');

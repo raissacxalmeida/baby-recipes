@@ -83,6 +83,18 @@ export const MIGRATIONS = [
       primary key (shared_id, user_id)
     )`,
   ],
+  // Catalogue of recipes served before asking OpenAI. Nothing here links to a user.
+  [
+    `create table catalogue_recipes (
+      id uuid primary key default gen_random_uuid(),
+      title_key text not null unique,
+      source text not null check (source in ('seed', 'ai')),
+      source_id text unique,
+      age_from_months int not null check (age_from_months >= 6),
+      data jsonb not null,
+      created_at timestamptz not null default now()
+    )`,
+  ],
 ];
 
-export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes'];
+export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes'];
