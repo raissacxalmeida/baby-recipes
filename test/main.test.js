@@ -22,6 +22,16 @@ test('startMain migrates, listens and answers the API', async () => {
   }
 });
 
+test('startMain seeds the recipe catalogue', async () => {
+  const started = await startMain(env, { createDb: () => createTestDb() });
+  try {
+    const { rows } = await started.db.query('select count(*)::int as n from catalogue_recipes');
+    expect(rows[0].n).toBe(49);
+  } finally {
+    await stop(started);
+  }
+});
+
 test('a missing PUBLIC_URL rejects with a message naming it', async () => {
   await expect(startMain({ DATABASE_URL: 'postgres://x' }, { createDb: () => createTestDb() })).rejects.toThrow(/PUBLIC_URL/);
 });

@@ -4,6 +4,7 @@ import { loadConfig } from './config.js';
 import { createPgDb } from './db.js';
 import { migrate } from './migrate.js';
 import { callModel } from './openai.js';
+import { seedCatalogue } from './seedCatalogue.js';
 import { createServer, loadEnv } from './server.js';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -29,6 +30,11 @@ export async function startMain(env, { createDb = createPgDb, now = () => new Da
   } catch (err) {
     await db.close?.();
     throw err;
+  }
+  try {
+    await seedCatalogue(db);
+  } catch (err) {
+    console.error(`Could not seed the recipe catalogue: ${err.message}`);
   }
   const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
   const server = createServer({
