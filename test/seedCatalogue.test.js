@@ -59,6 +59,10 @@ const PINS = [
   [['salmon', 'zucchini'], 6, [], ['Zucchini and Salmon Purée']],
   [['potato', 'carrot', 'beef', 'apple juice'], 6, ['Vegetable, Potato and Beef Purée'], ['Squash, Potato and Beef Purée']],
   [['apple', 'banana', 'pear', 'dried fig'], 8, ['Cooked Fruit Mix'], []],
+  [['peas', 'chinese cabbage', 'turkey', 'pasta'], 8, [], ['Sliced Turkey with Vegetables and Pasta']],
+  [['snap peas', 'chinese cabbage', 'turkey', 'pasta'], 8, ['Sliced Turkey with Vegetables and Pasta'], []],
+  [['cheese', 'leek', 'broccoli', 'fennel', 'pasta'], 10, [], ['Vegetable Béchamel']],
+  [['Carrots, grated', 'Potatoes'], 6, ['Carrot and Potato Purée'], []],
 ];
 
 test.each(PINS)('seeded lookup for %j at %i months', async (ingredients, ageMonths, include, exclude) => {
@@ -81,4 +85,11 @@ test('no finger-food recipe is served below 12 months', async () => {
 
 test('no recipe has an age below 6 months', () => {
   expect(loadSeed().every((s) => s.ageFromMonths >= 6)).toBe(true);
+});
+
+test('allergens are worked out from the ingredients, not taken from the file', async () => {
+  const withEgg = loadSeed().find((s) => s.ingredients.some((i) => i.name === 'egg'));
+  await seedCatalogue(db, [{ ...withEgg, allergens: [] }]);
+  const { rows } = await db.query('select data from catalogue_recipes');
+  expect(rows[0].data.allergens).toContain('egg');
 });

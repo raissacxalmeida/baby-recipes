@@ -9,17 +9,23 @@ export const PANTRY = [
   'yeast', 'fennel seeds', 'celery leaves', 'garlic', 'lemon', 'salt',
 ];
 
-// Foods whose name ends in another food: "potato" must not stand in for "sweet potato".
-const COMPOUND_FOODS = ['sweet potato'];
+// Foods whose name ends in another food: "peas" must not stand in for "snap peas".
+// A recipe ingredient with one of these is covered only by a typed ingredient that names the same food,
+// and a typed one never covers the plain food ("sweet potato" is not "potato").
+const COMPOUND_FOODS = [
+  'sweet potato', 'snap pea', 'cream cheese', 'sour cream', 'coconut milk', 'coconut cream', 'green bean', 'spring onion',
+];
 
 const MAIN_SHARE = 0.1;
 
 const nonPantry = (recipe) => recipe.ingredients.filter((i) => !isListed(i.name, PANTRY));
+const compoundIn = (text) => COMPOUND_FOODS.find((c) => isListed(text, [c]));
 
+// A typed "chicken breast" covers a recipe's "chicken", and a typed "chicken" covers "chicken breast".
 function covers(name, list) {
-  const compound = COMPOUND_FOODS.find((c) => isListed(name, [c]));
+  const compound = compoundIn(name);
   if (compound) return list.some((item) => isListed(item, [compound]));
-  return isListed(name, list);
+  return list.some((item) => !compoundIn(item) && (isListed(name, [item]) || isListed(item, [name])));
 }
 
 export function mainIngredients(recipe) {

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { saveToCatalogue } from './catalogue.js';
 import { validateRecipe } from './recipe.js';
-import { checkSafety } from './safety.js';
+import { checkSafety, detectAllergens } from './safety.js';
 
 export const loadSeed = () => JSON.parse(readFileSync(new URL('./seed/baby-recipes.json', import.meta.url), 'utf8'));
 
@@ -12,8 +12,9 @@ export async function seedCatalogue(db, recipes = loadSeed()) {
   let skipped = 0;
   const rejected = [];
   for (const recipe of recipes) {
+    let valid;
     try {
-      const valid = validateRecipe(recipe);
+      valid = validateRecipe(recipe);
       if (!Number.isInteger(recipe.ageFromMonths) || recipe.ageFromMonths < 6) {
         throw new Error('ageFromMonths must be a whole number of at least 6');
       }
@@ -24,7 +25,8 @@ export async function seedCatalogue(db, recipes = loadSeed()) {
       rejected.push(recipe.sourceId);
       continue;
     }
-    const inserted = await saveToCatalogue(db, recipe, {
+    // Store the checked copy, with allergens worked out here rather than trusted from the file.
+    const inserted = await saveToCatalogue(db, { ...valid, allergens: detectAllergens(valid) }, {
       ageFromMonths: recipe.ageFromMonths, source: 'seed', sourceId: recipe.sourceId,
     });
     if (inserted) added++;

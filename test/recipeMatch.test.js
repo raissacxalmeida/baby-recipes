@@ -37,3 +37,22 @@ test('capitals, plurals and punctuation still match', () => {
   const list = parseIngredientList(['Carrots,', ' POTATOES ']);
   expect(matchRecipe(r(['carrot', 150], ['potato', 100]), list).suitable).toBe(true);
 });
+
+test('extra words around a typed ingredient still match', () => {
+  const list = parseIngredientList(['Carrots, grated', 'potatoes']);
+  expect(matchRecipe(r(['carrot', 150], ['potato', 100]), list).suitable).toBe(true);
+  expect(matchRecipe(r(['chicken', 100], ['potato', 100]), ['chicken breast', 'potato']).suitable).toBe(true);
+});
+
+test('a typed sweet potato never covers a plain potato', () => {
+  expect(matchRecipe(r(['potato', 250]), ['sweet potato']).suitable).toBe(false);
+});
+
+test.each([
+  ['snap pea', 'pea'], ['cream cheese', 'cheese'], ['sour cream', 'cream'], ['coconut milk', 'milk'],
+  ['coconut cream', 'cream'], ['green bean', 'bean'], ['spring onion', 'onion'],
+])('%s is only covered by itself, never by %s', (compound, base) => {
+  expect(matchRecipe(r([compound, 100]), [base]).suitable).toBe(false);
+  expect(matchRecipe(r([compound, 100]), [compound]).suitable).toBe(true);
+  expect(matchRecipe(r([base, 100]), [compound]).suitable).toBe(false);
+});
