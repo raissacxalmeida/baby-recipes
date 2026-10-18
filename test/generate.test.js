@@ -1,5 +1,5 @@
 import { test, expect, vi } from 'vitest';
-import { generateRecipe, AppError } from '../src/server/generate.js';
+import { generateRecipe, validateRequest, presentRecipe, AppError } from '../src/server/generate.js';
 import { callModel } from '../src/server/openai.js';
 
 const now = () => new Date(2026, 9, 14);
@@ -120,4 +120,23 @@ test('three unsafe answers give generation-failed', async () => {
   const unsafe = raw({ ingredients: [{ name: 'honey', grams: 10 }] });
   const cm = fake(unsafe, unsafe, unsafe);
   await expect(generateRecipe(input(), { callModel: cm, now })).rejects.toMatchObject({ code: 'generation-failed' });
+});
+
+test('validateRequest returns the baby age and the normalised ingredient list', () => {
+  expect(validateRequest(input(), now)).toEqual({ ageMonths: 7, list: ['banana'] });
+});
+
+test('validateRequest rejects a baby under 6 months and an empty list', () => {
+  expect(() => validateRequest(input({ birthdate: '2026-06-14' }), now)).toThrowError(expect.objectContaining({ code: 'too-young' }));
+  expect(() => validateRequest(input({ ingredients: [] }), now)).toThrowError(expect.objectContaining({ code: 'invalid-input' }));
+});
+
+test('presentRecipe adds the id and the inList flags', () => {
+  const recipe = presentRecipe(raw({ allergens: ['egg'] }), ['banana']);
+  expect(recipe.id).toBe('banana-mash');
+  expect(recipe.ingredients).toEqual([
+    { name: 'banana', grams: 100, inList: true },
+    { name: 'olive oil', grams: 5, inList: false },
+  ]);
+  expect(recipe.allergens).toEqual(['egg']);
 });

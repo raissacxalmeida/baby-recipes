@@ -97,7 +97,7 @@ export async function addShown(db, userId, title, now) {
 export async function excludeTitles(db, userId) {
   const { rows } = await db.query(
     `select title from shown where user_id = $1
-     union select data->>'title' from recipes where user_id = $1 and status = 'disliked'`,
+     union select data->>'title' from recipes where user_id = $1`,
     [userId],
   );
   return rows.map((r) => r.title).sort();

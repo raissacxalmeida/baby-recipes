@@ -61,6 +61,11 @@ test('restore leaves the recipe in neither list and drops it from the exclusions
   expect(await excludeTitles(db, a)).toEqual([]);
 });
 
+test('liked titles are excluded too', async () => {
+  await like(db, a, recipe('Banana mash'));
+  expect(await excludeTitles(db, a)).toEqual(['Banana mash']);
+});
+
 test('a malformed recipe is invalid-input', async () => {
   await expect(like(db, a, { id: 'x' })).rejects.toMatchObject({ code: 'invalid-input' });
   await expect(dislike(db, a, null)).rejects.toMatchObject({ code: 'invalid-input' });

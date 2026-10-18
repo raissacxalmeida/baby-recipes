@@ -13,7 +13,7 @@ const MAX_INGREDIENT_LENGTH = 50;
 
 export const normalizeTitle = (t) => t.trim().toLowerCase().replace(/\s+/g, ' ');
 
-export async function generateRecipe({ birthdate, ingredients, exclude }, { callModel, now }) {
+export function validateRequest({ birthdate, ingredients, exclude }, now) {
   const isStrings = (v) => Array.isArray(v) && v.every((s) => typeof s === 'string');
   if (!isStrings(ingredients ?? []) || !isStrings(exclude ?? [])) {
     throw new AppError('invalid-input', 'Ingredients and excluded titles must be lists of text');
@@ -32,6 +32,24 @@ export async function generateRecipe({ birthdate, ingredients, exclude }, { call
   if (ageMonths < MIN_MONTHS) {
     throw new AppError('too-young', 'Solid foods usually start around 6 months, so no recipe is suggested yet');
   }
+  return { ageMonths, list };
+}
+
+// The recipe as the browser receives it: an id made from the title and which ingredients the parent listed.
+export function presentRecipe(recipe, list) {
+  return {
+    id: recipe.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    title: recipe.title,
+    basePortions: recipe.basePortions,
+    ingredients: recipe.ingredients.map((i) => ({ ...i, inList: isListed(i.name, list) })),
+    steps: recipe.steps,
+    texture: recipe.texture,
+    allergens: recipe.allergens,
+  };
+}
+
+export async function generateRecipe({ birthdate, ingredients, exclude }, { callModel, now }) {
+  const { ageMonths, list } = validateRequest({ birthdate, ingredients, exclude }, now);
 
   const excluded = new Set((exclude ?? []).map(normalizeTitle));
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
@@ -39,15 +57,7 @@ export async function generateRecipe({ birthdate, ingredients, exclude }, { call
       const recipe = validateRecipe(await callModel({ ageMonths, ingredients: list, exclude: [...excluded] }));
       if (excluded.has(normalizeTitle(recipe.title))) continue;
       if (checkSafety(recipe, ageMonths).length > 0) continue;
-      return {
-        id: recipe.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-        title: recipe.title,
-        basePortions: recipe.basePortions,
-        ingredients: recipe.ingredients.map((i) => ({ ...i, inList: isListed(i.name, list) })),
-        steps: recipe.steps,
-        texture: recipe.texture,
-        allergens: detectAllergens(recipe),
-      };
+      return presentRecipe({ ...recipe, allergens: detectAllergens(recipe) }, list);
     } catch (err) {
       if (err instanceof AppError && ['missing-key', 'upstream-error', 'limit-reached'].includes(err.code)) throw err;
     }
