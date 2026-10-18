@@ -10,6 +10,12 @@ const now = () => new Date(2026, 9, 15);
 const open = (api, path = '/') => render(<App api={api} now={now} path={path} navigate={() => {}} />);
 const type = (label, value) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
 const click = (name) => fireEvent.click(screen.getByRole('button', { name }));
+// The account actions live in the menu; opening it twice would close it again.
+const openMenu = async () => {
+  const button = await screen.findByRole('button', { name: 'Menu' });
+  if (button.getAttribute('aria-expanded') === 'false') fireEvent.click(button);
+};
+const inMenu = async (name) => { await openMenu(); return screen.findByRole('button', { name }); };
 
 test('a logged-out visitor sees the login form', async () => {
   open(createFakeApi());
@@ -31,26 +37,27 @@ test('a good login shows the signed-in area with the account bar', async () => {
   type('Email', 'ana@example.com');
   type('Password', PASSWORD);
   click('Log in');
+  await openMenu();
   expect(await screen.findByText('ana@example.com')).not.toBeNull();
   expect(screen.getByRole('button', { name: 'Log out' })).not.toBeNull();
 });
 
 test('an existing session skips the login form', async () => {
   open(createFakeApi({ user: { email: 'ana@example.com', isAdmin: false } }));
-  expect(await screen.findByRole('button', { name: 'Log out' })).not.toBeNull();
+  expect(await inMenu('Log out')).not.toBeNull();
   expect(screen.queryByLabelText('Password')).toBeNull();
 });
 
 test('logging out returns to the login form', async () => {
   const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false } });
   open(api);
-  fireEvent.click(await screen.findByRole('button', { name: 'Log out' }));
+  fireEvent.click(await inMenu('Log out'));
   expect(await screen.findByRole('button', { name: 'Log in' })).not.toBeNull();
   expect(api.logout).toHaveBeenCalled();
 });
 
 const openDeleteDialog = async () => {
-  fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+  fireEvent.click(await inMenu('Delete my account'));
   return screen.findByRole('alertdialog');
 };
 
@@ -77,11 +84,11 @@ test('after the account is deleted the page is not locked', async () => {
 
 test('only the admin sees the Admin link and no Delete button', async () => {
   const { unmount } = open(createFakeApi({ user: { email: 'ana@example.com', isAdmin: false } }));
-  await screen.findByRole('button', { name: 'Log out' });
+  await inMenu('Log out');
   expect(screen.queryByRole('button', { name: 'Admin' })).toBeNull();
   unmount();
   open(createFakeApi({ user: { email: 'me@example.com', isAdmin: true } }));
-  expect(await screen.findByRole('button', { name: 'Admin' })).not.toBeNull();
+  expect(await inMenu('Admin')).not.toBeNull();
   expect(screen.queryByRole('button', { name: 'Delete my account' })).toBeNull();
 });
 
@@ -102,7 +109,7 @@ test('a valid invite signup lands signed in', async () => {
   type('Choose a password', PASSWORD);
   click('Create account');
   await waitFor(() => expect(api.signup).toHaveBeenCalledWith('abc', PASSWORD));
-  expect(await screen.findByRole('button', { name: 'Log out' })).not.toBeNull();
+  expect(await inMenu('Log out')).not.toBeNull();
 });
 
 test('a bad invite link shows a message and no form', async () => {
@@ -134,7 +141,7 @@ test('a malformed invite path does not blank the page', async () => {
 test('logging out signs out locally even when the server call fails', async () => {
   const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false }, overrides: { logout: vi.fn(async () => { throw new Error('Could not reach the server'); }) } });
   open(api);
-  fireEvent.click(await screen.findByRole('button', { name: 'Log out' }));
+  fireEvent.click(await inMenu('Log out'));
   expect(await screen.findByRole('button', { name: 'Log in' })).not.toBeNull();
 });
 

@@ -13,6 +13,8 @@ export const first = make('Banana mash');
 export const second = make('Oat porridge');
 
 export const click = (name) => fireEvent.click(screen.getByRole('button', { name }));
+// Opens the menu and picks an item, from any page.
+export const goTo = (name) => { click('Menu'); click(name); };
 export const type = (label, value) => fireEvent.change(screen.getByLabelText(label), { target: { value } });
 export const shown = (title) => waitFor(() => expect(screen.getByRole('heading', { name: title })).not.toBeNull());
 export const addIngredient = (text) => { type('Ingredient', text); click('Add'); };
@@ -21,7 +23,7 @@ export const addIngredient = (text) => { type('Ingredient', text); click('Add');
 export async function startApp({ birthdate = '2026-02-14', user = { email: 'ana@example.com', isAdmin: false }, recipes = [first, second], shared = [], overrides } = {}) {
   const api = createFakeApi({ user, birthdate, recipes, shared, overrides });
   render(<App api={api} now={now} path="/" navigate={vi.fn()} />);
-  await screen.findByRole('button', { name: 'Log out' });
+  await screen.findByRole('button', { name: 'Menu' });
   await waitFor(() => expect(screen.queryByText('Loading...')).toBeNull());
   return api;
 }

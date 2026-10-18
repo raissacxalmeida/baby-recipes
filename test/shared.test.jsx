@@ -1,6 +1,6 @@
 import { test, expect, afterEach } from 'vitest';
 import { screen, waitFor, cleanup, within } from '@testing-library/react';
-import { addIngredient, click, make, shown, startApp } from './helpers/app.jsx';
+import { addIngredient, click, goTo, make, shown, startApp } from './helpers/app.jsx';
 
 afterEach(cleanup);
 
@@ -18,13 +18,12 @@ async function startWithLikedBanana(options) {
   await shown('Banana mash');
   click('Baby liked it');
   await waitFor(() => expect(screen.getByText('Saved to liked recipes.')).not.toBeNull());
-  click('New recipe');
-  click('Liked recipes');
+  goTo('Liked recipes');
   await screen.findByRole('heading', { name: 'Liked recipes' });
   return api;
 }
 const openCommunity = async () => {
-  click('Community recipes');
+  goTo('Community recipes');
   await screen.findByRole('heading', { name: 'Community recipes' });
 };
 
@@ -65,8 +64,7 @@ test('liking a community recipe saves it to Liked, and liking again removes it',
   await screen.findByText('3 likes');
   expect(api.likeShared).toHaveBeenCalledWith('s-Pear mash');
   expect(screen.getByRole('button', { name: 'Like Pear mash' }).getAttribute('aria-pressed')).toBe('true');
-  click('New recipe');
-  click('Liked recipes');
+  goTo('Liked recipes');
   await screen.findByRole('button', { name: 'Open Pear mash' });
   expect(screen.queryByRole('button', { name: 'Share Pear mash' })).toBeNull();
   click('New recipe');
@@ -74,8 +72,7 @@ test('liking a community recipe saves it to Liked, and liking again removes it',
   click('Like Pear mash');
   await screen.findByText('2 likes');
   expect(api.unlikeShared).toHaveBeenCalledWith('s-Pear mash');
-  click('New recipe');
-  click('Liked recipes');
+  goTo('Liked recipes');
   await screen.findByRole('heading', { name: 'Liked recipes' });
   expect(screen.queryByRole('button', { name: 'Open Pear mash' })).toBeNull();
 });

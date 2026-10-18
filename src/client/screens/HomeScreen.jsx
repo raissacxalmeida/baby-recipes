@@ -9,7 +9,7 @@ import { Notice } from '@/components/ui/notice.jsx';
 
 const percent = (used, limit) => (limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0);
 
-export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, loading, error, onShowLiked, onShowShared, usage = null }) {
+export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, loading, error, usage = null }) {
   const [text, setText] = useState('');
 
   function add(e) {
@@ -54,18 +54,6 @@ export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, 
         <Emoji>✨</Emoji>
         Suggest a recipe
       </Button>
-      {onShowLiked && (
-        <Button variant="outline" onClick={onShowLiked}>
-          <Emoji>♡</Emoji>
-          Liked recipes
-        </Button>
-      )}
-      {onShowShared && (
-        <Button variant="outline" onClick={onShowShared}>
-          <Emoji>🌍</Emoji>
-          Community recipes
-        </Button>
-      )}
       {usage && (
         <div className="grid gap-2">
           <p className="m-0 text-xs text-muted-foreground">Recipes today: {usage.recipesToday} of {usage.limit}</p>
