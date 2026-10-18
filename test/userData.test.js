@@ -70,7 +70,9 @@ test('one person never sees or changes another persons lists', async () => {
   await like(db, a, recipe('Banana mash'));
   await dislike(db, a, recipe('Oat porridge'));
   await addShown(db, a, 'Banana mash', now);
-  expect(await getState(db, b)).toEqual({ birthdate: null, liked: [], disliked: [] });
+  expect(await getState(db, b)).toEqual({
+    birthdate: null, liked: [], disliked: [], sharedIds: [], copiedIds: [],
+  });
   expect(await excludeTitles(db, b)).toEqual([]);
   await unlike(db, b, 'banana-mash');
   await restore(db, b, 'oat-porridge');

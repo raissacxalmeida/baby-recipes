@@ -63,6 +63,26 @@ export const MIGRATIONS = [
   ],
   // Exactly one admin, enforced by the database itself.
   ['create unique index one_admin on users (is_admin) where is_admin'],
+  // Community recipes. A shared recipe is a snapshot owned by its sharer; likes copy it into the liker's own list.
+  [
+    // Which shared recipe a saved copy came from (no foreign key: the copy outlives an unshare).
+    'alter table recipes add column copied_from uuid',
+    `create table shared_recipes (
+      id uuid primary key default gen_random_uuid(),
+      user_id uuid not null references users(id) on delete cascade,
+      recipe_id text not null,
+      data jsonb not null,
+      grp text not null,
+      baby_months int not null,
+      created_at timestamptz not null default now(),
+      unique (user_id, recipe_id)
+    )`,
+    `create table shared_likes (
+      shared_id uuid not null references shared_recipes(id) on delete cascade,
+      user_id uuid not null references users(id) on delete cascade,
+      primary key (shared_id, user_id)
+    )`,
+  ],
 ];
 
-export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts'];
+export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes'];

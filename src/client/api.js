@@ -44,6 +44,11 @@ export function createApi(fetchImpl = (...args) => fetch(...args)) {
     unlike: (recipeId) => request('DELETE', `/api/liked/${id(recipeId)}`),
     dislike: (recipe) => request('POST', '/api/disliked', { recipe }),
     restore: (recipeId) => request('POST', `/api/disliked/${id(recipeId)}/restore`, {}),
+    listShared: async () => (await request('GET', '/api/shared')).recipes,
+    share: (recipeId) => request('POST', '/api/shared', { id: recipeId }),
+    unshare: (recipeId) => request('DELETE', `/api/shared/${id(recipeId)}`),
+    likeShared: (sharedId) => request('POST', `/api/shared/${id(sharedId)}/like`, {}),
+    unlikeShared: (sharedId) => request('DELETE', `/api/shared/${id(sharedId)}/like`),
     deleteAccount: () => request('DELETE', '/api/account'),
     admin: {
       overview: () => request('GET', '/api/admin/overview'),

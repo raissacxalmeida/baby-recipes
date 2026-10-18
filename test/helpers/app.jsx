@@ -18,8 +18,8 @@ export const shown = (title) => waitFor(() => expect(screen.getByRole('heading',
 export const addIngredient = (text) => { type('Ingredient', text); click('Add'); };
 
 // Renders the whole app for a logged-in parent and waits for the first real screen.
-export async function startApp({ birthdate = '2026-02-14', user = { email: 'ana@example.com', isAdmin: false }, recipes = [first, second], overrides } = {}) {
-  const api = createFakeApi({ user, birthdate, recipes, overrides });
+export async function startApp({ birthdate = '2026-02-14', user = { email: 'ana@example.com', isAdmin: false }, recipes = [first, second], shared = [], overrides } = {}) {
+  const api = createFakeApi({ user, birthdate, recipes, shared, overrides });
   render(<App api={api} now={now} path="/" navigate={vi.fn()} />);
   await screen.findByRole('button', { name: 'Log out' });
   await waitFor(() => expect(screen.queryByText('Loading...')).toBeNull());

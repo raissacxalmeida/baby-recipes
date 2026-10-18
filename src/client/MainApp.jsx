@@ -5,12 +5,20 @@ import HomeScreen from './screens/HomeScreen.jsx';
 import LikedScreen from './screens/LikedScreen.jsx';
 import RecipeScreen from './screens/RecipeScreen.jsx';
 import SetupScreen from './screens/SetupScreen.jsx';
+import SharedScreen from './screens/SharedScreen.jsx';
 import TooYoungScreen from './screens/TooYoungScreen.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
 
 const MIN_MONTHS = 6;
+
+// Where the recipe screen's back button goes, by where the recipe was opened from.
+const BACK = {
+  home: { screen: 'home', label: 'New recipe' },
+  liked: { screen: 'liked', label: 'Back to liked recipes' },
+  shared: { screen: 'shared', label: 'Back to community recipes' },
+};
 
 function startScreen(birthdate, now) {
   if (!birthdate) return 'setup';
@@ -29,7 +37,9 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
   const [recipe, setRecipe] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [fromLiked, setFromLiked] = useState(false);
+  const [origin, setOrigin] = useState('home');
+  const [community, setCommunity] = useState([]);
+  const [communityGroup, setCommunityGroup] = useState('All');
   const [saved, setSaved] = useState(false);
   const [, rerender] = useReducer((n) => n + 1, 0);
   const requestId = useRef(0);
@@ -52,11 +62,12 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
     return () => { live = false; };
   }, [api]);
 
-  // Leaving a screen drops any pending request and its error.
+  // Leaving a screen drops any pending request and its error. Arriving home starts a fresh ingredient list.
   function go(next) {
     requestId.current += 1;
     setLoading(false);
     setError(null);
+    if (next === 'home') setIngredients([]);
     setScreen(next);
   }
 
@@ -95,7 +106,7 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
       const next = await api.suggest(ingredients);
       if (id !== requestId.current) return;
       setRecipe(next);
-      setFromLiked(false);
+      setOrigin('home');
       setSaved(false);
       setScreen('recipe');
       refresh().catch(() => {});
@@ -119,11 +130,22 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
     suggest();
   });
 
-  function open(liked) {
-    setRecipe(liked);
-    setFromLiked(true);
+  function open(opened, from = 'liked') {
+    setRecipe(opened);
+    setOrigin(from);
     go('recipe');
   }
+
+  const showCommunity = () => guarded(async () => {
+    setCommunity(await api.listShared());
+    go('shared');
+  });
+
+  const toggleCommunityLike = (item) => guarded(async () => {
+    await (item.liked ? api.unlikeShared(item.id) : api.likeShared(item.id));
+    setCommunity(await api.listShared());
+    await refresh();
+  });
 
   if (loadError) return <Notice kind="error">{loadError}</Notice>;
   if (!server || !screen) return <Notice>Loading...</Notice>;
@@ -136,8 +158,26 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
         liked={server.liked}
         disliked={server.disliked}
         onOpen={open}
+        sharedIds={server.sharedIds}
+        copiedIds={server.copiedIds}
+        error={error}
+        onShare={(r) => guarded(async () => { await api.share(r.id); await refresh(); })}
+        onUnshare={(r) => guarded(async () => { await api.unshare(r.id); await refresh(); })}
         onUnlike={(id) => guarded(async () => { await api.unlike(id); await refresh(); })}
         onRestore={(id) => guarded(async () => { await api.restore(id); await refresh(); })}
+        onBack={() => go('home')}
+      />
+    );
+  }
+  if (screen === 'shared') {
+    return (
+      <SharedScreen
+        recipes={community}
+        group={communityGroup}
+        onGroup={setCommunityGroup}
+        error={error}
+        onOpen={(item) => open(item.recipe, 'shared')}
+        onToggleLike={toggleCommunityLike}
         onBack={() => go('home')}
       />
     );
@@ -145,17 +185,17 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
   if (screen === 'recipe' && recipe) {
     return (
       <>
-        <Button variant="ghost" size="sm" className="self-start" onClick={() => go(fromLiked ? 'liked' : 'home')}>
+        <Button variant="ghost" size="sm" className="self-start" onClick={() => go(BACK[origin].screen)}>
           <Emoji>←</Emoji>
-          {fromLiked ? 'Back to liked recipes' : 'Back to ingredients'}
+          {BACK[origin].label}
         </Button>
         <RecipeScreen
           key={recipe.id}
           recipe={recipe}
           busy={loading}
-          onAnother={fromLiked ? undefined : suggest}
-          onLiked={fromLiked ? undefined : like}
-          onDisliked={fromLiked ? undefined : dislike}
+          onAnother={origin === 'home' ? suggest : undefined}
+          onLiked={origin === 'home' ? like : undefined}
+          onDisliked={origin === 'home' ? dislike : undefined}
         />
         {saved && <Notice>Saved to liked recipes.</Notice>}
         {error && <Notice kind="error">{error}</Notice>}
@@ -172,6 +212,7 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
       loading={loading}
       error={error}
       onShowLiked={() => go('liked')}
+      onShowShared={showCommunity}
     />
   );
 }

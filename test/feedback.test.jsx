@@ -11,7 +11,7 @@ const suggestFirst = async (options) => {
   await shown('Banana mash');
   return api;
 };
-const openLiked = () => { click('Back to ingredients'); click('Liked recipes'); };
+const openLiked = () => { click('New recipe'); click('Liked recipes'); };
 
 test('Give me another asks again and shows a different recipe', async () => {
   const api = await suggestFirst();
@@ -70,7 +70,7 @@ test('an old error is not shown after navigating elsewhere', async () => {
   click('Suggest a recipe');
   await waitFor(() => expect(screen.getByRole('alert')).not.toBeNull());
   click('Liked recipes');
-  click('Back to ingredients');
+  click('New recipe');
   expect(screen.queryByRole('alert')).toBeNull();
 });
 
@@ -108,4 +108,26 @@ test('a failed Give me another keeps the recipe and shows the message', async ()
   click('Give me another');
   await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/Daily limit reached/));
   expect(screen.getByRole('heading', { name: 'Banana mash' })).not.toBeNull();
+});
+
+test('the ingredient list is empty after coming back from a recipe', async () => {
+  await suggestFirst();
+  click('New recipe');
+  expect(screen.queryByText('banana')).toBeNull();
+  expect(screen.getByRole('button', { name: 'Suggest a recipe' }).disabled).toBe(true);
+});
+
+test('the ingredient list is empty after visiting liked recipes without generating', async () => {
+  await startApp();
+  addIngredient('banana');
+  click('Liked recipes');
+  click('New recipe');
+  expect(screen.queryByText('banana')).toBeNull();
+});
+
+test('Give me another still uses the ingredients', async () => {
+  const api = await suggestFirst();
+  click('Give me another');
+  await shown('Oat porridge');
+  expect(api.suggest).toHaveBeenLastCalledWith(['banana']);
 });
