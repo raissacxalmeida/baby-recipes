@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { ageInMonths } from '../shared/age.js';
 import { ageLabel } from '../shared/units.js';
+import Menu from './components/Menu.jsx';
 import HomeScreen from './screens/HomeScreen.jsx';
 import LikedScreen from './screens/LikedScreen.jsx';
 import RecipeScreen from './screens/RecipeScreen.jsx';
@@ -13,9 +14,8 @@ import { Notice } from '@/components/ui/notice.jsx';
 
 const MIN_MONTHS = 6;
 
-// Where the recipe screen's back button goes, by where the recipe was opened from.
+// Where the recipe screen's back button goes, by where the recipe was opened from. A freshly suggested recipe has none: the menu leads out.
 const BACK = {
-  home: { screen: 'home', label: 'New recipe' },
   liked: { screen: 'liked', label: 'Back to liked recipes' },
   shared: { screen: 'shared', label: 'Back to community recipes' },
 };
@@ -29,7 +29,7 @@ function startScreen(birthdate, now) {
   }
 }
 
-export default function MainApp({ api, now, onSessionLost = () => {} }) {
+export default function MainApp({ api, user, now, landOn = null, onSessionLost = () => {}, onLogout, onDelete, onAdmin }) {
   const [server, setServer] = useState(null);
   const [loadError, setLoadError] = useState(null);
   const [screen, setScreen] = useState(null);
@@ -53,10 +53,14 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
   useEffect(() => {
     let live = true;
     api.state()
-      .then((s) => {
+      .then(async (s) => {
+        const start = startScreen(s.birthdate, now());
+        // Arriving from another page (the admin page) can ask for the liked or community page instead of Home.
+        const list = start === 'home' && landOn === 'shared' ? await api.listShared() : null;
         if (!live) return;
         setServer(s);
-        setScreen(startScreen(s.birthdate, now()));
+        if (list) setCommunity(list);
+        setScreen(start === 'home' && landOn ? landOn : start);
       })
       .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err.message)));
     return () => { live = false; };
@@ -147,72 +151,91 @@ export default function MainApp({ api, now, onSessionLost = () => {} }) {
     await refresh();
   });
 
-  if (loadError) return <Notice kind="error">{loadError}</Notice>;
-  if (!server || !screen) return <Notice>Loading...</Notice>;
+  const account = <Menu user={user} onAdmin={onAdmin} onLogout={onLogout} onDelete={onDelete} />;
+  if (loadError) return <>{account}<Notice kind="error">{loadError}</Notice></>;
+  if (!server || !screen) return <>{account}<Notice>Loading...</Notice></>;
 
-  if (screen === 'setup') return <SetupScreen onSave={saveBirthday} now={now} />;
-  if (screen === 'too-young') return <TooYoungScreen onChangeBirthday={() => go('setup')} />;
-  if (screen === 'liked') {
-    return (
-      <LikedScreen
-        liked={server.liked}
-        disliked={server.disliked}
-        onOpen={open}
-        sharedIds={server.sharedIds}
-        copiedIds={server.copiedIds}
-        error={error}
-        onShare={(r) => guarded(async () => { await api.share(r.id); await refresh(); })}
-        onUnshare={(r) => guarded(async () => { await api.unshare(r.id); await refresh(); })}
-        onUnlike={(id) => guarded(async () => { await api.unlike(id); await refresh(); })}
-        onRestore={(id) => guarded(async () => { await api.restore(id); await refresh(); })}
-        onBack={() => go('home')}
-      />
-    );
-  }
-  if (screen === 'shared') {
-    return (
-      <SharedScreen
-        recipes={community}
-        group={communityGroup}
-        onGroup={setCommunityGroup}
-        error={error}
-        onOpen={(item) => open(item.recipe, 'shared')}
-        onToggleLike={toggleCommunityLike}
-        onBack={() => go('home')}
-      />
-    );
-  }
-  if (screen === 'recipe' && recipe) {
-    return (
-      <>
-        <Button variant="ghost" size="sm" className="self-start" onClick={() => go(BACK[origin].screen)}>
-          <Emoji>←</Emoji>
-          {BACK[origin].label}
-        </Button>
-        <RecipeScreen
-          key={recipe.id}
-          recipe={recipe}
-          busy={loading}
-          onAnother={origin === 'home' ? suggest : undefined}
-          onLiked={origin === 'home' ? like : undefined}
-          onDisliked={origin === 'home' ? dislike : undefined}
+  function renderScreen() {
+    if (screen === 'setup') return <SetupScreen onSave={saveBirthday} now={now} />;
+    if (screen === 'too-young') return <TooYoungScreen onChangeBirthday={() => go('setup')} />;
+    if (screen === 'liked') {
+      return (
+        <LikedScreen
+          liked={server.liked}
+          disliked={server.disliked}
+          onOpen={open}
+          sharedIds={server.sharedIds}
+          copiedIds={server.copiedIds}
+          error={error}
+          onShare={(r) => guarded(async () => { await api.share(r.id); await refresh(); })}
+          onUnshare={(r) => guarded(async () => { await api.unshare(r.id); await refresh(); })}
+          onUnlike={(id) => guarded(async () => { await api.unlike(id); await refresh(); })}
+          onRestore={(id) => guarded(async () => { await api.restore(id); await refresh(); })}
         />
-        {saved && <Notice>Saved to liked recipes.</Notice>}
-        {error && <Notice kind="error">{error}</Notice>}
-      </>
+      );
+    }
+    if (screen === 'shared') {
+      return (
+        <SharedScreen
+          recipes={community}
+          group={communityGroup}
+          onGroup={setCommunityGroup}
+          error={error}
+          onOpen={(item) => open(item.recipe, 'shared')}
+          onToggleLike={toggleCommunityLike}
+        />
+      );
+    }
+    if (screen === 'recipe' && recipe) {
+      return (
+        <>
+          {BACK[origin] && (
+            <Button variant="ghost" size="sm" className="self-start" onClick={() => go(BACK[origin].screen)}>
+              <Emoji>←</Emoji>
+              {BACK[origin].label}
+            </Button>
+          )}
+          <RecipeScreen
+            key={recipe.id}
+            recipe={recipe}
+            busy={loading}
+            onAnother={origin === 'home' ? suggest : undefined}
+            onLiked={origin === 'home' ? like : undefined}
+            onDisliked={origin === 'home' ? dislike : undefined}
+          />
+          {saved && <Notice>Saved to liked recipes.</Notice>}
+          {error && <Notice kind="error">{error}</Notice>}
+        </>
+      );
+    }
+    return (
+      <HomeScreen
+        ageText={ageLabel(ageInMonths(server.birthdate, now()))}
+        usage={server.usage}
+        ingredients={ingredients}
+        onChange={setIngredients}
+        onSuggest={suggest}
+        loading={loading}
+        error={error}
+      />
     );
   }
+
+  // The page links only make sense once the app proper has started; the recipe page marks no page as current.
+  const inApp = ['home', 'liked', 'shared', 'recipe'].includes(screen);
   return (
-    <HomeScreen
-      ageText={ageLabel(ageInMonths(server.birthdate, now()))}
-      usage={server.usage}
-      ingredients={ingredients}
-      onChange={setIngredients}
-      onSuggest={suggest}
-      loading={loading}
-      error={error}
-      onShowLiked={() => go('liked')}
-      onShowShared={showCommunity}
-    />
+    <>
+      <Menu
+        user={user}
+        current={screen}
+        onHome={inApp ? () => go('home') : undefined}
+        onLiked={inApp ? () => go('liked') : undefined}
+        onCommunity={inApp ? showCommunity : undefined}
+        onAdmin={onAdmin}
+        onLogout={onLogout}
+        onDelete={onDelete}
+      />
+      {renderScreen()}
+    </>
   );
 }

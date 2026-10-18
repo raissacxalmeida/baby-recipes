@@ -1,6 +1,6 @@
 import { test, expect, afterEach, vi } from 'vitest';
 import { screen, waitFor, cleanup } from '@testing-library/react';
-import { addIngredient, click, shown, startApp } from './helpers/app.jsx';
+import { addIngredient, click, goTo, shown, startApp } from './helpers/app.jsx';
 
 afterEach(cleanup);
 
@@ -10,7 +10,7 @@ test('Home shows how many recipes were used today', async () => {
   addIngredient('banana');
   click('Suggest a recipe');
   await shown('Banana mash');
-  click('New recipe');
+  goTo('Home');
   await waitFor(() => expect(screen.getByText('Recipes today: 1 of 10')).not.toBeNull());
   expect(api.state).toHaveBeenCalledTimes(2);
 });

@@ -1,6 +1,6 @@
 import { test, expect, afterEach, vi } from 'vitest';
 import { screen, waitFor, cleanup } from '@testing-library/react';
-import { addIngredient, click, first, second, shown, startApp } from './helpers/app.jsx';
+import { addIngredient, click, first, goTo, second, shown, startApp } from './helpers/app.jsx';
 
 afterEach(cleanup);
 
@@ -11,7 +11,7 @@ const suggestFirst = async (options) => {
   await shown('Banana mash');
   return api;
 };
-const openLiked = () => { click('New recipe'); click('Liked recipes'); };
+const openLiked = () => goTo('Liked recipes');
 
 test('Give me another asks again and shows a different recipe', async () => {
   const api = await suggestFirst();
@@ -69,8 +69,8 @@ test('an old error is not shown after navigating elsewhere', async () => {
   addIngredient('banana');
   click('Suggest a recipe');
   await waitFor(() => expect(screen.getByRole('alert')).not.toBeNull());
-  click('Liked recipes');
-  click('New recipe');
+  goTo('Liked recipes');
+  goTo('Home');
   expect(screen.queryByRole('alert')).toBeNull();
 });
 
@@ -79,7 +79,7 @@ test('a response that arrives after navigating away is ignored', async () => {
   await startApp({ overrides: { suggest: vi.fn(() => new Promise((r) => { resolve = r; })) } });
   addIngredient('banana');
   click('Suggest a recipe');
-  click('Liked recipes');
+  goTo('Liked recipes');
   resolve(first);
   await new Promise((r) => setTimeout(r, 20));
   expect(screen.getByRole('heading', { name: 'Liked recipes' })).not.toBeNull();
@@ -112,7 +112,7 @@ test('a failed Give me another keeps the recipe and shows the message', async ()
 
 test('the ingredient list is empty after coming back from a recipe', async () => {
   await suggestFirst();
-  click('New recipe');
+  goTo('Home');
   expect(screen.queryByText('banana')).toBeNull();
   expect(screen.getByRole('button', { name: 'Suggest a recipe' }).disabled).toBe(true);
 });
@@ -120,8 +120,8 @@ test('the ingredient list is empty after coming back from a recipe', async () =>
 test('the ingredient list is empty after visiting liked recipes without generating', async () => {
   await startApp();
   addIngredient('banana');
-  click('Liked recipes');
-  click('New recipe');
+  goTo('Liked recipes');
+  goTo('Home');
   expect(screen.queryByText('banana')).toBeNull();
 });
 
