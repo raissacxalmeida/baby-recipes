@@ -1,4 +1,4 @@
-# Baby recipes
+# Tiny Pantry
 
 A small website that suggests baby-friendly recipes from the ingredients you have, for your baby's age. Invite-only accounts keep each person's data (birthday, liked recipes, not-liked recipes) on the server. It runs on your own computer with Docker Compose and is meant for your **home network**.
 
