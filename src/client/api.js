@@ -1,3 +1,5 @@
+import { hasKey, t } from './i18n/index.js';
+
 export function createApi(fetchImpl = (...args) => fetch(...args)) {
   async function request(method, path, body) {
     let res;
@@ -12,11 +14,13 @@ export function createApi(fetchImpl = (...args) => fetch(...args)) {
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch {
-      throw new Error('Could not reach the server');
+      throw new Error(t('err.network'));
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw Object.assign(new Error(data.message ?? 'Something went wrong'), { status: res.status, code: data.error });
+      // The server's English message is the fallback for a key this browser has no text for.
+      const message = data.key && hasKey(data.key) ? t(data.key, data.params) : data.message ?? t('err.generic');
+      throw Object.assign(new Error(message), { status: res.status, code: data.error, key: data.key });
     }
     return data;
   }

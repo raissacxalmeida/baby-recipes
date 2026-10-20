@@ -1,5 +1,6 @@
 import { test, expect, vi } from 'vitest';
 import { createApi } from '../src/client/api.js';
+import { setLanguage } from '../src/client/i18n/index.js';
 
 const reply = (status, body) => vi.fn(async () => ({ ok: status < 400, status, json: async () => body }));
 
@@ -113,4 +114,26 @@ test('likeShared and unlikeShared hit the like path of the shared id', async () 
   expect(fetchImpl.mock.calls.map(([url, init]) => `${init.method} ${url}`)).toEqual([
     'POST /api/shared/abc/like', 'DELETE /api/shared/abc/like',
   ]);
+});
+
+test('a server error with a known key is shown in the current language', async () => {
+  setLanguage('de');
+  const wrong = createApi(reply(401, { error: 'unauthorized', message: 'Wrong email or password', key: 'err.wrongLogin' }));
+  await expect(wrong.login('a@b.c', 'x')).rejects.toMatchObject({
+    message: 'Falsche E-Mail-Adresse oder falsches Passwort', status: 401, code: 'unauthorized', key: 'err.wrongLogin',
+  });
+  const short = createApi(reply(400, { error: 'invalid-input', message: 'Use a password with at least 10 characters', key: 'err.passwordShort', params: { min: 10 } }));
+  await expect(short.signup('tok', 'x')).rejects.toMatchObject({ message: 'Verwende ein Passwort mit mindestens 10 Zeichen' });
+});
+
+test('a key the browser does not know falls back to the English message', async () => {
+  setLanguage('de');
+  const api = createApi(reply(400, { error: 'invalid-input', message: 'Plain English', key: 'err.unknownFromNewerServer' }));
+  await expect(api.signup('tok', 'x')).rejects.toMatchObject({ message: 'Plain English' });
+});
+
+test('a network failure is shown in the current language', async () => {
+  setLanguage('de');
+  const api = createApi(async () => { throw new TypeError('Failed to fetch'); });
+  await expect(api.state()).rejects.toThrow('Der Server ist nicht erreichbar');
 });

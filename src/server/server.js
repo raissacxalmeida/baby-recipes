@@ -122,7 +122,7 @@ export function createServer({ db, config, callModel, now = () => new Date(), st
 
   async function handleApi(req, res, pathname) {
     const found = matchRoute(compiled, req.method, pathname);
-    if (!found) throw new AppError('not-found', 'Not found');
+    if (!found) throw new AppError('not-found', 'Not found', { key: 'err.notFound' });
     const { route, params } = found;
     if (req.method !== 'GET' && req.headers['x-requested-with'] !== 'fetch') {
       throw new AppError('invalid-input', 'Missing X-Requested-With header');
@@ -145,8 +145,8 @@ export function createServer({ db, config, callModel, now = () => new Date(), st
     let user = null;
     if (route.access !== 'public') {
       user = await sessionUser(db, sessionToken, now());
-      if (!user) throw new AppError('unauthorized', 'Please log in');
-      if (route.access === 'admin' && !user.isAdmin) throw new AppError('forbidden', 'Not allowed');
+      if (!user) throw new AppError('unauthorized', 'Please log in', { key: 'err.notLoggedIn' });
+      if (route.access === 'admin' && !user.isAdmin) throw new AppError('forbidden', 'Not allowed', { key: 'err.notAllowed' });
     }
     const result = await route.handler({ db, user, params, body, now, config, callModel, sessionToken });
     const headers = {};
@@ -166,10 +166,14 @@ export function createServer({ db, config, callModel, now = () => new Date(), st
       return sendText(res, 404, 'Not found');
     } catch (err) {
       if (err instanceof AppError) {
-        return sendJson(res, STATUS[err.code] ?? 500, { error: err.code, message: err.message });
+        return sendJson(res, STATUS[err.code] ?? 500, {
+          error: err.code,
+          message: err.message,
+          ...(err.key ? { key: err.key, ...(err.params ? { params: err.params } : {}) } : {}),
+        });
       }
       console.error('Unhandled error:', err.name, err.message);
-      return sendJson(res, 500, { error: 'server-error', message: 'Something went wrong' });
+      return sendJson(res, 500, { error: 'server-error', message: 'Something went wrong', key: 'err.generic' });
     }
   });
 }

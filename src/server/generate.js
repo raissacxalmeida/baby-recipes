@@ -19,18 +19,20 @@ export function validateRequest({ birthdate, ingredients, exclude }, now) {
     throw new AppError('invalid-input', 'Ingredients and excluded titles must be lists of text');
   }
   if ((ingredients ?? []).length > MAX_INGREDIENTS || (ingredients ?? []).some((s) => s.length > MAX_INGREDIENT_LENGTH)) {
-    throw new AppError('invalid-input', `Use at most ${MAX_INGREDIENTS} ingredients of ${MAX_INGREDIENT_LENGTH} characters each`);
+    throw new AppError('invalid-input', `Use at most ${MAX_INGREDIENTS} ingredients of ${MAX_INGREDIENT_LENGTH} characters each`, {
+      key: 'err.ingredientsLimit', params: { maxItems: MAX_INGREDIENTS, maxLength: MAX_INGREDIENT_LENGTH },
+    });
   }
   let ageMonths;
   try {
     ageMonths = ageInMonths(birthdate, now());
   } catch (err) {
-    throw new AppError('invalid-input', err.message);
+    throw new AppError('invalid-input', err.message, { key: err.key });
   }
   const list = parseIngredientList(ingredients ?? []);
-  if (list.length === 0) throw new AppError('invalid-input', 'Add at least one ingredient');
+  if (list.length === 0) throw new AppError('invalid-input', 'Add at least one ingredient', { key: 'err.ingredientsNeeded' });
   if (ageMonths < MIN_MONTHS) {
-    throw new AppError('too-young', 'Solid foods usually start around 6 months, so no recipe is suggested yet');
+    throw new AppError('too-young', 'Solid foods usually start around 6 months, so no recipe is suggested yet', { key: 'err.tooYoung' });
   }
   return { ageMonths, list };
 }
@@ -62,5 +64,5 @@ export async function generateRecipe({ birthdate, ingredients, exclude }, { call
       if (err instanceof AppError && ['missing-key', 'upstream-error', 'limit-reached'].includes(err.code)) throw err;
     }
   }
-  throw new AppError('generation-failed', 'Could not make a safe recipe. Please try again');
+  throw new AppError('generation-failed', 'Could not make a safe recipe. Please try again', { key: 'err.generationFailed' });
 }

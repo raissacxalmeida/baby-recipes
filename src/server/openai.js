@@ -41,7 +41,7 @@ function prompt({ ageMonths, ingredients, exclude }) {
 }
 
 export async function callModel(input, { apiKey, fetchImpl = fetch }) {
-  if (!apiKey) throw new AppError('missing-key', 'OPENAI_API_KEY is not set');
+  if (!apiKey) throw new AppError('missing-key', 'OPENAI_API_KEY is not set', { key: 'err.openaiKey' });
   let res;
   try {
     res = await fetchImpl(URL, {
@@ -58,11 +58,13 @@ export async function callModel(input, { apiKey, fetchImpl = fetch }) {
     }),
     });
   } catch {
-    throw new AppError('upstream-error', 'Could not reach OpenAI');
+    throw new AppError('upstream-error', 'Could not reach OpenAI', { key: 'err.openaiUnreachable' });
   }
   if (!res.ok) {
     const hint = res.status === 401 || res.status === 403 ? ' Check OPENAI_API_KEY.' : '';
-    throw new AppError('upstream-error', `OpenAI rejected the request (status ${res.status}).${hint}`);
+    throw new AppError('upstream-error', `OpenAI rejected the request (status ${res.status}).${hint}`, {
+      key: 'err.openaiRejected', params: { status: res.status },
+    });
   }
   const data = await res.json();
   return JSON.parse(data.choices[0].message.content);

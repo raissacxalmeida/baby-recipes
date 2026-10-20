@@ -84,7 +84,7 @@ export const dataRoutes = [
   {
     method: 'POST', pattern: '/api/shared', access: 'user',
     async handler({ db, user, body, now }) {
-      if (typeof body.id !== 'string') throw new AppError('invalid-input', 'Choose a recipe to share');
+      if (typeof body.id !== 'string') throw new AppError('invalid-input', 'Choose a recipe to share', { key: 'err.chooseRecipe' });
       await shareRecipe(db, user.id, body.id, now());
       return ok();
     },
