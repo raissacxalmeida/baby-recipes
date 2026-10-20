@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
+import Logo from './Logo.jsx';
 
 function MenuItem({ emoji, label, active, onClick }) {
   return (
@@ -24,13 +25,14 @@ export default function Menu({ user, current = null, onHome, onLiked, onCommunit
   };
 
   return (
-    <header className="relative">
-      <Button variant="outline" size="sm" aria-expanded={open} aria-controls="main-menu" onClick={() => setOpen(!open)}>
+    <header className="relative flex items-center justify-between gap-3">
+      <Logo />
+      <Button variant="outline" size="sm" className="shrink-0" aria-expanded={open} aria-controls="main-menu" onClick={() => setOpen(!open)}>
         <Emoji>☰</Emoji>
         Menu
       </Button>
       {open && (
-        <Card id="main-menu" className="absolute left-0 top-full z-40 mt-2 grid w-64 max-w-full gap-1 p-2">
+        <Card id="main-menu" className="absolute right-0 top-full z-40 mt-2 grid w-64 max-w-full gap-1 p-2">
           <p className="m-0 min-w-0 wrap-anywhere px-3 py-1 text-sm text-muted-foreground">{user.email}</p>
           {onHome && <MenuItem emoji="✨" label="Home" active={current === 'home'} onClick={closing(onHome)} />}
           {onLiked && <MenuItem emoji="♡" label="Liked recipes" active={current === 'liked'} onClick={closing(onLiked)} />}

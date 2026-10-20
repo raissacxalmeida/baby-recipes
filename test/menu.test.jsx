@@ -150,3 +150,15 @@ test('an admin reaches the admin page from the menu and Home brings them back', 
   expect(await screen.findByRole('heading', { name: "What's in the fridge?" })).not.toBeNull();
   await waitFor(() => expect(screen.queryByRole('heading', { name: 'Admin' })).toBeNull());
 });
+
+test('the header shows the Tiny Pantry name next to the menu button', async () => {
+  await startApp();
+  expect(screen.getByText('Tiny Pantry')).not.toBeNull();
+  expect(screen.getByRole('button', { name: 'Menu' })).not.toBeNull();
+});
+
+test('the name is not repeated in the open menu', async () => {
+  await startApp();
+  openMenu();
+  expect(screen.getAllByText('Tiny Pantry')).toHaveLength(1);
+});
