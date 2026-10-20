@@ -17,7 +17,7 @@ The site is English only. Every user, whether logged in or not, should be able t
 - **Recipe content is not translated in this project.** Recipe titles, ingredient names and steps, whether built-in (the 49 seeded recipes), AI-generated, saved or shared, stay in English. A German user sees a German app around English recipes. The owner accepted this for a first version. Translating recipe content is a later, separate project.
 - The AI is not asked to write recipes in the user's language.
 - Right-to-left languages, and any language beyond the four.
-- Translating the brand name "Tiny Pantry".
+- Translating the brand name "Tiny Pantry" or its tagline.
 
 ## Anti-goals (what would make this a failure even if it works)
 
@@ -41,7 +41,7 @@ The site is English only. Every user, whether logged in or not, should be able t
 - **Logged in:** choosing a language saves it to the account straight away. If the save fails, the interface still switches and the user is not shown an error.
 - **The footer is rendered on every page already**, so the switch is one small component there. Keep it easy to reach on long screens, but do not make it sticky unless that looks fine.
 - **Page language tag:** `<html lang>` follows the chosen language (it is hard-coded `en` in `index.html`).
-- **Brand and tagline:** the name stays "Tiny Pantry" in every language and the page title stays "Tiny Pantry". The tagline is translated, and it is still provisional.
+- **Brand and tagline:** the name stays "Tiny Pantry" in every language and the page title stays "Tiny Pantry". The tagline "recipes for little eaters" also stays in English in every language, as the owner decided, so `Logo.jsx` needs no change.
 - **Numbers:** amounts follow the language's decimal mark (`1,2 kg` in Portuguese, Spanish and German, `1.2 kg` in English). Dates shown in the admin page stay in the ISO form they use now.
 - **Plurals and sentences:** all counted wording ("1 portion" / "N portions", "N likes", "Pending (N days left)", ages) and all sentences with a value in them (email addresses, ages, times) are translated as whole sentences with the value as a slot, never built from pieces. German, Spanish and Portuguese have different plural and word-order needs from English.
 - **Translations:** I (Claude) will write the Portuguese, Spanish and German text. The owner decided to ship without native-speaker review (decision 5); a review afterwards is welcome.
