@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
+import { t } from '../i18n/index.js';
 
 const MIN_PASSWORD = 10;
 
@@ -25,7 +26,7 @@ export default function ResetScreen({ api, token, onDone }) {
   async function submit(e) {
     e.preventDefault();
     if (password.length < MIN_PASSWORD) {
-      setError(`Use a password with at least ${MIN_PASSWORD} characters`);
+      setError(t('err.passwordShort', { min: MIN_PASSWORD }));
       return;
     }
     setBusy(true);
@@ -42,7 +43,7 @@ export default function ResetScreen({ api, token, onDone }) {
   if (invalid) {
     return (
       <Card>
-        <section className="grid gap-4"><h1>Reset password</h1><Notice kind="error">{error}</Notice></section>
+        <section className="grid gap-4"><h1>{t('reset.title')}</h1><Notice kind="error">{error}</Notice></section>
       </Card>
     );
   }
@@ -50,21 +51,21 @@ export default function ResetScreen({ api, token, onDone }) {
     return (
       <Card>
         <section className="grid gap-4">
-          <h1>Password changed</h1>
-          <Button variant="outline" onClick={() => onDone()}>Go to log in</Button>
+          <h1>{t('reset.changedTitle')}</h1>
+          <Button variant="outline" onClick={() => onDone()}>{t('reset.toLogin')}</Button>
         </section>
       </Card>
     );
   }
-  if (email === null) return <Notice>Checking your link...</Notice>;
+  if (email === null) return <Notice>{t('reset.checking')}</Notice>;
   return (
     <Card>
       <form onSubmit={submit} className="grid gap-4">
-        <h1>Reset password</h1>
-        <Notice className="wrap-anywhere">New password for {email}.</Notice>
-        <Field label="New password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <h1>{t('reset.title')}</h1>
+        <Notice className="wrap-anywhere">{t('reset.forEmail', { email })}</Notice>
+        <Field label={t('reset.newPassword')} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {error && <Notice kind="error">{error}</Notice>}
-        <Button type="submit" disabled={busy}>Change password</Button>
+        <Button type="submit" disabled={busy}>{t('reset.submit')}</Button>
       </form>
     </Card>
   );

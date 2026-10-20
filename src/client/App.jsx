@@ -8,7 +8,7 @@ import Logo from './components/Logo.jsx';
 import LanguageSwitch from './components/LanguageSwitch.jsx';
 import Menu from './components/Menu.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { getLanguage, setLanguage, useLanguage } from './i18n/index.js';
+import { getLanguage, setLanguage, t, useLanguage } from './i18n/index.js';
 import { isLanguage } from '../shared/languages.js';
 
 const defaultNavigate = (path) => window.history.pushState({}, '', path);
@@ -63,7 +63,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   }
   const signedIn = (user) => { setNotice(null); setSession({ status: 'ready', user }); };
   const signedOut = () => { setLandOn(null); setSession({ status: 'anon', user: null }); };
-  const sessionLost = () => { setNotice('Your session ended. Please log in again.'); signedOut(); };
+  const sessionLost = () => { setNotice(t('auth.sessionEnded')); signedOut(); };
 
   let body;
   if (invite) {
@@ -71,7 +71,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   } else if (reset) {
     body = <ResetScreen api={api} token={safeDecode(reset[1])} onDone={() => go('/')} />;
   } else if (session.status === 'loading') {
-    body = <Notice>Loading...</Notice>;
+    body = <Notice>{t('common.loading')}</Notice>;
   } else if (session.status === 'anon') {
     body = <LoginScreen api={api} onLoggedIn={signedIn} notice={notice} />;
   } else {
@@ -119,7 +119,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
       {loggedOut && <Logo size="lg" tagline />}
       {body}
       <footer className="mt-4 grid gap-2 text-center text-xs text-muted-foreground">
-        <p className="m-0">This is not medical advice. Check with your paediatrician if unsure.</p>
+        <p className="m-0">{t('footer.disclaimer')}</p>
         <LanguageSwitch onChange={chooseLanguage} />
       </footer>
     </main>
