@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { t } from '../i18n/index.js';
+import { errorText, t } from '../i18n/index.js';
 
 function Row({ title, children }) {
   return (
@@ -20,7 +20,7 @@ export default function LikedScreen({
   return (
     <section className="grid gap-4">
       <h1><Emoji>♡</Emoji> {t('liked.title')}</h1>
-      {error && <Notice kind="error">{error}</Notice>}
+      {error && <Notice kind="error">{errorText(error)}</Notice>}
       <Card>
         {liked.length === 0 && <Notice>{t('liked.none')}</Notice>}
         <ul className="m-0 list-none p-0">

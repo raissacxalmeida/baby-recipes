@@ -46,4 +46,11 @@ function subscribe(listener) {
 export const useLanguage = () => useSyncExternalStore(subscribe, getLanguage);
 
 export const t = (key, params) => translate(current, key, params);
-export const hasKey = (key) => key in catalogs.en;
+export const hasKey = (key) => Object.hasOwn(catalogs.en, key);
+
+// What to show for an error kept in state: the text for its key in the language showing now, else its own message.
+// Errors are kept as data (not as finished text) so a language switch changes the wording of one already on screen.
+export function errorText(error) {
+  if (typeof error === 'string') return error;
+  return error.key && hasKey(error.key) ? t(error.key, error.params) : error.message;
+}

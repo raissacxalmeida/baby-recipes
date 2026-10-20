@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { getLanguage, t } from '../i18n/index.js';
+import { errorText, getLanguage, t } from '../i18n/index.js';
 
 const percent = (used, limit) => (limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0);
 
@@ -51,7 +51,7 @@ export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, 
           </ul>
         )}
       </Card>
-      {error && <Notice kind="error">{error}</Notice>}
+      {error && <Notice kind="error">{errorText(error)}</Notice>}
       <Button onClick={onSuggest} disabled={loading || ingredients.length === 0}>
         <Emoji>✨</Emoji>
         {t('home.suggest')}

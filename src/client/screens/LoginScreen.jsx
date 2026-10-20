@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { t } from '../i18n/index.js';
+import { errorText, t } from '../i18n/index.js';
 
 export default function LoginScreen({ api, onLoggedIn, notice = null }) {
   const [email, setEmail] = useState('');
@@ -18,7 +18,7 @@ export default function LoginScreen({ api, onLoggedIn, notice = null }) {
     try {
       onLoggedIn(await api.login(email, password));
     } catch (err) {
-      setError(err.message);
+      setError(err);
       setBusy(false);
     }
   }
@@ -27,10 +27,10 @@ export default function LoginScreen({ api, onLoggedIn, notice = null }) {
     <Card>
       <form onSubmit={submit} className="grid gap-4">
         <h1>{t('login.title')}</h1>
-        {notice && <Notice>{notice}</Notice>}
+        {notice && <Notice>{errorText(notice)}</Notice>}
         <Field label={t('auth.email')} type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} />
         <Field label={t('auth.password')} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        {error && <Notice kind="error">{error}</Notice>}
+        {error && <Notice kind="error">{errorText(error)}</Notice>}
         <Button type="submit" disabled={busy}>{t('login.submit')}</Button>
       </form>
     </Card>

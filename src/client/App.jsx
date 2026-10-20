@@ -8,7 +8,7 @@ import Logo from './components/Logo.jsx';
 import LanguageSwitch from './components/LanguageSwitch.jsx';
 import Menu from './components/Menu.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { getLanguage, setLanguage, t, useLanguage } from './i18n/index.js';
+import { errorText, getLanguage, setLanguage, t, useLanguage } from './i18n/index.js';
 import { isLanguage } from '../shared/languages.js';
 
 const defaultNavigate = (path) => window.history.pushState({}, '', path);
@@ -63,7 +63,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   }
   const signedIn = (user) => { setNotice(null); setSession({ status: 'ready', user }); };
   const signedOut = () => { setLandOn(null); setSession({ status: 'anon', user: null }); };
-  const sessionLost = () => { setNotice(t('auth.sessionEnded')); signedOut(); };
+  const sessionLost = () => { setNotice({ key: 'auth.sessionEnded' }); signedOut(); };
 
   let body;
   if (invite) {
@@ -89,7 +89,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
           signedOut();
           go('/');
         } catch (err) {
-          setAccountError(err.message);
+          setAccountError(err);
         }
       },
       onAdmin: () => { setLandOn(null); go('/admin'); },
@@ -99,13 +99,13 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
       ? (
         <>
           <Menu {...account} current="admin" onHome={land(null)} onLiked={land('liked')} onCommunity={land('shared')} />
-          {accountError && <Notice kind="error">{accountError}</Notice>}
+          {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
           <AdminScreen api={api} me={session.user} />
         </>
       )
       : (
         <>
-          {accountError && <Notice kind="error">{accountError}</Notice>}
+          {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
           <MainApp api={api} now={now} landOn={landOn} onSessionLost={sessionLost} {...account} />
         </>
       );

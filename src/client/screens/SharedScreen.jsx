@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { t } from '../i18n/index.js';
+import { errorText, t } from '../i18n/index.js';
 
 const emojiFor = (name) => GROUPS.find((g) => g.name === name)?.emoji;
 
@@ -18,7 +18,7 @@ export default function SharedScreen({
   return (
     <section className="grid gap-4">
       <h1><Emoji>🌍</Emoji> {t('shared.title')}</h1>
-      {error && <Notice kind="error">{error}</Notice>}
+      {error && <Notice kind="error">{errorText(error)}</Notice>}
       {recipes.length === 0 && <Notice kind="note">{t('shared.none')}</Notice>}
       {present.length > 0 && (
         <div className="flex flex-wrap gap-2">

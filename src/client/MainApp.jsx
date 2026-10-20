@@ -10,7 +10,7 @@ import TooYoungScreen from './screens/TooYoungScreen.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { t } from './i18n/index.js';
+import { errorText, t } from './i18n/index.js';
 
 const MIN_MONTHS = 6;
 
@@ -62,7 +62,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
         if (list) setCommunity(list);
         setScreen(start === 'home' && landOn ? landOn : start);
       })
-      .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err.message)));
+      .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err)));
     return () => { live = false; };
   }, [api]);
 
@@ -78,7 +78,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   // A 401 means the session ended (expired, or the account was removed): back to the login form.
   function failed(err) {
     if (err.status === 401) onSessionLost();
-    else setError(err.message);
+    else setError(err);
   }
 
   async function guarded(action) {
@@ -152,7 +152,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   });
 
   const account = <Menu user={user} onAdmin={onAdmin} onLogout={onLogout} onDelete={onDelete} />;
-  if (loadError) return <>{account}<Notice kind="error">{loadError}</Notice></>;
+  if (loadError) return <>{account}<Notice kind="error">{errorText(loadError)}</Notice></>;
   if (!server || !screen) return <>{account}<Notice>{t('common.loading')}</Notice></>;
 
   function renderScreen() {
@@ -204,7 +204,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
             onDisliked={origin === 'home' ? dislike : undefined}
           />
           {saved && <Notice>{t('recipe.saved')}</Notice>}
-          {error && <Notice kind="error">{error}</Notice>}
+          {error && <Notice kind="error">{errorText(error)}</Notice>}
         </>
       );
     }

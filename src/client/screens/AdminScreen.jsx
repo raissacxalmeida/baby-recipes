@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card.jsx';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { t } from '../i18n/index.js';
+import { errorText, t } from '../i18n/index.js';
 
 const day = (iso) => (iso ? iso.slice(0, 10) : t('admin.never'));
 const statusText = (invite) => {
@@ -73,7 +73,7 @@ function AdminPage({ api }) {
   const [issued, setIssued] = useState(null);
   const [email, setEmail] = useState('');
 
-  const load = () => api.admin.overview().then(setData).catch((err) => setError(err.message));
+  const load = () => api.admin.overview().then(setData).catch((err) => setError(err));
   useEffect(() => { load(); }, []);
 
   async function act(action) {
@@ -82,7 +82,7 @@ function AdminPage({ api }) {
     try {
       await action();
     } catch (err) {
-      setError(err.message);
+      setError(err);
       ok = false;
     }
     await load();
@@ -104,7 +104,7 @@ function AdminPage({ api }) {
           <Button type="submit">{t('admin.createInvite')}</Button>
         </form>
       </Card>
-      {error && <Notice kind="error">{error}</Notice>}
+      {error && <Notice kind="error">{errorText(error)}</Notice>}
       {issued && <IssuedLink issued={issued} />}
 
       {data && (
