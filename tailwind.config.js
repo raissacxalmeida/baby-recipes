@@ -19,7 +19,7 @@ export default {
       },
       borderRadius: { card: '18px', control: '14px' },
       boxShadow: {
-        card: '0 2px 10px rgba(180, 120, 40, 0.08)',
+        card: '0 2px 10px rgba(60, 90, 140, 0.08)',
         'primary-edge': '0 3px 0 var(--primary-edge)',
       },
       fontFamily: { sans: ['Nunito', 'system-ui', 'sans-serif'] },
