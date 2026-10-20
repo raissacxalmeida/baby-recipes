@@ -3,7 +3,7 @@ import { ageInMonths } from '../shared/age.js';
 import { groupFor } from '../shared/recipeGroup.js';
 import { isUuid } from './users.js';
 
-const notFound = () => new AppError('not-found', 'That recipe is not available');
+const notFound = () => new AppError('not-found', 'That recipe is not available', { key: 'err.recipeUnavailable' });
 
 export async function shareRecipe(db, userId, recipeId, now) {
   await db.transaction(async (tx) => {
@@ -11,15 +11,15 @@ export async function shareRecipe(db, userId, recipeId, now) {
       "select data, copied_from from recipes where user_id = $1 and id = $2 and status = 'liked'",
       [userId, String(recipeId)],
     )).rows[0];
-    if (!saved) throw new AppError('not-found', 'Like the recipe first, then share it');
-    if (saved.copied_from) throw new AppError('conflict', 'This recipe came from the community already');
+    if (!saved) throw new AppError('not-found', 'Like the recipe first, then share it', { key: 'err.likeFirst' });
+    if (saved.copied_from) throw new AppError('conflict', 'This recipe came from the community already', { key: 'err.alreadyCommunity' });
     const user = (await tx.query("select to_char(birthdate, 'YYYY-MM-DD') as birthdate from users where id = $1", [userId])).rows[0];
-    if (!user?.birthdate) throw new AppError('invalid-input', "Set your baby's birthday first");
+    if (!user?.birthdate) throw new AppError('invalid-input', "Set your baby's birthday first", { key: 'err.birthdayFirst' });
     let months;
     try {
       months = ageInMonths(user.birthdate, now);
     } catch (err) {
-      throw new AppError('invalid-input', err.message);
+      throw new AppError('invalid-input', err.message, { key: err.key });
     }
     await tx.query(
       `insert into shared_recipes (user_id, recipe_id, data, grp, baby_months) values ($1, $2, $3, $4, $5)
@@ -53,7 +53,7 @@ export async function likeShared(db, userId, sharedId) {
   await db.transaction(async (tx) => {
     const shared = (await tx.query('select user_id, data from shared_recipes where id = $1', [sharedId])).rows[0];
     if (!shared) throw notFound();
-    if (shared.user_id === userId) throw new AppError('invalid-input', 'You shared this one');
+    if (shared.user_id === userId) throw new AppError('invalid-input', 'You shared this one', { key: 'err.ownShared' });
     await tx.query('insert into shared_likes (shared_id, user_id) values ($1, $2) on conflict do nothing', [sharedId, userId]);
     // A liked recipe with the same id is the parent's own and is kept; a disliked one is replaced.
     await tx.query(

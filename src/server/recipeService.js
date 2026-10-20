@@ -4,12 +4,14 @@ import { generateRecipe, presentRecipe, validateRequest } from './generate.js';
 import { addShown, excludeTitles, getState } from './userData.js';
 import { nextReset, releaseRecipe, reserveCall, reserveRecipe } from './usage.js';
 
-const limitMessage = (now) =>
-  `Daily limit reached. It resets at ${nextReset(now).toISOString().slice(11, 16)} UTC`;
+function limitError(now) {
+  const time = nextReset(now).toISOString().slice(11, 16);
+  return new AppError('limit-reached', `Daily limit reached. It resets at ${time} UTC`, { key: 'err.limitReached', params: { time } });
+}
 
 export async function requestRecipe(db, user, ingredients, { callModel, now }) {
   const state = await getState(db, user.id);
-  if (!state.birthdate) throw new AppError('invalid-input', "Set your baby's birthday first");
+  if (!state.birthdate) throw new AppError('invalid-input', "Set your baby's birthday first", { key: 'err.birthdayFirst' });
   const { ageMonths, list } = validateRequest({ birthdate: state.birthdate, ingredients, exclude: [] }, now);
   const seen = await excludeTitles(db, user.id);
 
@@ -22,13 +24,13 @@ export async function requestRecipe(db, user, ingredients, { callModel, now }) {
 
   const started = now();
   if (!user.isAdmin && !(await reserveRecipe(db, user.id, started))) {
-    throw new AppError('limit-reached', limitMessage(started));
+    throw limitError(started);
   }
   try {
     const exclude = [...seen, ...(await overlappingTitles(db, { ingredients: list }))];
     const guarded = async (input) => {
       if (!user.isAdmin && !(await reserveCall(db, user.id, now()))) {
-        throw new AppError('limit-reached', limitMessage(now()));
+        throw limitError(now());
       }
       return callModel(input);
     };

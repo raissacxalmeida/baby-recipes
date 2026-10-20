@@ -30,7 +30,7 @@ test('non-admins get 403 and anonymous visitors 401 on every admin route, and no
   for (const [method, path, body] of calls) {
     const forbidden = await t.call(method, path, body, ana);
     expect(forbidden.status, `${method} ${path} as user`).toBe(403);
-    expect(forbidden.body).toEqual({ error: 'forbidden', message: 'Not allowed' });
+    expect(forbidden.body).toEqual({ error: 'forbidden', message: 'Not allowed', key: 'err.notAllowed' });
     expect((await t.call(method, path, body, guest())).status, `${method} ${path} anonymous`).toBe(401);
   }
   expect((await t.db.query('select * from invites')).rows).toHaveLength(2);

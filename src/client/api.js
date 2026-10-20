@@ -1,3 +1,5 @@
+import { hasKey, t } from './i18n/index.js';
+
 export function createApi(fetchImpl = (...args) => fetch(...args)) {
   async function request(method, path, body) {
     let res;
@@ -12,11 +14,15 @@ export function createApi(fetchImpl = (...args) => fetch(...args)) {
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch {
-      throw new Error('Could not reach the server');
+      throw Object.assign(new Error(t('err.network')), { key: 'err.network' });
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw Object.assign(new Error(data.message ?? 'Something went wrong'), { status: res.status, code: data.error });
+      // The server's English message is the fallback for a key this browser has no text for.
+      const message = data.key && hasKey(data.key) ? t(data.key, data.params) : data.message ?? t('err.generic');
+      // The error keeps its key and values so the screen can word it again after a language switch.
+      const key = data.key && hasKey(data.key) ? data.key : data.message ? undefined : 'err.generic';
+      throw Object.assign(new Error(message), { status: res.status, code: data.error, key, params: data.params });
     }
     return data;
   }
@@ -39,6 +45,7 @@ export function createApi(fetchImpl = (...args) => fetch(...args)) {
     reset: (token, password) => request('POST', '/api/reset', { token, password }),
     state: () => request('GET', '/api/state'),
     setBirthdate: (birthdate) => request('PUT', '/api/birthdate', { birthdate }),
+    setLanguage: (language) => request('PUT', '/api/language', { language }),
     suggest: async (ingredients) => (await request('POST', '/api/recipe', { ingredients })).recipe,
     like: (recipe) => request('POST', '/api/liked', { recipe }),
     unlike: (recipeId) => request('DELETE', `/api/liked/${id(recipeId)}`),

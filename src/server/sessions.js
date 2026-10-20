@@ -8,7 +8,7 @@ const LOCK_MS = 15 * MINUTE;
 const MAX_FAILURES = 10;
 const SESSION_DAYS = 30;
 const MAX_EMAIL = 254;
-const WRONG = 'Wrong email or password';
+const wrongLogin = () => new AppError('unauthorized', 'Wrong email or password', { key: 'err.wrongLogin' });
 
 let dummyHash;
 const getDummyHash = async () => (dummyHash ??= await hashPassword('dummy password for timing'));
@@ -22,7 +22,7 @@ async function reserveAttempt(db, email, now) {
       'select failures, first_failure_at, locked_until from login_attempts where email = $1', [email],
     )).rows[0];
     if (row?.locked_until && new Date(row.locked_until) > now) {
-      throw new AppError('locked', 'Too many attempts. Try again in 15 minutes');
+      throw new AppError('locked', 'Too many attempts. Try again in 15 minutes', { key: 'err.locked' });
     }
     const lockOver = Boolean(row?.locked_until);
     const windowOver = row && now - new Date(row.first_failure_at) >= WINDOW_MS;
@@ -54,28 +54,30 @@ export async function startSession(db, user, now) {
 
 export async function login(db, { email, password }, now) {
   const e = String(email ?? '').trim().toLowerCase();
-  if (e.length > MAX_EMAIL || e.includes('\u0000')) throw new AppError('unauthorized', WRONG);
+  if (e.length > MAX_EMAIL || e.includes('\u0000')) throw wrongLogin();
   await reserveAttempt(db, e, now);
   const user = (await db.query(
-    'select id, email, password_hash, is_admin from users where email = $1', [e],
+    'select id, email, password_hash, is_admin, language from users where email = $1', [e],
   )).rows[0];
   const given = String(password ?? '');
   const ok = user
     ? await verifyPassword(given, user.password_hash)
     : (await verifyPassword(given, await getDummyHash()), false);
-  if (!ok) throw new AppError('unauthorized', WRONG);
+  if (!ok) throw wrongLogin();
   const token = await startSession(db, user, now);
-  return { token, user: { id: user.id, email: user.email, isAdmin: user.is_admin } };
+  return { token, user: { id: user.id, email: user.email, isAdmin: user.is_admin, language: user.language } };
 }
 
 export async function sessionUser(db, token, now) {
   if (typeof token !== 'string' || !token) return null;
   const { rows } = await db.query(
-    `select u.id, u.email, u.is_admin from sessions s join users u on u.id = s.user_id
+    `select u.id, u.email, u.is_admin, u.language from sessions s join users u on u.id = s.user_id
      where s.token_hash = $1 and s.expires_at > $2`,
     [hashToken(token), now],
   );
-  return rows.length ? { id: rows[0].id, email: rows[0].email, isAdmin: rows[0].is_admin } : null;
+  return rows.length
+    ? { id: rows[0].id, email: rows[0].email, isAdmin: rows[0].is_admin, language: rows[0].language }
+    : null;
 }
 
 export async function logout(db, token) {

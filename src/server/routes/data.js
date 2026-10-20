@@ -4,7 +4,7 @@ import {
   likeShared, listShared, shareRecipe, unlikeShared, unshareRecipe,
 } from '../sharedRecipes.js';
 import {
-  dislike, getState, like, restore, setBirthdate, unlike,
+  dislike, getState, like, restore, setBirthdate, setLanguage, unlike,
 } from '../userData.js';
 import { LIMITS, nextReset, usageToday } from '../usage.js';
 import { removeUser } from '../users.js';
@@ -30,6 +30,13 @@ export const dataRoutes = [
     method: 'PUT', pattern: '/api/birthdate', access: 'user',
     async handler({ db, user, body, now }) {
       await setBirthdate(db, user.id, body.birthdate, now());
+      return ok();
+    },
+  },
+  {
+    method: 'PUT', pattern: '/api/language', access: 'user',
+    async handler({ db, user, body }) {
+      await setLanguage(db, user.id, body.language);
       return ok();
     },
   },
@@ -77,7 +84,7 @@ export const dataRoutes = [
   {
     method: 'POST', pattern: '/api/shared', access: 'user',
     async handler({ db, user, body, now }) {
-      if (typeof body.id !== 'string') throw new AppError('invalid-input', 'Choose a recipe to share');
+      if (typeof body.id !== 'string') throw new AppError('invalid-input', 'Choose a recipe to share', { key: 'err.chooseRecipe' });
       await shareRecipe(db, user.id, body.id, now());
       return ok();
     },

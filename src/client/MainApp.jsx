@@ -1,6 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { ageInMonths } from '../shared/age.js';
-import { ageLabel } from '../shared/units.js';
 import Menu from './components/Menu.jsx';
 import HomeScreen from './screens/HomeScreen.jsx';
 import LikedScreen from './screens/LikedScreen.jsx';
@@ -11,13 +10,14 @@ import TooYoungScreen from './screens/TooYoungScreen.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
+import { errorText, t } from './i18n/index.js';
 
 const MIN_MONTHS = 6;
 
 // Where the recipe screen's back button goes, by where the recipe was opened from. A freshly suggested recipe has none: the menu leads out.
 const BACK = {
-  liked: { screen: 'liked', label: 'Back to liked recipes' },
-  shared: { screen: 'shared', label: 'Back to community recipes' },
+  liked: { screen: 'liked', label: 'recipe.backLiked' },
+  shared: { screen: 'shared', label: 'recipe.backCommunity' },
 };
 
 function startScreen(birthdate, now) {
@@ -62,7 +62,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
         if (list) setCommunity(list);
         setScreen(start === 'home' && landOn ? landOn : start);
       })
-      .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err.message)));
+      .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err)));
     return () => { live = false; };
   }, [api]);
 
@@ -78,7 +78,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   // A 401 means the session ended (expired, or the account was removed): back to the login form.
   function failed(err) {
     if (err.status === 401) onSessionLost();
-    else setError(err.message);
+    else setError(err);
   }
 
   async function guarded(action) {
@@ -152,8 +152,8 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   });
 
   const account = <Menu user={user} onAdmin={onAdmin} onLogout={onLogout} onDelete={onDelete} />;
-  if (loadError) return <>{account}<Notice kind="error">{loadError}</Notice></>;
-  if (!server || !screen) return <>{account}<Notice>Loading...</Notice></>;
+  if (loadError) return <>{account}<Notice kind="error">{errorText(loadError)}</Notice></>;
+  if (!server || !screen) return <>{account}<Notice>{t('common.loading')}</Notice></>;
 
   function renderScreen() {
     if (screen === 'setup') return <SetupScreen onSave={saveBirthday} now={now} />;
@@ -192,7 +192,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
           {BACK[origin] && (
             <Button variant="ghost" size="sm" className="self-start" onClick={() => go(BACK[origin].screen)}>
               <Emoji>←</Emoji>
-              {BACK[origin].label}
+              {t(BACK[origin].label)}
             </Button>
           )}
           <RecipeScreen
@@ -203,14 +203,14 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
             onLiked={origin === 'home' ? like : undefined}
             onDisliked={origin === 'home' ? dislike : undefined}
           />
-          {saved && <Notice>Saved to liked recipes.</Notice>}
-          {error && <Notice kind="error">{error}</Notice>}
+          {saved && <Notice>{t('recipe.saved')}</Notice>}
+          {error && <Notice kind="error">{errorText(error)}</Notice>}
         </>
       );
     }
     return (
       <HomeScreen
-        ageText={ageLabel(ageInMonths(server.birthdate, now()))}
+        ageText={t('age.months', { count: ageInMonths(server.birthdate, now()) })}
         usage={server.usage}
         ingredients={ingredients}
         onChange={setIngredients}

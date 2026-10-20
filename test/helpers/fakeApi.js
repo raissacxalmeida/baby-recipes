@@ -38,6 +38,7 @@ export function createFakeApi({ user = null, birthdate = null, recipes = [], sha
       usage: state.user?.isAdmin ? null : { recipesToday: state.used, limit: LIMIT, resetsAt: '2026-10-16T00:00:00.000Z' },
     })),
     setBirthdate: vi.fn(async (d) => { state.birthdate = d; }),
+    setLanguage: vi.fn(async (language) => { if (state.user) state.user = { ...state.user, language }; }),
     suggest: vi.fn(async () => {
       const skip = new Set([...state.shown, ...state.disliked.map((r) => r.title)]);
       const next = state.queue.find((r) => !skip.has(r.title));

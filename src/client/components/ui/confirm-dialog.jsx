@@ -9,6 +9,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog.jsx';
+import { t } from '../../i18n/index.js';
 
 export function ConfirmDialog({ trigger, title, description, confirmLabel, onConfirm }) {
   return (
@@ -20,7 +21,7 @@ export function ConfirmDialog({ trigger, title, description, confirmLabel, onCon
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
           <AlertDialogAction onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

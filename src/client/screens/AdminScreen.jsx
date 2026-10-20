@@ -6,11 +6,12 @@ import { Card } from '@/components/ui/card.jsx';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
+import { errorText, t } from '../i18n/index.js';
 
-const day = (iso) => (iso ? iso.slice(0, 10) : 'never');
+const day = (iso) => (iso ? iso.slice(0, 10) : t('admin.never'));
 const statusText = (invite) => {
-  if (invite.status === 'pending') return `Pending (${invite.daysLeft} ${invite.daysLeft === 1 ? 'day' : 'days'} left)`;
-  return invite.status === 'used' ? 'Used' : 'Expired';
+  if (invite.status === 'pending') return t('admin.pending', { count: invite.daysLeft });
+  return invite.status === 'used' ? t('admin.used') : t('admin.expired');
 };
 
 // Each row is a small card: cells stack and show their label before the value (the app column is narrow at every width).
@@ -41,7 +42,7 @@ function Td({ label, className, ...props }) {
 }
 
 function IssuedLink({ issued }) {
-  const label = `${issued.kind === 'invite' ? 'Invite' : 'Reset'} link for ${issued.email}`;
+  const label = t(issued.kind === 'invite' ? 'admin.inviteLink' : 'admin.resetLink', { email: issued.email });
   const [copied, setCopied] = useState(false);
   const [field, setField] = useState(null);
 
@@ -58,10 +59,10 @@ function IssuedLink({ issued }) {
     <Card className="grid gap-3 border-note-border bg-note">
       <Field label={label} readOnly value={issued.link} ref={setField} onFocus={(e) => e.target.select()} />
       <div className="flex items-center gap-3">
-        <Button variant="outline" onClick={copy}>Copy</Button>
-        {copied && <span className="text-sm font-semibold"> Copied</span>}
+        <Button variant="outline" onClick={copy}>{t('admin.copy')}</Button>
+        {copied && <span className="text-sm font-semibold">{t('admin.copied')}</span>}
       </div>
-      <Notice className="wrap-anywhere">Shown only once. Send it to {issued.email} yourself.</Notice>
+      <Notice className="wrap-anywhere">{t('admin.shownOnce', { email: issued.email })}</Notice>
     </Card>
   );
 }
@@ -72,7 +73,7 @@ function AdminPage({ api }) {
   const [issued, setIssued] = useState(null);
   const [email, setEmail] = useState('');
 
-  const load = () => api.admin.overview().then(setData).catch((err) => setError(err.message));
+  const load = () => api.admin.overview().then(setData).catch((err) => setError(err));
   useEffect(() => { load(); }, []);
 
   async function act(action) {
@@ -81,7 +82,7 @@ function AdminPage({ api }) {
     try {
       await action();
     } catch (err) {
-      setError(err.message);
+      setError(err);
       ok = false;
     }
     await load();
@@ -95,36 +96,36 @@ function AdminPage({ api }) {
 
   return (
     <section className="grid gap-4">
-      <h1>Admin</h1>
-      <h2>Invite someone</h2>
+      <h1>{t('admin.title')}</h1>
+      <h2>{t('admin.inviteSomeone')}</h2>
       <Card>
         <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (await invite(email.trim())) setEmail(''); }}>
-          <Field label="Invite email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Button type="submit">Create invite</Button>
+          <Field label={t('admin.inviteEmail')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          <Button type="submit">{t('admin.createInvite')}</Button>
         </form>
       </Card>
-      {error && <Notice kind="error">{error}</Notice>}
+      {error && <Notice kind="error">{errorText(error)}</Notice>}
       {issued && <IssuedLink issued={issued} />}
 
       {data && (
         <>
-          <h2>Invites</h2>
+          <h2>{t('admin.invites')}</h2>
           <Card className="py-2">
-            <Table label="Invites" headings={['Email', 'Status', 'Created', '']}>
+            <Table label={t('admin.invites')} headings={[t('admin.colEmail'), t('admin.colStatus'), t('admin.colCreated'), '']}>
               {data.invites.map((i) => (
                 <Tr key={i.id}>
                   <Td className="break-all font-semibold">{i.email}</Td>
-                  <Td label="Status"><Badge>{statusText(i)}</Badge></Td>
-                  <Td label="Created">{day(i.createdAt)}</Td>
+                  <Td label={t('admin.colStatus')}><Badge>{statusText(i)}</Badge></Td>
+                  <Td label={t('admin.colCreated')}>{day(i.createdAt)}</Td>
                   <Td>
                     {i.status === 'pending' && (
-                      <Button size="sm" variant="outline" aria-label={`Revoke invite for ${i.email}`} onClick={() => act(() => api.admin.revokeInvite(i.id))}>
-                        Revoke
+                      <Button size="sm" variant="outline" aria-label={t('admin.revokeLabel', { email: i.email })} onClick={() => act(() => api.admin.revokeInvite(i.id))}>
+                        {t('admin.revoke')}
                       </Button>
                     )}
                     {i.status === 'expired' && (
-                      <Button size="sm" variant="outline" aria-label={`Invite ${i.email} again`} onClick={() => invite(i.email)}>
-                        Invite again
+                      <Button size="sm" variant="outline" aria-label={t('admin.inviteAgainLabel', { email: i.email })} onClick={() => invite(i.email)}>
+                        {t('admin.inviteAgain')}
                       </Button>
                     )}
                   </Td>
@@ -133,34 +134,34 @@ function AdminPage({ api }) {
             </Table>
           </Card>
 
-          <h2>People</h2>
+          <h2>{t('admin.people')}</h2>
           <Card className="py-2">
-            <Table label="People" headings={['Email', 'Joined', 'Last login', 'Recipes today', '']}>
+            <Table label={t('admin.people')} headings={[t('admin.colEmail'), t('admin.colJoined'), t('admin.colLastLogin'), t('admin.colRecipesToday'), '']}>
               {data.people.map((p) => (
                 <Tr key={p.id}>
-                  <Td className="break-all font-semibold"><span>{p.email}</span>{p.isAdmin && <span> (admin)</span>}</Td>
-                  <Td label="Joined">{day(p.joinedAt)}</Td>
-                  <Td label="Last login">{day(p.lastLoginAt)}</Td>
-                  <Td label="Recipes today">{p.recipesToday === null ? null : `${p.recipesToday} of ${data.limit}`}</Td>
+                  <Td className="break-all font-semibold"><span>{p.email}</span>{p.isAdmin && <span> {t('admin.adminTag')}</span>}</Td>
+                  <Td label={t('admin.colJoined')}>{day(p.joinedAt)}</Td>
+                  <Td label={t('admin.colLastLogin')}>{day(p.lastLoginAt)}</Td>
+                  <Td label={t('admin.colRecipesToday')}>{p.recipesToday === null ? null : t('admin.usage', { used: p.recipesToday, limit: data.limit })}</Td>
                   <Td>
                     {!p.isAdmin && (
                       <div className="flex flex-wrap gap-2">
                         <Button
                           size="sm"
                           variant="outline"
-                          aria-label={`Reset password for ${p.email}`}
+                          aria-label={t('admin.resetLabel', { email: p.email })}
                           onClick={() => act(async () => {
                             const { link } = await api.admin.reset(p.id);
                             setIssued({ kind: 'reset', email: p.email, link });
                           })}
                         >
-                          Reset password
+                          {t('admin.resetPassword')}
                         </Button>
                         <ConfirmDialog
-                          trigger={<Button size="sm" variant="ghost" className="text-destructive" aria-label={`Remove ${p.email}`}>Remove</Button>}
-                          title="Remove this person?"
-                          description={`Remove ${p.email} and delete all their data? This cannot be undone.`}
-                          confirmLabel="Yes, remove"
+                          trigger={<Button size="sm" variant="ghost" className="text-destructive" aria-label={t('admin.removeLabel', { email: p.email })}>{t('admin.remove')}</Button>}
+                          title={t('admin.removeTitle')}
+                          description={t('admin.removeBody', { email: p.email })}
+                          confirmLabel={t('admin.removeConfirm')}
                           onConfirm={() => act(() => api.admin.remove(p.id))}
                         />
                       </div>
@@ -177,6 +178,6 @@ function AdminPage({ api }) {
 }
 
 export default function AdminScreen({ api, me }) {
-  if (!me.isAdmin) return <p>Not found</p>;
+  if (!me.isAdmin) return <p>{t('admin.notFound')}</p>;
   return <AdminPage api={api} />;
 }

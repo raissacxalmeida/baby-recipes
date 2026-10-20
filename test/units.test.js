@@ -1,11 +1,19 @@
 import { test, expect } from 'vitest';
-import { formatAmount, scaleRecipe, ageLabel } from '../src/shared/units.js';
+import { formatAmount, scaleRecipe } from '../src/shared/units.js';
 
 test('formatAmount', () => {
   expect(formatAmount(250)).toBe('250 g');
   expect(formatAmount(999)).toBe('999 g');
   expect(formatAmount(1000)).toBe('1 kg');
   expect(formatAmount(1500)).toBe('1.5 kg');
+});
+
+test('formatAmount uses the decimal mark of the language', () => {
+  expect(formatAmount(1500, 'en')).toBe('1.5 kg');
+  expect(formatAmount(1500, 'de')).toBe('1,5 kg');
+  expect(formatAmount(1234, 'de')).toBe('1,23 kg');
+  expect(formatAmount(250, 'pt')).toBe('250 g');
+  expect(formatAmount(1000, 'es')).toBe('1 kg');
 });
 
 test('scaleRecipe doubles amounts', () => {
@@ -26,10 +34,4 @@ test.each([0, 13, 1.5])('scaleRecipe rejects %s portions', (n) =>
 test('scaleRecipe never shows a tiny amount as 0 g', () => {
   const r = { basePortions: 4, ingredients: [{ name: 'cinnamon', grams: 1, inList: false }] };
   expect(scaleRecipe(r, 1).ingredients[0].grams).toBe(1);
-});
-
-test('ageLabel', () => {
-  expect(ageLabel(1)).toBe('1 month');
-  expect(ageLabel(8)).toBe('8 months');
-  expect(ageLabel(14)).toBe('14 months');
 });

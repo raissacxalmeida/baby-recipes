@@ -5,8 +5,11 @@ import ResetScreen from './screens/ResetScreen.jsx';
 import SignupScreen from './screens/SignupScreen.jsx';
 import MainApp from './MainApp.jsx';
 import Logo from './components/Logo.jsx';
+import LanguageSwitch from './components/LanguageSwitch.jsx';
 import Menu from './components/Menu.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
+import { errorText, getLanguage, setLanguage, t, useLanguage } from './i18n/index.js';
+import { isLanguage } from '../shared/languages.js';
 
 const defaultNavigate = (path) => window.history.pushState({}, '', path);
 const safeDecode = (s) => {
@@ -25,6 +28,9 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   // Which page the app should open on when it comes back from the admin page.
   const [landOn, setLandOn] = useState(null);
 
+  // App is the one component that follows the language: its re-render carries every screen below it.
+  useLanguage();
+
   const invite = /^\/invite\/([^/]+)$/.exec(path);
   const reset = /^\/reset\/([^/]+)$/.exec(path);
   const special = Boolean(invite || reset);
@@ -38,13 +44,26 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
     return () => { live = false; };
   }, [api, special]);
 
+  // The language saved on the account wins; an account with none takes the one showing now. A failed save is not worth a message.
+  useEffect(() => {
+    const { user } = session;
+    if (!user) return;
+    if (isLanguage(user.language)) setLanguage(user.language);
+    else api.setLanguage(getLanguage()).catch(() => {});
+  }, [session.user]);
+
+  function chooseLanguage(code) {
+    setLanguage(code);
+    if (session.user) api.setLanguage(code).catch(() => {});
+  }
+
   function go(next) {
     navigate(next);
     setPath(next);
   }
   const signedIn = (user) => { setNotice(null); setSession({ status: 'ready', user }); };
   const signedOut = () => { setLandOn(null); setSession({ status: 'anon', user: null }); };
-  const sessionLost = () => { setNotice('Your session ended. Please log in again.'); signedOut(); };
+  const sessionLost = () => { setNotice({ key: 'auth.sessionEnded' }); signedOut(); };
 
   let body;
   if (invite) {
@@ -52,7 +71,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   } else if (reset) {
     body = <ResetScreen api={api} token={safeDecode(reset[1])} onDone={() => go('/')} />;
   } else if (session.status === 'loading') {
-    body = <Notice>Loading...</Notice>;
+    body = <Notice>{t('common.loading')}</Notice>;
   } else if (session.status === 'anon') {
     body = <LoginScreen api={api} onLoggedIn={signedIn} notice={notice} />;
   } else {
@@ -70,7 +89,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
           signedOut();
           go('/');
         } catch (err) {
-          setAccountError(err.message);
+          setAccountError(err);
         }
       },
       onAdmin: () => { setLandOn(null); go('/admin'); },
@@ -80,13 +99,13 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
       ? (
         <>
           <Menu {...account} current="admin" onHome={land(null)} onLiked={land('liked')} onCommunity={land('shared')} />
-          {accountError && <Notice kind="error">{accountError}</Notice>}
+          {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
           <AdminScreen api={api} me={session.user} />
         </>
       )
       : (
         <>
-          {accountError && <Notice kind="error">{accountError}</Notice>}
+          {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
           <MainApp api={api} now={now} landOn={landOn} onSessionLost={sessionLost} {...account} />
         </>
       );
@@ -99,8 +118,9 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
     <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-6">
       {loggedOut && <Logo size="lg" tagline />}
       {body}
-      <footer className="mt-4 text-center text-xs text-muted-foreground">
-        This is not medical advice. Check with your paediatrician if unsure.
+      <footer className="mt-4 grid gap-2 text-center text-xs text-muted-foreground">
+        <p className="m-0">{t('footer.disclaimer')}</p>
+        <LanguageSwitch onChange={chooseLanguage} />
       </footer>
     </main>
   );

@@ -1,5 +1,6 @@
 import { AppError } from './errors.js';
 import { ageInMonths } from '../shared/age.js';
+import { isLanguage } from '../shared/languages.js';
 import { isRecipe } from '../shared/recipeShape.js';
 
 const MAX_SHOWN = 50;
@@ -7,7 +8,7 @@ const MAX_RECIPE_BYTES = 20000;
 
 function checkRecipe(recipe) {
   if (!isRecipe(recipe) || JSON.stringify(recipe).length > MAX_RECIPE_BYTES) {
-    throw new AppError('invalid-input', 'That recipe is not valid');
+    throw new AppError('invalid-input', 'That recipe is not valid', { key: 'err.recipeInvalid' });
   }
 }
 
@@ -31,9 +32,14 @@ export async function setBirthdate(db, userId, birthdate, now) {
   try {
     ageInMonths(birthdate, now);
   } catch (err) {
-    throw new AppError('invalid-input', err.message);
+    throw new AppError('invalid-input', err.message, { key: err.key });
   }
   await db.query('update users set birthdate = $2::date where id = $1', [userId, birthdate]);
+}
+
+export async function setLanguage(db, userId, language) {
+  if (!isLanguage(language)) throw new AppError('invalid-input', 'Choose a supported language', { key: 'err.language' });
+  await db.query('update users set language = $2 where id = $1', [userId, language]);
 }
 
 async function save(db, userId, recipe, status) {
