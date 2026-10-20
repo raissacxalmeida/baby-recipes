@@ -1,5 +1,6 @@
 import { AppError } from './errors.js';
 import { ageInMonths } from '../shared/age.js';
+import { isLanguage } from '../shared/languages.js';
 import { isRecipe } from '../shared/recipeShape.js';
 
 const MAX_SHOWN = 50;
@@ -34,6 +35,11 @@ export async function setBirthdate(db, userId, birthdate, now) {
     throw new AppError('invalid-input', err.message);
   }
   await db.query('update users set birthdate = $2::date where id = $1', [userId, birthdate]);
+}
+
+export async function setLanguage(db, userId, language) {
+  if (!isLanguage(language)) throw new AppError('invalid-input', 'Choose a supported language');
+  await db.query('update users set language = $2 where id = $1', [userId, language]);
 }
 
 async function save(db, userId, recipe, status) {

@@ -48,7 +48,7 @@ test('login sets an HttpOnly SameSite=Lax cookie without Secure by default', asy
   await t.addUser('me@example.com', { admin: true });
   const res = await t.call('POST', '/api/login', { email: 'me@example.com', password: PASSWORD });
   expect(res.status).toBe(200);
-  expect(res.body.user).toEqual({ email: 'me@example.com', isAdmin: true });
+  expect(res.body.user).toEqual({ email: 'me@example.com', isAdmin: true, language: null });
   expect(res.setCookie).toMatch(/^session=[A-Za-z0-9_-]{43};/);
   expect(res.setCookie).toMatch(/HttpOnly/);
   expect(res.setCookie).toMatch(/SameSite=Lax/);
@@ -71,7 +71,7 @@ test('session, logout and 401 without a cookie', async () => {
   expect((await t.call('GET', '/api/session')).status).toBe(401);
   const jar = await t.loginAs('ana@example.com');
   const session = await t.call('GET', '/api/session', undefined, jar);
-  expect(session.body.user).toEqual({ email: 'ana@example.com', isAdmin: false });
+  expect(session.body.user).toEqual({ email: 'ana@example.com', isAdmin: false, language: null });
   const cookie = jar.cookie;
   await t.call('POST', '/api/logout', {}, jar);
   expect((await t.call('GET', '/api/session', undefined, { cookie })).status).toBe(401);

@@ -1,7 +1,7 @@
 import { login, logout, startSession } from '../sessions.js';
 import { acceptInvite, getInvite, getReset, useReset } from '../users.js';
 
-const publicUser = (u) => ({ email: u.email, isAdmin: u.isAdmin });
+const publicUser = (u) => ({ email: u.email, isAdmin: u.isAdmin, language: u.language ?? null });
 
 export const authRoutes = [
   {

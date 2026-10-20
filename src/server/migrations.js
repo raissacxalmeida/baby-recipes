@@ -95,6 +95,10 @@ export const MIGRATIONS = [
       created_at timestamptz not null default now()
     )`,
   ],
+  // The language a person chose in the footer; null until they choose (or the app saves the one showing).
+  [
+    "alter table users add column language text check (language in ('en', 'pt', 'es', 'de'))",
+  ],
 ];
 
 export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes'];

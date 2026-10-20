@@ -39,6 +39,7 @@ export function createApi(fetchImpl = (...args) => fetch(...args)) {
     reset: (token, password) => request('POST', '/api/reset', { token, password }),
     state: () => request('GET', '/api/state'),
     setBirthdate: (birthdate) => request('PUT', '/api/birthdate', { birthdate }),
+    setLanguage: (language) => request('PUT', '/api/language', { language }),
     suggest: async (ingredients) => (await request('POST', '/api/recipe', { ingredients })).recipe,
     like: (recipe) => request('POST', '/api/liked', { recipe }),
     unlike: (recipeId) => request('DELETE', `/api/liked/${id(recipeId)}`),
