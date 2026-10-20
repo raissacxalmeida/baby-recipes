@@ -9,7 +9,7 @@ export const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 export const AlertDialogContent = forwardRef(function AlertDialogContent({ className, ...props }, ref) {
   return (
     <AlertDialogPrimitive.Portal>
-      <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgba(59,42,26,0.45)]" />
+      <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgba(36,52,73,0.45)]" />
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(

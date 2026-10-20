@@ -87,3 +87,10 @@ test('no orange is left in the theme files', () => {
     expect(old.filter((c) => text.includes(c)), file).toEqual([]);
   }
 });
+
+test('no old brown is left anywhere in the client code', () => {
+  const hits = files('src/client')
+    .filter((f) => /\.(jsx?|css)$/.test(f))
+    .filter((f) => /59,\s*42,\s*26|#3b2a1a/i.test(readFileSync(f, 'utf8')));
+  expect(hits).toEqual([]);
+});
