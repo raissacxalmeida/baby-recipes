@@ -1,6 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import { ageInMonths } from '../shared/age.js';
-import { ageLabel } from '../shared/units.js';
 import Menu from './components/Menu.jsx';
 import HomeScreen from './screens/HomeScreen.jsx';
 import LikedScreen from './screens/LikedScreen.jsx';
@@ -211,7 +210,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
     }
     return (
       <HomeScreen
-        ageText={ageLabel(ageInMonths(server.birthdate, now()))}
+        ageText={t('age.months', { count: ageInMonths(server.birthdate, now()) })}
         usage={server.usage}
         ingredients={ingredients}
         onChange={setIngredients}

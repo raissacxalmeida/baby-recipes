@@ -4,9 +4,9 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
+import { t } from '../i18n/index.js';
 
 const emojiFor = (name) => GROUPS.find((g) => g.name === name)?.emoji;
-const likesText = (n) => (n === 1 ? '1 like' : `${n} likes`);
 
 export default function SharedScreen({
   recipes, group, onGroup, onOpen, onToggleLike, error = null,
@@ -17,9 +17,9 @@ export default function SharedScreen({
 
   return (
     <section className="grid gap-4">
-      <h1><Emoji>🌍</Emoji> Community recipes</h1>
+      <h1><Emoji>🌍</Emoji> {t('shared.title')}</h1>
       {error && <Notice kind="error">{error}</Notice>}
-      {recipes.length === 0 && <Notice kind="note">Nothing has been shared yet.</Notice>}
+      {recipes.length === 0 && <Notice kind="note">{t('shared.none')}</Notice>}
       {present.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {[{ name: 'All' }, ...present].map((g) => (
@@ -32,7 +32,7 @@ export default function SharedScreen({
               onClick={() => onGroup(g.name)}
             >
               {g.emoji && <Emoji>{g.emoji}</Emoji>}
-              {g.name}
+              {t(`group.${g.name}`)}
             </Button>
           ))}
         </div>
@@ -43,30 +43,30 @@ export default function SharedScreen({
             <Card className="grid gap-2">
               <div className="flex items-start justify-between gap-2">
                 <span className="min-w-0 flex-1 wrap-anywhere font-semibold">{r.recipe.title}</span>
-                <Badge variant="warm" className="shrink-0">{r.ageMonths} mo</Badge>
+                <Badge variant="warm" className="shrink-0">{t('shared.months', { count: r.ageMonths })}</Badge>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm text-muted-foreground">
-                  <Emoji>{emojiFor(r.group)}</Emoji> {r.group}
+                  <Emoji>{emojiFor(r.group)}</Emoji> {t(`group.${r.group}`)}
                   {' · '}
-                  <span>{likesText(r.likes)}</span>
+                  <span>{t('shared.likes', { count: r.likes })}</span>
                 </span>
                 <div className="flex shrink-0 flex-wrap items-center gap-1">
                   {r.mine
-                    ? <Badge variant="warm">Shared by you</Badge>
+                    ? <Badge variant="warm">{t('shared.mine')}</Badge>
                     : (
                       <Button
                         size="sm"
                         variant={r.liked ? 'default' : 'outline'}
-                        aria-label={`Like ${r.recipe.title}`}
+                        aria-label={t('shared.likeLabel', { title: r.recipe.title })}
                         aria-pressed={r.liked}
                         onClick={() => onToggleLike(r)}
                       >
                         <Emoji>{r.liked ? '♥' : '♡'}</Emoji>
-                        {r.liked ? 'Liked' : 'Like'}
+                        {r.liked ? t('shared.liked') : t('shared.like')}
                       </Button>
                     )}
-                  <Button size="sm" variant="outline" aria-label={`Open ${r.recipe.title}`} onClick={() => onOpen(r)}>Open</Button>
+                  <Button size="sm" variant="outline" aria-label={t('common.openLabel', { title: r.recipe.title })} onClick={() => onOpen(r)}>{t('common.open')}</Button>
                 </div>
               </div>
             </Card>

@@ -3,6 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import catalogs from '../src/client/i18n/catalogs.js';
 import { LANGUAGES } from '../src/shared/languages.js';
+import { GROUPS } from '../src/shared/recipeGroup.js';
 
 const keysOf = (language) => Object.keys(catalogs[language]).sort();
 const variants = (entry) => (typeof entry === 'string' ? [entry] : Object.values(entry));
@@ -61,4 +62,17 @@ test('every key the server and shared code send exists in English', () => {
     ...literalsIn('src/shared', ['.js'], /\bkey:\s*'([^']+)'/g),
   ];
   for (const key of sent) expect(catalogs.en, key).toHaveProperty([key]);
+});
+
+// These keys are built at run time (`group.${name}`, `allergen.${name}`), so the literal scan above cannot see them.
+test('every food group and the All chip have a name in English', () => {
+  for (const name of ['All', ...GROUPS.map((g) => g.name)]) expect(catalogs.en, `group.${name}`).toHaveProperty([`group.${name}`]);
+});
+
+test('every allergen the safety check can name has a name in English', () => {
+  const source = readFileSync('src/server/safety.js', 'utf8');
+  const block = /const ALLERGEN_KEYWORDS = \{([\s\S]*?)\n\};/.exec(source)[1];
+  const names = [...block.matchAll(/^\s+'?([a-z ]+)'?:/gm)].map((m) => m[1]);
+  expect(names.length).toBeGreaterThan(5);
+  for (const name of names) expect(catalogs.en, `allergen.${name}`).toHaveProperty([`allergen.${name}`]);
 });

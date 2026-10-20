@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
+import { t } from '../i18n/index.js';
 
 function Row({ title, children }) {
   return (
@@ -18,31 +19,31 @@ export default function LikedScreen({
 }) {
   return (
     <section className="grid gap-4">
-      <h1><Emoji>♡</Emoji> Liked recipes</h1>
+      <h1><Emoji>♡</Emoji> {t('liked.title')}</h1>
       {error && <Notice kind="error">{error}</Notice>}
       <Card>
-        {liked.length === 0 && <Notice>No liked recipes yet.</Notice>}
+        {liked.length === 0 && <Notice>{t('liked.none')}</Notice>}
         <ul className="m-0 list-none p-0">
           {liked.map((r) => (
             <Row key={r.id} title={r.title}>
-              <Button size="sm" variant="outline" aria-label={`Open ${r.title}`} onClick={() => onOpen(r)}>Open</Button>
+              <Button size="sm" variant="outline" aria-label={t('common.openLabel', { title: r.title })} onClick={() => onOpen(r)}>{t('common.open')}</Button>
               {onShare && !copiedIds.includes(r.id) && (
                 sharedIds.includes(r.id)
-                  ? <Button size="sm" variant="outline" aria-label={`Unshare ${r.title}`} onClick={() => onUnshare(r)}>Unshare</Button>
-                  : <Button size="sm" variant="outline" aria-label={`Share ${r.title}`} onClick={() => onShare(r)}>Share</Button>
+                  ? <Button size="sm" variant="outline" aria-label={t('liked.unshareLabel', { title: r.title })} onClick={() => onUnshare(r)}>{t('liked.unshare')}</Button>
+                  : <Button size="sm" variant="outline" aria-label={t('liked.shareLabel', { title: r.title })} onClick={() => onShare(r)}>{t('liked.share')}</Button>
               )}
-              <Button size="sm" variant="ghost" aria-label={`Remove ${r.title}`} onClick={() => onUnlike(r.id)}>Remove</Button>
+              <Button size="sm" variant="ghost" aria-label={t('liked.removeLabel', { title: r.title })} onClick={() => onUnlike(r.id)}>{t('liked.remove')}</Button>
             </Row>
           ))}
         </ul>
       </Card>
-      <h2>Not liked</h2>
+      <h2>{t('liked.notLiked')}</h2>
       <Card>
-        {disliked.length === 0 && <Notice>Nothing here.</Notice>}
+        {disliked.length === 0 && <Notice>{t('liked.nothing')}</Notice>}
         <ul className="m-0 list-none p-0">
           {disliked.map((r) => (
             <Row key={r.id} title={r.title}>
-              <Button size="sm" variant="outline" aria-label={`Restore ${r.title}`} onClick={() => onRestore(r.id)}>Restore</Button>
+              <Button size="sm" variant="outline" aria-label={t('liked.restoreLabel', { title: r.title })} onClick={() => onRestore(r.id)}>{t('liked.restore')}</Button>
             </Row>
           ))}
         </ul>
