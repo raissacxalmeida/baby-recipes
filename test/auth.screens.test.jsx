@@ -177,3 +177,38 @@ test('the login lockout message is shown', async () => {
   click('Log in');
   expect((await screen.findByRole('alert')).textContent).toMatch(/15 minutes/);
 });
+
+const TAGLINE = 'recipes for little eaters';
+
+test('the login page shows the logo and tagline', async () => {
+  open(createFakeApi());
+  expect(await screen.findByText(TAGLINE)).not.toBeNull();
+  expect(screen.getByText('Tiny Pantry')).not.toBeNull();
+  expect(screen.getAllByRole('heading').map((h) => h.textContent)).toEqual(['Log in']);
+});
+
+test('the invite page shows the logo and tagline', async () => {
+  open(createFakeApi(), '/invite/abc');
+  expect(await screen.findByText(TAGLINE)).not.toBeNull();
+  expect(screen.getByText('Tiny Pantry')).not.toBeNull();
+});
+
+test('the reset page shows the logo and tagline', async () => {
+  open(createFakeApi(), '/reset/abc');
+  expect(await screen.findByText(TAGLINE)).not.toBeNull();
+  expect(screen.getByText('Tiny Pantry')).not.toBeNull();
+});
+
+test('the logged-in app shows the name but not the tagline', async () => {
+  open(createFakeApi({ user: { email: 'ana@example.com', isAdmin: false }, birthdate: '2026-02-14' }));
+  await screen.findByRole('button', { name: 'Menu' });
+  expect(screen.getByText('Tiny Pantry')).not.toBeNull();
+  expect(screen.queryByText(TAGLINE)).toBeNull();
+});
+
+test('nothing is shown while the session is loading', () => {
+  open(createFakeApi({ overrides: { session: () => new Promise(() => {}) } }));
+  expect(screen.getByText('Loading...')).not.toBeNull();
+  expect(screen.queryByText('Tiny Pantry')).toBeNull();
+  expect(screen.queryByText(TAGLINE)).toBeNull();
+});

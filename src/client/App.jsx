@@ -4,6 +4,7 @@ import LoginScreen from './screens/LoginScreen.jsx';
 import ResetScreen from './screens/ResetScreen.jsx';
 import SignupScreen from './screens/SignupScreen.jsx';
 import MainApp from './MainApp.jsx';
+import Logo from './components/Logo.jsx';
 import Menu from './components/Menu.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
 
@@ -91,8 +92,12 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
       );
   }
 
+  // The pages shown before logging in get the big logo; once in, the menu header carries the small one.
+  const loggedOut = Boolean(invite || reset) || session.status === 'anon';
+
   return (
     <main className="mx-auto flex max-w-md flex-col gap-4 px-4 py-6">
+      {loggedOut && <Logo size="lg" tagline />}
       {body}
       <footer className="mt-4 text-center text-xs text-muted-foreground">
         This is not medical advice. Check with your paediatrician if unsure.
