@@ -10,6 +10,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const MENU = /^Men[uúü]$/;
 const ana = (extra = {}) => ({ email: 'ana@example.com', isAdmin: false, language: null, ...extra });
 const nav = (name) => (name ? screen.getByRole('navigation', { name }) : screen.getByRole('navigation'));
 const pick = (name) => fireEvent.click(within(nav()).getByRole('button', { name }));
@@ -18,7 +19,7 @@ const pick = (name) => fireEvent.click(within(nav()).getByRole('button', { name 
 async function show({ user = null, path = '/', overrides } = {}) {
   const api = createFakeApi({ user, birthdate: '2026-02-14', overrides });
   render(<App api={api} now={now} path={path} navigate={vi.fn()} />);
-  if (user) await screen.findByRole('button', { name: 'Menu' });
+  if (user) await screen.findByRole('button', { name: MENU });
   else await screen.findByRole('navigation');
   return api;
 }
@@ -98,9 +99,9 @@ test('a browser that refuses to store anything still switches', async () => {
 test('logging out keeps the language', async () => {
   await show({ user: ana({ language: 'pt' }) });
   await waitFor(() => expect(getLanguage()).toBe('pt'));
-  fireEvent.click(screen.getByRole('button', { name: 'Menu' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
-  await waitFor(() => expect(screen.queryByRole('button', { name: 'Menu' })).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: MENU }));
+  fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+  await waitFor(() => expect(screen.queryByRole('button', { name: MENU })).toBeNull());
   expect(getLanguage()).toBe('pt');
 });
 
