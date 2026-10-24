@@ -39,6 +39,7 @@ export default {
   'err.openaiKey': 'OPENAI_API_KEY ist nicht gesetzt',
   'err.openaiUnreachable': 'OpenAI ist nicht erreichbar',
   'err.openaiRejected': 'OpenAI hat die Anfrage abgelehnt (Status {status}).',
+  'err.translationFailed': 'Das konnte nicht übersetzt werden. Bitte versuche es noch einmal',
   'auth.sessionEnded': 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
   'auth.email': 'E-Mail',
   'auth.password': 'Passwort',

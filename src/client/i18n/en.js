@@ -39,6 +39,7 @@ export default {
   'err.openaiKey': 'OPENAI_API_KEY is not set',
   'err.openaiUnreachable': 'Could not reach OpenAI',
   'err.openaiRejected': 'OpenAI rejected the request (status {status}).',
+  'err.translationFailed': 'Could not translate that. Please try again',
   'auth.sessionEnded': 'Your session ended. Please log in again.',
   'auth.email': 'Email',
   'auth.password': 'Password',
