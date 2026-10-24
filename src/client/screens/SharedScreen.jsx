@@ -9,7 +9,7 @@ import { errorText, t } from '../i18n/index.js';
 const emojiFor = (name) => GROUPS.find((g) => g.name === name)?.emoji;
 
 export default function SharedScreen({
-  recipes, group, onGroup, onOpen, onToggleLike, error = null,
+  recipes, group, onGroup, onOpen, onToggleLike, error = null, titleOf = (title) => title,
 }) {
   const present = GROUPS.filter((g) => recipes.some((r) => r.group === g.name));
   const selected = present.some((g) => g.name === group) ? group : 'All';
@@ -42,7 +42,7 @@ export default function SharedScreen({
           <li key={r.id}>
             <Card className="grid gap-2">
               <div className="flex items-start justify-between gap-2">
-                <span className="min-w-0 flex-1 wrap-anywhere font-semibold">{r.recipe.title}</span>
+                <span className="min-w-0 flex-1 wrap-anywhere font-semibold">{titleOf(r.recipe.title)}</span>
                 <Badge variant="warm" className="shrink-0">{t('shared.months', { count: r.ageMonths })}</Badge>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2">
@@ -58,7 +58,7 @@ export default function SharedScreen({
                       <Button
                         size="sm"
                         variant={r.liked ? 'default' : 'outline'}
-                        aria-label={t('shared.likeLabel', { title: r.recipe.title })}
+                        aria-label={t('shared.likeLabel', { title: titleOf(r.recipe.title) })}
                         aria-pressed={r.liked}
                         onClick={() => onToggleLike(r)}
                       >
@@ -66,7 +66,7 @@ export default function SharedScreen({
                         {r.liked ? t('shared.liked') : t('shared.like')}
                       </Button>
                     )}
-                  <Button size="sm" variant="outline" aria-label={t('common.openLabel', { title: r.recipe.title })} onClick={() => onOpen(r)}>{t('common.open')}</Button>
+                  <Button size="sm" variant="outline" aria-label={t('common.openLabel', { title: titleOf(r.recipe.title) })} onClick={() => onOpen(r)}>{t('common.open')}</Button>
                 </div>
               </div>
             </Card>

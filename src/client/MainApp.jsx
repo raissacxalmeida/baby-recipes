@@ -10,7 +10,8 @@ import TooYoungScreen from './screens/TooYoungScreen.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, t } from './i18n/index.js';
+import { errorText, getLanguage, t } from './i18n/index.js';
+import { titleIn, titleKey } from './localize.js';
 
 const MIN_MONTHS = 6;
 
@@ -41,8 +42,11 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   const [community, setCommunity] = useState([]);
   const [communityGroup, setCommunityGroup] = useState('All');
   const [saved, setSaved] = useState(false);
+  const [titles, setTitles] = useState({});
   const [, rerender] = useReducer((n) => n + 1, 0);
   const requestId = useRef(0);
+  const asked = useRef(new Set());
+  const language = getLanguage();
 
   async function refresh() {
     const next = await api.state();
@@ -65,6 +69,21 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
       .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err)));
     return () => { live = false; };
   }, [api]);
+
+  // The lists show every title in the chosen language, so their titles are translated together, once per language.
+  // A failure leaves the English titles and is tried again the next time the list is shown.
+  useEffect(() => {
+    if (language === 'en' || !server) return;
+    const recipes = screen === 'liked' ? [...server.liked, ...server.disliked] : screen === 'shared' ? community.map((c) => c.recipe) : [];
+    const missing = [...new Set(recipes.map((r) => r.title))].filter((title) => !asked.current.has(titleKey(language, title)));
+    if (missing.length === 0) return;
+    missing.forEach((title) => asked.current.add(titleKey(language, title)));
+    api.translateTitles(language, missing)
+      .then((answer) => setTitles((previous) => ({
+        ...previous, ...Object.fromEntries(Object.entries(answer).map(([title, translated]) => [titleKey(language, title), translated])),
+      })))
+      .catch(() => missing.forEach((title) => asked.current.delete(titleKey(language, title))));
+  }, [screen, language, server, community]);
 
   // Leaving a screen drops any pending request and its error. Arriving home starts a fresh ingredient list.
   function go(next) {
@@ -163,6 +182,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
         <LikedScreen
           liked={server.liked}
           disliked={server.disliked}
+          titleOf={(title) => titleIn(titles, language, title)}
           onOpen={open}
           sharedIds={server.sharedIds}
           copiedIds={server.copiedIds}
@@ -178,6 +198,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
       return (
         <SharedScreen
           recipes={community}
+          titleOf={(title) => titleIn(titles, language, title)}
           group={communityGroup}
           onGroup={setCommunityGroup}
           error={error}
