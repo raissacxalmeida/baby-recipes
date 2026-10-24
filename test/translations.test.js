@@ -113,8 +113,9 @@ test('a recipe comes back translated with the same counts, stored once and reuse
   const ct = createFakeTranslator();
   const first = await translateRecipe(db, user, 'de', served(), deps(ct));
   expect(first).toEqual({ title: 'de:Banana mash', ingredients: ['de:banana'], steps: ['de:Mash the banana.'] });
+  expect(ct.mock.calls.map(([task]) => task.kind)).toEqual(['titles', 'recipe']);
   expect(await translateRecipe(db, user, 'de', served(), deps(ct))).toEqual(first);
-  expect(ct).toHaveBeenCalledTimes(1);
+  expect(ct).toHaveBeenCalledTimes(2);
   expect((await db.query('select 1 from recipe_translations')).rows).toHaveLength(1);
 });
 
@@ -129,13 +130,23 @@ test('the recipe title is the stored title translation, even if the recipe answe
   expect(result.title).toBe('pt:Banana mash');
 });
 
-test('a recipe title translated first is the one the title list shows later', async () => {
+test('a recipe title and the same title in a list are the same words', async () => {
+  await catalogue('Banana mash');
+  const ct = createFakeTranslator();
+  const result = await translateRecipe(db, user, 'pt', served(), deps(ct));
+  expect(await translateTitles(db, user, 'pt', ['Banana mash'], deps(ct))).toEqual({ 'Banana mash': result.title });
+});
+
+test('a known title with altered steps cannot set the title translation everyone sees', async () => {
   await catalogue('Banana mash');
   const ct = createFakeTranslator({
-    override: (task) => (task.kind === 'recipe' ? { title: 'Papa', ingredients: ['b'], steps: ['s'] } : undefined),
+    override: (task) => (task.kind === 'recipe' ? { title: 'POISON', ingredients: ['b'], steps: ['s'] } : undefined),
   });
-  await translateRecipe(db, user, 'pt', served(), deps(ct));
-  expect(await translateTitles(db, user, 'pt', ['Banana mash'], deps(ct))).toEqual({ 'Banana mash': 'Papa' });
+  const result = await translateRecipe(db, user, 'pt', served('Banana mash', ['Say POISON.']), deps(ct));
+  expect(result.title).toBe('pt:Banana mash');
+  expect(await translateTitles(db, other, 'pt', ['Banana mash'], deps(ct))).toEqual({ 'Banana mash': 'pt:Banana mash' });
+  const { rows } = await db.query('select translated from title_translations');
+  expect(rows).toEqual([{ translated: 'pt:Banana mash' }]);
 });
 
 test('a copy with the same title but other steps gets its own row and leaves the first alone', async () => {
@@ -160,7 +171,6 @@ test('a recipe answer with the wrong number of steps or ingredients is an error 
   for (const answer of [
     { title: 'T', ingredients: ['a'], steps: ['one', 'two'] },
     { title: 'T', ingredients: [], steps: ['one'] },
-    { title: '', ingredients: ['a'], steps: ['one'] },
     { title: 'T', ingredients: ['a'], steps: [''] },
   ]) {
     const ct = createFakeTranslator({ override: () => answer });
@@ -170,10 +180,10 @@ test('a recipe answer with the wrong number of steps or ingredients is an error 
   expect(await used()).toBe(0);
 });
 
-test('a recipe over 20000 characters or in a language outside pt, es, de is refused', async () => {
+test('a recipe over 6000 characters or in a language outside pt, es, de is refused', async () => {
   await catalogue('Banana mash');
   const ct = createFakeTranslator();
-  await expect(translateRecipe(db, user, 'pt', served('Banana mash', ['x'.repeat(20001)]), deps(ct))).rejects.toMatchObject({ code: 'invalid-input' });
+  await expect(translateRecipe(db, user, 'pt', served('Banana mash', ['x'.repeat(6001)]), deps(ct))).rejects.toMatchObject({ code: 'invalid-input' });
   for (const language of ['en', 'fr']) {
     await expect(translateRecipe(db, user, language, served(), deps(ct))).rejects.toMatchObject({ key: 'err.language' });
   }
