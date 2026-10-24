@@ -18,8 +18,9 @@ export async function startTestServer(overrides = {}) {
   };
   let clock = new Date('2026-10-15T12:00:00Z');
   let model = async () => { throw new Error('no model set'); };
+  let translator = async () => { throw new Error('no translator set'); };
   const server = createServer({
-    db, config, staticDir, now: () => clock, callModel: (input) => model(input),
+    db, config, staticDir, now: () => clock, callModel: (input) => model(input), callTranslate: (task) => translator(task),
   });
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
   const port = server.address().port;
@@ -62,6 +63,7 @@ export async function startTestServer(overrides = {}) {
     get now() { return clock; },
     setNow: (d) => { clock = d; },
     setModel: (fn) => { model = fn; },
+    setTranslator: (fn) => { translator = fn; },
     close: async () => { await new Promise((r) => server.close(r)); await db.close(); },
   };
 }
