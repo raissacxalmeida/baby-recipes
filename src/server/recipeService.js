@@ -2,12 +2,7 @@ import { AppError } from './errors.js';
 import { findSuitable, overlappingTitles, saveToCatalogue } from './catalogue.js';
 import { generateRecipe, presentRecipe, validateRequest } from './generate.js';
 import { addShown, excludeTitles, getState } from './userData.js';
-import { nextReset, releaseRecipe, reserveCall, reserveRecipe } from './usage.js';
-
-function limitError(now) {
-  const time = nextReset(now).toISOString().slice(11, 16);
-  return new AppError('limit-reached', `Daily limit reached. It resets at ${time} UTC`, { key: 'err.limitReached', params: { time } });
-}
+import { limitError, releaseRecipe, reserveCall, reserveRecipe } from './usage.js';
 
 export async function requestRecipe(db, user, ingredients, { callModel, now }) {
   const state = await getState(db, user.id);

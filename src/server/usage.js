@@ -1,4 +1,6 @@
-export const LIMITS = { recipes: 10, calls: 30 };
+import { AppError } from './errors.js';
+
+export const LIMITS = { recipes: 10, calls: 30, translations: 100 };
 
 const day = (now) => now.toISOString().slice(0, 10);
 
@@ -16,12 +18,18 @@ async function reserve(db, userId, now, column, limit) {
 export const reserveRecipe = (db, userId, now) => reserve(db, userId, now, 'recipes', LIMITS.recipes);
 export const reserveCall = (db, userId, now) => reserve(db, userId, now, 'calls', LIMITS.calls);
 
-export async function releaseRecipe(db, userId, now) {
+export const reserveTranslation = (db, userId, now) => reserve(db, userId, now, 'translations', LIMITS.translations);
+
+// Column names come from fixed constants below, never from input.
+async function release(db, userId, now, column) {
   await db.query(
-    'update usage set recipes = greatest(recipes - 1, 0) where user_id = $1 and day = $2::date',
+    `update usage set ${column} = greatest(${column} - 1, 0) where user_id = $1 and day = $2::date`,
     [userId, day(now)],
   );
 }
+
+export const releaseRecipe = (db, userId, now) => release(db, userId, now, 'recipes');
+export const releaseTranslation = (db, userId, now) => release(db, userId, now, 'translations');
 
 export async function usageToday(db, userId, now) {
   const { rows } = await db.query(
@@ -32,4 +40,9 @@ export async function usageToday(db, userId, now) {
 
 export function nextReset(now) {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+}
+
+export function limitError(now) {
+  const time = nextReset(now).toISOString().slice(11, 16);
+  return new AppError('limit-reached', `Daily limit reached. It resets at ${time} UTC`, { key: 'err.limitReached', params: { time } });
 }

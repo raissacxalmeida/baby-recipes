@@ -99,6 +99,22 @@ export const MIGRATIONS = [
   [
     "alter table users add column language text check (language in ('en', 'pt', 'es', 'de'))",
   ],
+  // Translations of recipe text. The English recipe stays the original; these are looked up by its English text.
+  [
+    `create table title_translations (
+      title text not null,
+      language text not null check (language in ('pt', 'es', 'de')),
+      translated text not null,
+      primary key (title, language)
+    )`,
+    `create table recipe_translations (
+      recipe_hash text not null,
+      language text not null check (language in ('pt', 'es', 'de')),
+      data jsonb not null,
+      primary key (recipe_hash, language)
+    )`,
+    'alter table usage add column translations int not null default 0',
+  ],
 ];
 
-export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes'];
+export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes', 'title_translations', 'recipe_translations'];
