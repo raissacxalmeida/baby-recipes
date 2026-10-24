@@ -42,10 +42,30 @@ test('a network failure has a readable message', async () => {
   await expect(api.state()).rejects.toThrow('Could not reach the server');
 });
 
-test('suggest sends only the ingredients and returns the recipe', async () => {
+test('suggest sends the ingredients with the language showing and returns the recipe', async () => {
   const fetchImpl = reply(200, { recipe: { title: 'Banana mash' } });
-  expect((await createApi(fetchImpl).suggest(['banana'])).title).toBe('Banana mash');
-  expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual({ ingredients: ['banana'] });
+  setLanguage('de');
+  try {
+    expect((await createApi(fetchImpl).suggest(['banana'])).title).toBe('Banana mash');
+    expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual({ ingredients: ['banana'], language: 'de' });
+  } finally {
+    setLanguage('en');
+  }
+});
+
+test('translateTitles and translateRecipe post the language with the English text and return the translation', async () => {
+  const fetchImpl = vi.fn()
+    .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ titles: { 'Banana mash': 'Papa de banana' } }) })
+    .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ translation: { title: 'Papa', ingredients: ['banana'], steps: ['Amasse.'] } }) });
+  const api = createApi(fetchImpl);
+  const recipe = { id: 'banana-mash', title: 'Banana mash' };
+  expect(await api.translateTitles('pt', ['Banana mash'])).toEqual({ 'Banana mash': 'Papa de banana' });
+  expect(await api.translateRecipe('pt', recipe)).toEqual({ title: 'Papa', ingredients: ['banana'], steps: ['Amasse.'] });
+  expect(fetchImpl.mock.calls.map(([url, init]) => `${init.method} ${url}`)).toEqual([
+    'POST /api/translate/titles', 'POST /api/translate/recipe',
+  ]);
+  expect(JSON.parse(fetchImpl.mock.calls[0][1].body)).toEqual({ language: 'pt', titles: ['Banana mash'] });
+  expect(JSON.parse(fetchImpl.mock.calls[1][1].body)).toEqual({ language: 'pt', recipe });
 });
 
 test('feedback and account calls use the documented paths', async () => {

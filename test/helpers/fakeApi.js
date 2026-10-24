@@ -47,6 +47,12 @@ export function createFakeApi({ user = null, birthdate = null, recipes = [], sha
       state.shown.push(next.title);
       return next;
     }),
+    translateTitles: vi.fn(async (language, titles) => Object.fromEntries(titles.map((title) => [title, `${language}:${title}`]))),
+    translateRecipe: vi.fn(async (language, recipe) => ({
+      title: `${language}:${recipe.title}`,
+      ingredients: recipe.ingredients.map((i) => `${language}:${i.name}`),
+      steps: recipe.steps.map((step) => `${language}:${step}`),
+    })),
     like: vi.fn(async (r) => {
       state.liked = [...by(state.liked, r.id), r];
       state.disliked = by(state.disliked, r.id);
