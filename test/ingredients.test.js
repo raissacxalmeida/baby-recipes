@@ -34,3 +34,10 @@ test('isListed matches names followed by punctuation', () => {
   expect(isListed('Carrots, grated', list)).toBe(true);
   expect(isListed('Water', list)).toBe(false);
 });
+
+test('without the English plural rule a word is only lower-cased and trimmed', () => {
+  expect(normalizeIngredient('Feijoes', { plurals: false })).toBe('feijoes');
+  expect(normalizeIngredient('  Tomatoes ', { plurals: false })).toBe('tomatoes');
+  expect(parseIngredientList(['Feijoes', 'feijoes', ' '], { plurals: false })).toEqual(['feijoes']);
+  expect(parseIngredientList(['Tomatoes', 'tomato'])).toEqual(['tomato']);
+});

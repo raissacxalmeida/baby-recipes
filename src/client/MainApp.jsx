@@ -12,6 +12,7 @@ import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
 import { errorText, getLanguage, t } from './i18n/index.js';
 import { titleIn, titleKey } from './localize.js';
+import { useRecipeTranslation } from './useRecipeTranslation.js';
 
 const MIN_MONTHS = 6;
 
@@ -47,6 +48,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   const requestId = useRef(0);
   const asked = useRef(new Set());
   const language = getLanguage();
+  const translated = useRecipeTranslation(api, recipe, language, screen === 'recipe');
 
   async function refresh() {
     const next = await api.state();
@@ -216,14 +218,19 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
               {t(BACK[origin].label)}
             </Button>
           )}
-          <RecipeScreen
-            key={recipe.id}
-            recipe={recipe}
-            busy={loading}
-            onAnother={origin === 'home' ? suggest : undefined}
-            onLiked={origin === 'home' ? like : undefined}
-            onDisliked={origin === 'home' ? dislike : undefined}
-          />
+          {/* The recipe is shown whole in one language: a notice while its translation is on the way. */}
+          {translated.status === 'pending'
+            ? <Notice>{t('recipe.translating')}</Notice>
+            : (
+              <RecipeScreen
+                key={recipe.id}
+                recipe={translated.recipe}
+                busy={loading}
+                onAnother={origin === 'home' ? suggest : undefined}
+                onLiked={origin === 'home' ? like : undefined}
+                onDisliked={origin === 'home' ? dislike : undefined}
+              />
+            )}
           {saved && <Notice>{t('recipe.saved')}</Notice>}
           {error && <Notice kind="error">{errorText(error)}</Notice>}
         </>
