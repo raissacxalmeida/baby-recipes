@@ -6,6 +6,8 @@ import { saveToCatalogue } from '../src/server/catalogue.js';
 import { presentRecipe } from '../src/server/generate.js';
 import { usageToday } from '../src/server/usage.js';
 import { requestRecipe } from '../src/server/recipeService.js';
+import { createFakeTranslator } from './helpers/fakeTranslate.js';
+import { AppError } from '../src/server/errors.js';
 
 let db;
 beforeAll(async () => { db = await createTestDb(); });
@@ -187,4 +189,50 @@ test('a recipe from OpenAI is saved and served to the next parent for free', asy
 test('a failing catalogue save does not fail the request', async () => {
   const flaky = { ...db, query: (t, p) => (/insert into catalogue_recipes/.test(t) ? Promise.reject(new Error('disk full')) : db.query(t, p)) };
   expect((await requestRecipe(flaky, user, ['banana'], { callModel: model(raw()), now })).title).toBe('Banana mash');
+});
+
+const potato = (title = 'Potato mash') => raw(title, { ingredients: [{ name: 'potato', grams: 100 }], steps: ['Mash the potato.'] });
+const portuguese = (ingredients = { batata: 'potato' }) => ({ callTranslate: createFakeTranslator({ ingredients }), now, language: 'pt' });
+
+test('typed words in another language are turned into English before the model is asked', async () => {
+  const cm = model(potato());
+  const recipe = await requestRecipe(db, user, ['batata'], { callModel: cm, ...portuguese() });
+  expect(cm.mock.calls[0][0].ingredients).toEqual(['potato']);
+  expect(recipe.ingredients[0]).toMatchObject({ name: 'potato', inList: true });
+});
+
+test('a catalogue recipe is found from the translated English words', async () => {
+  await saveToCatalogue(db, potato(), { ageFromMonths: 6, source: 'ai' });
+  const cm = model(potato('Another'));
+  const recipe = await requestRecipe(db, user, ['batata'], { callModel: cm, ...portuguese() });
+  expect(recipe.title).toBe('Potato mash');
+  expect(cm).not.toHaveBeenCalled();
+});
+
+test('when no typed word can be placed there is no recipe call and no allowance used', async () => {
+  const cm = model(potato());
+  await expect(requestRecipe(db, user, ['xyzzy'], { callModel: cm, ...portuguese({}) })).rejects.toMatchObject({ key: 'err.ingredientsNeeded' });
+  expect(cm).not.toHaveBeenCalled();
+  expect((await usageToday(db, user.id, now())).recipes).toBe(0);
+});
+
+test('"mel" becomes honey and the English recipe check still refuses a honey recipe', async () => {
+  const cm = model(unsafe());
+  await expect(requestRecipe(db, user, ['mel'], { callModel: cm, ...portuguese({ mel: 'honey' }) })).rejects.toMatchObject({ code: 'generation-failed' });
+  expect(cm.mock.calls[0][0].ingredients).toEqual(['honey']);
+});
+
+test('a failing translation fails the request before the model is asked and counts nothing', async () => {
+  const cm = model(potato());
+  const callTranslate = async () => { throw new AppError('upstream-error', 'Could not reach OpenAI', { key: 'err.openaiUnreachable' }); };
+  await expect(requestRecipe(db, user, ['batata'], { callModel: cm, callTranslate, now, language: 'pt' })).rejects.toMatchObject({ code: 'upstream-error' });
+  expect(cm).not.toHaveBeenCalled();
+  expect((await usageToday(db, user.id, now())).recipes).toBe(0);
+});
+
+test('English never calls the translator', async () => {
+  const callTranslate = createFakeTranslator();
+  await requestRecipe(db, user, ['banana'], { callModel: model(raw()), callTranslate, now });
+  await requestRecipe(db, user, ['banana'], { callModel: model(raw('Banana pudding')), callTranslate, now, language: 'en' });
+  expect(callTranslate).not.toHaveBeenCalled();
 });

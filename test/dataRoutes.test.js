@@ -1,5 +1,6 @@
 import { test, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { startTestServer } from './helpers/http.js';
+import { createFakeTranslator } from './helpers/fakeTranslate.js';
 
 let t;
 let ana;
@@ -119,4 +120,15 @@ test('deleting an account removes the person and the old cookie stops working', 
 
 test('the admin cannot delete the account', async () => {
   expect((await t.call('DELETE', '/api/account', undefined, admin)).status).toBe(403);
+});
+
+test('a recipe request in another language is translated, and an unknown language is refused', async () => {
+  t.setTranslator(createFakeTranslator({ ingredients: { banana: 'banana' } }));
+  await setBirthday(ana);
+  const ok = await t.call('POST', '/api/recipe', { ingredients: ['Banana'], language: 'pt' }, ana);
+  expect(ok.status).toBe(200);
+  expect(ok.body.recipe.ingredients[0]).toMatchObject({ name: 'banana', inList: true });
+  const bad = await t.call('POST', '/api/recipe', { ingredients: ['banana'], language: 'xx' }, ana);
+  expect(bad.status).toBe(400);
+  expect(bad.body).toMatchObject({ key: 'err.language' });
 });

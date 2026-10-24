@@ -5,7 +5,8 @@ import { createInvite, acceptInvite, createAdmin } from '../src/server/users.js'
 import { like } from '../src/server/userData.js';
 import { saveToCatalogue } from '../src/server/catalogue.js';
 import { LIMITS } from '../src/server/usage.js';
-import { recipeHash, translateRecipe, translateTitles } from '../src/server/translations.js';
+import { AppError } from '../src/server/errors.js';
+import { recipeHash, translateIngredients, translateRecipe, translateTitles } from '../src/server/translations.js';
 
 let db;
 beforeAll(async () => { db = await createTestDb(); });
@@ -191,4 +192,34 @@ test('translating leaves the stored English recipes untouched', async () => {
   await translateRecipe(db, user, 'pt', served(), deps(ct));
   expect((await db.query('select data from catalogue_recipes')).rows).toEqual(before.catalogue);
   expect((await db.query('select data from recipes')).rows).toEqual(before.recipes);
+});
+
+test('typed words come back as English names and the ones it cannot place are dropped', async () => {
+  const ct = createFakeTranslator({ ingredients: { batata: 'potato' } });
+  expect(await translateIngredients(db, user, 'pt', ['batata', 'xyzzy'], deps(ct))).toEqual(['potato']);
+  expect(ct).toHaveBeenCalledTimes(1);
+  expect(ct.mock.calls[0][0]).toEqual({ kind: 'ingredients', language: 'pt', items: ['batata', 'xyzzy'] });
+});
+
+test('an empty or over-long answer for a word drops that word', async () => {
+  const ct = createFakeTranslator({ override: () => ['potato', '   ', 'x'.repeat(51), null] });
+  expect(await translateIngredients(db, user, 'de', ['a', 'b', 'c', 'd'], deps(ct))).toEqual(['potato']);
+});
+
+test('typed words with a wrong-length answer are an error and free the allowance', async () => {
+  const ct = createFakeTranslator({ override: () => ['potato'] });
+  await expect(translateIngredients(db, user, 'pt', ['batata', 'cenoura'], deps(ct))).rejects.toMatchObject({ key: 'err.translationFailed' });
+  expect(await used()).toBe(0);
+});
+
+test('a missing key is rethrown as it is and frees the allowance', async () => {
+  const ct = async () => { throw new AppError('missing-key', 'OPENAI_API_KEY is not set', { key: 'err.openaiKey' }); };
+  await expect(translateIngredients(db, user, 'pt', ['batata'], deps(ct))).rejects.toMatchObject({ code: 'missing-key' });
+  expect(await used()).toBe(0);
+});
+
+test('an empty list makes no call', async () => {
+  const ct = createFakeTranslator();
+  expect(await translateIngredients(db, user, 'pt', [], deps(ct))).toEqual([]);
+  expect(ct).not.toHaveBeenCalled();
 });

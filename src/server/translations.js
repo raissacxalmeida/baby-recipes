@@ -112,3 +112,19 @@ export async function translateRecipe(db, user, language, recipe, { callTranslat
   );
   return data;
 }
+
+const MAX_INGREDIENT_LENGTH = 50;
+
+// What a parent typed, as English names. A word the model cannot place (null) is dropped, never guessed at.
+export async function translateIngredients(db, user, language, items, { callTranslate, now }) {
+  checkLanguage(language);
+  if (items.length === 0) return [];
+  const answer = await counted(db, user, now, async () => {
+    const result = await callTranslate({ kind: 'ingredients', language, items });
+    if (!Array.isArray(result) || result.length !== items.length) throw malformed();
+    return result;
+  });
+  return answer
+    .filter((word) => isText(word) && word.trim().length <= MAX_INGREDIENT_LENGTH)
+    .map((word) => word.trim());
+}
