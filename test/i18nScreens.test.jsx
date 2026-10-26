@@ -43,13 +43,33 @@ test('the baby age sentence takes the translated age as a whole', () => {
   expect(screen.getByText('Das Baby ist 8 Monate alt.')).not.toBeNull();
 });
 
-test('the English-only note shows under the ingredient box in other languages, not in English', () => {
-  home();
-  expect(screen.queryByText(catalogs.en['home.ingredientNote'])).toBeNull();
+test('there is no English-only note under the ingredient box in any language', () => {
+  expect(catalogs.en['home.ingredientNote']).toBeUndefined();
+  for (const language of ['en', 'pt', 'es', 'de']) {
+    setLanguage(language);
+    home();
+    expect(screen.queryByText(/English|inglés|inglês|Englisch/)).toBeNull();
+    cleanup();
+  }
+});
+
+const typeAndAdd = (language, text) => {
+  fireEvent.change(screen.getByLabelText(catalogs[language]['home.ingredient']), { target: { value: text } });
+  fireEvent.click(screen.getByRole('button', { name: catalogs[language]['home.add'] }));
+};
+
+test('a word typed in another language keeps its ending, while English words are still made singular', () => {
+  setLanguage('pt');
+  const onChange = vi.fn();
+  home({ ingredients: [], onChange });
+  typeAndAdd('pt', 'Feijoes');
+  expect(onChange).toHaveBeenCalledWith(['feijoes']);
   cleanup();
-  setLanguage('de');
-  home();
-  expect(screen.getByText(catalogs.de['home.ingredientNote'])).not.toBeNull();
+  setLanguage('en');
+  const onEnglish = vi.fn();
+  home({ ingredients: [], onChange: onEnglish });
+  typeAndAdd('en', 'Tomatoes');
+  expect(onEnglish).toHaveBeenCalledWith(['tomato']);
 });
 
 const dish = {

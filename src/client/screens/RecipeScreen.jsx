@@ -39,7 +39,7 @@ export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, b
           {scaled.ingredients.map((i, n) => (
             <li key={n} className="flex items-center justify-between gap-3 border-b border-border py-2 last:border-0">
               <span className="flex min-w-0 flex-wrap items-center gap-2">
-                <Emoji>{ingredientEmoji(i.name)}</Emoji>
+                <Emoji>{ingredientEmoji(i.original ?? i.name)}</Emoji>
                 <span className="wrap-anywhere">{i.name}</span>
                 {!i.inList && <Badge variant="warm">{t('recipe.notInList')}</Badge>}
               </span>

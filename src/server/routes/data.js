@@ -1,4 +1,5 @@
 import { AppError } from '../errors.js';
+import { isLanguage } from '../../shared/languages.js';
 import { requestRecipe } from '../recipeService.js';
 import {
   likeShared, listShared, shareRecipe, unlikeShared, unshareRecipe,
@@ -42,8 +43,11 @@ export const dataRoutes = [
   },
   {
     method: 'POST', pattern: '/api/recipe', access: 'user',
-    async handler({ db, user, body, now, callModel }) {
-      const recipe = await requestRecipe(db, user, body.ingredients, { callModel, now });
+    async handler({ db, user, body, now, callModel, callTranslate }) {
+      // The language the browser is showing: typed ingredients are written in it.
+      const language = body.language ?? 'en';
+      if (!isLanguage(language)) throw new AppError('invalid-input', 'Choose a supported language', { key: 'err.language' });
+      const recipe = await requestRecipe(db, user, body.ingredients, { callModel, callTranslate, now, language });
       return { body: { recipe } };
     },
   },

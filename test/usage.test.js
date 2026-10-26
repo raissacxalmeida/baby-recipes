@@ -2,7 +2,7 @@ import { test, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestDb } from './helpers/db.js';
 import { createInvite, acceptInvite } from '../src/server/users.js';
 import {
-  LIMITS, reserveRecipe, reserveCall, releaseRecipe, usageToday, nextReset,
+  LIMITS, reserveRecipe, reserveCall, releaseRecipe, reserveTranslation, releaseTranslation, usageToday, nextReset,
 } from '../src/server/usage.js';
 
 let db;
@@ -18,7 +18,9 @@ beforeEach(async () => {
   id = (await acceptInvite(db, { token, password: 'a long enough password' }, now)).id;
 });
 
-test('limits are 10 recipes and 30 calls', () => expect(LIMITS).toEqual({ recipes: 10, calls: 30 }));
+test('limits are 10 recipes, 30 calls and 100 translations', () => {
+  expect(LIMITS).toEqual({ recipes: 10, calls: 30, translations: 100 });
+});
 
 test('10 reservations succeed and the 11th fails', async () => {
   for (let i = 0; i < 10; i++) expect(await reserveRecipe(db, id, now)).toBe(true);
@@ -52,4 +54,22 @@ test('calls stop after 30', async () => {
 
 test('nextReset is the next UTC midnight', () => {
   expect(nextReset(now).toISOString()).toBe('2026-10-16T00:00:00.000Z');
+});
+
+test('100 translation reservations succeed and the 101st fails', async () => {
+  for (let i = 0; i < 100; i++) expect(await reserveTranslation(db, id, now)).toBe(true);
+  expect(await reserveTranslation(db, id, now)).toBe(false);
+});
+
+test('releasing a translation frees one slot and never goes below zero', async () => {
+  await releaseTranslation(db, id, now);
+  for (let i = 0; i < 100; i++) await reserveTranslation(db, id, now);
+  await releaseTranslation(db, id, now);
+  expect(await reserveTranslation(db, id, now)).toBe(true);
+  expect(await reserveTranslation(db, id, now)).toBe(false);
+});
+
+test('translation reservations do not change the recipe or call counts', async () => {
+  await reserveTranslation(db, id, now);
+  expect(await usageToday(db, id, now)).toEqual({ recipes: 0, calls: 0 });
 });

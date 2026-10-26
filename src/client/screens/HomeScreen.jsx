@@ -15,7 +15,7 @@ export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, 
 
   function add(e) {
     e.preventDefault();
-    onChange(parseIngredientList([...ingredients, text]));
+    onChange(parseIngredientList([...ingredients, text], { plurals: getLanguage() === 'en' }));
     setText('');
   }
 
@@ -30,7 +30,6 @@ export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, 
           <Field label={t('home.ingredient')} className="min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} />
           <Button type="submit" variant="outline">{t('home.add')}</Button>
         </form>
-        {getLanguage() !== 'en' && <Notice>{t('home.ingredientNote')}</Notice>}
         {ingredients.length > 0 && (
           <ul className="m-0 flex list-none flex-wrap gap-2 p-0">
             {ingredients.map((name) => (

@@ -1,4 +1,4 @@
-import { hasKey, t } from './i18n/index.js';
+import { getLanguage, hasKey, t } from './i18n/index.js';
 
 export function createApi(fetchImpl = (...args) => fetch(...args)) {
   async function request(method, path, body) {
@@ -46,7 +46,10 @@ export function createApi(fetchImpl = (...args) => fetch(...args)) {
     state: () => request('GET', '/api/state'),
     setBirthdate: (birthdate) => request('PUT', '/api/birthdate', { birthdate }),
     setLanguage: (language) => request('PUT', '/api/language', { language }),
-    suggest: async (ingredients) => (await request('POST', '/api/recipe', { ingredients })).recipe,
+    // Ingredients are typed in the language showing, so the server is told which one.
+    suggest: async (ingredients) => (await request('POST', '/api/recipe', { ingredients, language: getLanguage() })).recipe,
+    translateTitles: async (language, titles) => (await request('POST', '/api/translate/titles', { language, titles })).titles,
+    translateRecipe: async (language, recipe) => (await request('POST', '/api/translate/recipe', { language, recipe })).translation,
     like: (recipe) => request('POST', '/api/liked', { recipe }),
     unlike: (recipeId) => request('DELETE', `/api/liked/${id(recipeId)}`),
     dislike: (recipe) => request('POST', '/api/disliked', { recipe }),

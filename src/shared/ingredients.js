@@ -5,12 +5,13 @@ function singular(word) {
   return word;
 }
 
-export function normalizeIngredient(s) {
-  return s.toLowerCase().split(/[\s,;:()/]+/).filter(Boolean).map(singular).join(' ');
+// The plural rule is English; words typed in another language are only lower-cased and split.
+export function normalizeIngredient(s, { plurals = true } = {}) {
+  return s.toLowerCase().split(/[\s,;:()/]+/).filter(Boolean).map((word) => (plurals ? singular(word) : word)).join(' ');
 }
 
-export function parseIngredientList(raw) {
-  return [...new Set(raw.map(normalizeIngredient).filter(Boolean))];
+export function parseIngredientList(raw, options) {
+  return [...new Set(raw.map((s) => normalizeIngredient(s, options)).filter(Boolean))];
 }
 
 export function isListed(recipeIngredientName, list) {

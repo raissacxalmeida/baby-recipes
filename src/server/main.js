@@ -3,7 +3,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { loadConfig } from './config.js';
 import { createPgDb } from './db.js';
 import { migrate } from './migrate.js';
-import { callModel } from './openai.js';
+import { callModel, callTranslate } from './openai.js';
 import { seedCatalogue } from './seedCatalogue.js';
 import { createServer, loadEnv } from './server.js';
 
@@ -43,6 +43,7 @@ export async function startMain(env, { createDb = createPgDb, now = () => new Da
     now,
     staticDir: path.join(repoRoot, 'dist'),
     callModel: (input) => callModel(input, { apiKey: config.openaiKey }),
+    callTranslate: (task) => callTranslate(task, { apiKey: config.openaiKey }),
   });
   await new Promise((resolve) => server.listen(config.port, '0.0.0.0', resolve));
   return { server, db, config };

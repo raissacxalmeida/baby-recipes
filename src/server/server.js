@@ -116,7 +116,7 @@ function serveStatic(req, res, root, pathname) {
   return stream.pipe(res);
 }
 
-export function createServer({ db, config, callModel, now = () => new Date(), staticDir }) {
+export function createServer({ db, config, callModel, callTranslate, now = () => new Date(), staticDir }) {
   const root = path.resolve(staticDir);
   const compiled = routes.map(compile);
 
@@ -148,7 +148,7 @@ export function createServer({ db, config, callModel, now = () => new Date(), st
       if (!user) throw new AppError('unauthorized', 'Please log in', { key: 'err.notLoggedIn' });
       if (route.access === 'admin' && !user.isAdmin) throw new AppError('forbidden', 'Not allowed', { key: 'err.notAllowed' });
     }
-    const result = await route.handler({ db, user, params, body, now, config, callModel, sessionToken });
+    const result = await route.handler({ db, user, params, body, now, config, callModel, callTranslate, sessionToken });
     const headers = {};
     if (result.setSession) headers['Set-Cookie'] = sessionCookie(result.setSession, SESSION_MAX_AGE, config.cookieSecure);
     if (result.clearSession) headers['Set-Cookie'] = sessionCookie('', 0, config.cookieSecure);
