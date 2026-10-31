@@ -1,5 +1,6 @@
 import { AppError } from './errors.js';
 import { hashPassword, hashToken, newToken } from './auth.js';
+import type { Db, InviteRow, ResetRow, UsageRow, UserRow } from './types.js';
 
 const DAY = 86400000;
 const INVITE_DAYS = 7;
@@ -7,9 +8,9 @@ const RESET_HOURS = 24;
 export const MIN_PASSWORD = 10;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-export const isUuid = (s) => typeof s === 'string' && UUID.test(s);
+export const isUuid = (s: unknown): s is string => typeof s === 'string' && UUID.test(s);
 
-export function normalizeEmail(email) {
+export function normalizeEmail(email: unknown): string {
   const e = String(email ?? '').trim().toLowerCase();
   if (e.length > 254 || e.includes('\u0000') || !/^[^\s@]+@[^\s@]+$/.test(e)) {
     throw new AppError('invalid-input', 'Enter a valid email address', { key: 'err.email' });
@@ -17,7 +18,7 @@ export function normalizeEmail(email) {
   return e;
 }
 
-export function checkPassword(password) {
+export function checkPassword(password: unknown): asserts password is string {
   if (typeof password !== 'string' || password.length < MIN_PASSWORD) {
     throw new AppError('invalid-input', `Use a password with at least ${MIN_PASSWORD} characters`, {
       key: 'err.passwordShort', params: { min: MIN_PASSWORD },
@@ -25,9 +26,9 @@ export function checkPassword(password) {
   }
 }
 
-async function insertInvite(db, email, isAdmin, now) {
+async function insertInvite(db: Db, email: string, isAdmin: boolean, now: Date): Promise<{ id: string; token: string }> {
   const token = newToken();
-  const { rows } = await db.query(
+  const { rows } = await db.query<Pick<InviteRow, 'id'>>(
     `insert into invites (email, token_hash, is_admin, expires_at, created_at)
      values ($1, $2, $3, $4, $5) returning id`,
     [email, hashToken(token), isAdmin, new Date(now.getTime() + INVITE_DAYS * DAY), now],
@@ -35,7 +36,7 @@ async function insertInvite(db, email, isAdmin, now) {
   return { id: rows[0].id, token };
 }
 
-export async function createInvite(db, email, now) {
+export async function createInvite(db: Db, email: unknown, now: Date): Promise<{ id: string; token: string }> {
   const e = normalizeEmail(email);
   if ((await db.query('select 1 from users where email = $1', [e])).rows.length) {
     throw new AppError('conflict', 'That email already has an account', { key: 'err.emailTaken' });
@@ -47,8 +48,8 @@ export async function createInvite(db, email, now) {
   return insertInvite(db, e, false, now);
 }
 
-export async function getInvite(db, token, now) {
-  const { rows } = await db.query(
+export async function getInvite(db: Db, token: unknown, now: Date): Promise<{ email: string }> {
+  const { rows } = await db.query<Pick<InviteRow, 'email'>>(
     'select email from invites where token_hash = $1 and used_at is null and expires_at > $2',
     [hashToken(String(token)), now],
   );
@@ -56,11 +57,15 @@ export async function getInvite(db, token, now) {
   return { email: rows[0].email };
 }
 
-export async function acceptInvite(db, { token, password }, now) {
+export async function acceptInvite(
+  db: Db,
+  { token, password }: { token: unknown; password: unknown },
+  now: Date,
+): Promise<{ id: string; email: string; isAdmin: boolean }> {
   checkPassword(password);
   const passwordHash = await hashPassword(password);
   return db.transaction(async (tx) => {
-    const used = await tx.query(
+    const used = await tx.query<Pick<InviteRow, 'email' | 'is_admin'>>(
       `update invites set used_at = $2
        where token_hash = $1 and used_at is null and expires_at > $2
        returning email, is_admin`,
@@ -71,7 +76,7 @@ export async function acceptInvite(db, { token, password }, now) {
     if (isAdmin && (await tx.query('select 1 from users where is_admin')).rows.length) {
       throw new AppError('conflict', 'An admin already exists', { key: 'err.adminExists' });
     }
-    const created = await tx.query(
+    const created = await tx.query<Pick<UserRow, 'id'>>(
       `insert into users (email, password_hash, is_admin, created_at) values ($1, $2, $3, $4)
        on conflict (email) do nothing returning id`,
       [email, passwordHash, isAdmin, now],
@@ -82,8 +87,8 @@ export async function acceptInvite(db, { token, password }, now) {
   });
 }
 
-export async function listInvites(db, now) {
-  const { rows } = await db.query(
+export async function listInvites(db: Db, now: Date) {
+  const { rows } = await db.query<Pick<InviteRow, 'id' | 'email' | 'used_at' | 'expires_at' | 'created_at'>>(
     'select id, email, used_at, expires_at, created_at from invites order by created_at desc',
   );
   return rows.map((r) => {
@@ -92,22 +97,22 @@ export async function listInvites(db, now) {
       id: r.id,
       email: r.email,
       status,
-      daysLeft: status === 'pending' ? Math.ceil((new Date(r.expires_at) - now) / DAY) : null,
+      daysLeft: status === 'pending' ? Math.ceil((new Date(r.expires_at).getTime() - now.getTime()) / DAY) : null,
       createdAt: new Date(r.created_at).toISOString(),
     };
   });
 }
 
-export async function revokeInvite(db, id) {
+export async function revokeInvite(db: Db, id: unknown): Promise<void> {
   const deleted = isUuid(id)
-    ? await db.query('delete from invites where id = $1 and used_at is null returning id', [id])
+    ? await db.query<Pick<InviteRow, 'id'>>('delete from invites where id = $1 and used_at is null returning id', [id])
     : { rows: [] };
   if (!deleted.rows.length) throw new AppError('not-found', 'Invite not found', { key: 'err.inviteMissing' });
 }
 
-export async function createAdmin(db, email, now) {
+export async function createAdmin(db: Db, email: unknown, now: Date): Promise<{ kind: 'reset' | 'invite'; token: string }> {
   const e = normalizeEmail(email);
-  const admin = (await db.query('select id, email from users where is_admin')).rows[0];
+  const admin = (await db.query<Pick<UserRow, 'id' | 'email'>>('select id, email from users where is_admin')).rows[0];
   if (admin) {
     if (admin.email !== e) throw new AppError('conflict', 'An admin already exists', { key: 'err.adminExists' });
     const { token } = await createReset(db, admin.id, now);
@@ -121,7 +126,7 @@ export async function createAdmin(db, email, now) {
   return { kind: 'invite', token };
 }
 
-export async function createReset(db, userId, now) {
+export async function createReset(db: Db, userId: unknown, now: Date): Promise<{ token: string }> {
   const exists = isUuid(userId) && (await db.query('select 1 from users where id = $1', [userId])).rows.length;
   if (!exists) throw new AppError('not-found', 'Person not found', { key: 'err.personMissing' });
   const token = newToken();
@@ -135,8 +140,8 @@ export async function createReset(db, userId, now) {
   return { token };
 }
 
-export async function getReset(db, token, now) {
-  const { rows } = await db.query(
+export async function getReset(db: Db, token: unknown, now: Date): Promise<{ email: string }> {
+  const { rows } = await db.query<Pick<UserRow, 'email'>>(
     `select u.email from resets r join users u on u.id = r.user_id
      where r.token_hash = $1 and r.used_at is null and r.expires_at > $2`,
     [hashToken(String(token)), now],
@@ -145,26 +150,28 @@ export async function getReset(db, token, now) {
   return { email: rows[0].email };
 }
 
-export async function useReset(db, { token, password }, now) {
+export async function useReset(db: Db, { token, password }: { token: unknown; password: unknown }, now: Date): Promise<void> {
   checkPassword(password);
   const passwordHash = await hashPassword(password);
   await db.transaction(async (tx) => {
-    const used = await tx.query(
+    const used = await tx.query<Pick<ResetRow, 'user_id'>>(
       `update resets set used_at = $2
        where token_hash = $1 and used_at is null and expires_at > $2 returning user_id`,
       [hashToken(String(token)), now],
     );
     if (!used.rows.length) throw new AppError('not-found', 'This reset link is not valid', { key: 'err.resetInvalid' });
     const userId = used.rows[0].user_id;
-    const user = await tx.query('update users set password_hash = $2 where id = $1 returning email', [userId, passwordHash]);
+    const user = await tx.query<Pick<UserRow, 'email'>>('update users set password_hash = $2 where id = $1 returning email', [userId, passwordHash]);
     await tx.query('delete from sessions where user_id = $1', [userId]);
     await tx.query('delete from login_attempts where email = $1', [user.rows[0].email]);
   });
 }
 
-export async function listPeople(db, now) {
+export async function listPeople(db: Db, now: Date) {
   const day = now.toISOString().slice(0, 10);
-  const { rows } = await db.query(
+  const { rows } = await db.query<
+    Pick<UserRow, 'id' | 'email' | 'is_admin' | 'created_at' | 'last_login_at'> & Pick<UsageRow, 'recipes'>
+  >(
     `select u.id, u.email, u.is_admin, u.created_at, u.last_login_at, coalesce(g.recipes, 0)::int as recipes
      from users u left join usage g on g.user_id = u.id and g.day = $1::date
      order by u.is_admin desc, u.created_at`,
@@ -180,8 +187,10 @@ export async function listPeople(db, now) {
   }));
 }
 
-export async function removeUser(db, userId) {
-  const user = isUuid(userId) ? (await db.query('select email, is_admin from users where id = $1', [userId])).rows[0] : null;
+export async function removeUser(db: Db, userId: unknown): Promise<void> {
+  const user = isUuid(userId)
+    ? (await db.query<Pick<UserRow, 'email' | 'is_admin'>>('select email, is_admin from users where id = $1', [userId])).rows[0]
+    : null;
   if (!user) throw new AppError('not-found', 'Person not found', { key: 'err.personMissing' });
   if (user.is_admin) throw new AppError('forbidden', 'The admin cannot be removed', { key: 'err.adminProtected' });
   await db.transaction(async (tx) => {

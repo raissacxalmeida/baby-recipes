@@ -1,10 +1,12 @@
-export function loadConfig(env) {
-  const problems = [];
+import type { Config } from './types.js';
+
+export function loadConfig(env: Record<string, string | undefined>): Config {
+  const problems: string[] = [];
   const databaseUrl = (env.DATABASE_URL ?? '').trim();
   if (!databaseUrl) problems.push('DATABASE_URL is required');
 
   let publicUrl = (env.PUBLIC_URL ?? '').trim();
-  let publicHost = null;
+  let publicHost = ''; // always set below once PUBLIC_URL passes the checks
   if (!publicUrl) {
     problems.push('PUBLIC_URL is required (for example http://my-mac.local:3000)');
   } else {

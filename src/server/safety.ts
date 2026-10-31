@@ -1,3 +1,5 @@
+import type { SafetyRecipe } from './types.js';
+
 // Patterns are regex sources matched on whole words after the text is normalised.
 const UNDER_12 = [
   ['honey', 'honey(?:ed)?'],
@@ -27,10 +29,10 @@ const NUTS_PREPARED = /\b(?:ground|butter|paste|powder|flour|pur[ée]ed?|finely|
 const GRAPES = /\bgrapes?\b/;
 const GRAPES_PREPARED = /\b(?:quartered|quarter|halved|halve|chopped|mashed|pur[ée]ed?|cut)\b/;
 
-const ALLOWED_TEXTURES = (months) =>
+const ALLOWED_TEXTURES = (months: number): string[] =>
   months < 9 ? ['puree', 'mashed'] : months < 12 ? ['mashed', 'soft-pieces'] : ['puree', 'mashed', 'soft-pieces', 'finger-food'];
 
-const ALLERGEN_KEYWORDS = {
+const ALLERGEN_KEYWORDS: Record<string, string[]> = {
   peanut: ['peanut'],
   'tree nut': ['tree nut', 'almond', 'walnut', 'cashew', 'hazelnut', 'pecan', 'pistachio'],
   egg: ['egg'],
@@ -42,17 +44,17 @@ const ALLERGEN_KEYWORDS = {
   sesame: ['sesame', 'tahini'],
 };
 
-const normalize = (text) =>
+const normalize = (text: string): string =>
   text
     .toLowerCase()
     .replace(/['’]/g, '')
     .replace(/[\s\u00a0-]+/g, ' ')
     .replace(/\b(?:breast|formula)(?: milk)?\b/g, ' ');
-const has = (text, pattern) => new RegExp(`\\b(?:${pattern})\\b`).test(text);
+const has = (text: string, pattern: string): boolean => new RegExp(`\\b(?:${pattern})\\b`).test(text);
 
-export function checkSafety(recipe, ageMonths) {
+export function checkSafety(recipe: SafetyRecipe, ageMonths: number): string[] {
   const text = normalize([recipe.title, ...recipe.ingredients.map((i) => i.name), ...recipe.steps].join(' \n '));
-  const problems = [];
+  const problems: string[] = [];
   if (ageMonths < 12) {
     for (const [label, pattern] of UNDER_12) {
       if (has(text, pattern)) problems.push(`${label} is not suitable under 12 months`);
@@ -65,13 +67,13 @@ export function checkSafety(recipe, ageMonths) {
     if (NUTS.test(text) && !NUTS_PREPARED.test(text)) problems.push('whole nuts are a choking hazard under 3 years');
     if (GRAPES.test(text) && !GRAPES_PREPARED.test(text)) problems.push('whole grapes are a choking hazard under 3 years');
   }
-  if (!ALLOWED_TEXTURES(ageMonths).includes(recipe.texture)) {
+  if (recipe.texture === undefined || !ALLOWED_TEXTURES(ageMonths).includes(recipe.texture)) {
     problems.push(`texture ${recipe.texture} is not suitable at ${ageMonths} months`);
   }
   return problems;
 }
 
-export function detectAllergens(recipe) {
+export function detectAllergens(recipe: Pick<SafetyRecipe, 'ingredients' | 'aiAllergens'>): string[] {
   const text = normalize(recipe.ingredients.map((i) => i.name).join(' \n '));
   const found = new Set((recipe.aiAllergens ?? []).map((a) => a.trim().toLowerCase()).filter(Boolean));
   for (const [allergen, terms] of Object.entries(ALLERGEN_KEYWORDS)) {

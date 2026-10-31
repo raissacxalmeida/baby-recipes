@@ -1,5 +1,5 @@
 // Each migration is a list of single SQL statements (PGlite and pg both accept one statement per query).
-export const MIGRATIONS = [
+export const MIGRATIONS: string[][] = [
   [
     `create table users (
       id uuid primary key default gen_random_uuid(),
@@ -117,4 +117,4 @@ export const MIGRATIONS = [
   ],
 ];
 
-export const APP_TABLES = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes', 'title_translations', 'recipe_translations'];
+export const APP_TABLES: string[] = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes', 'title_translations', 'recipe_translations'];
