@@ -6,11 +6,24 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
+import type { ApiRecipe } from '../apiTypes.js';
 import { getLanguage, hasKey, t } from '../i18n/index.js';
 
-const allergenLabel = (name) => (hasKey(`allergen.${name}`) ? t(`allergen.${name}`) : name);
+// The server may name an allergen this browser has no text for; it is then shown as it came.
+const allergenLabel = (name: string): string => {
+  const key = `allergen.${name}`;
+  return hasKey(key) ? t(key) : name;
+};
 
-export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, busy = false }) {
+export interface RecipeScreenProps {
+  recipe: ApiRecipe;
+  onAnother?: () => void;
+  onLiked?: () => void;
+  onDisliked?: () => void;
+  busy?: boolean;
+}
+
+export default function RecipeScreen({ recipe, onAnother, onLiked, onDisliked, busy = false }: RecipeScreenProps) {
   const [portions, setPortions] = useState(recipe.basePortions);
   const scaled = scaleRecipe(recipe, portions);
 

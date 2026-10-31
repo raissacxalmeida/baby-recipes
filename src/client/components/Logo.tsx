@@ -4,7 +4,7 @@ export const NAME = 'Tiny Pantry';
 export const TAGLINE = 'recipes for little eaters';
 
 // An open jar with a sprout growing out of it and a heart on the front. Decorative: the name next to it says it all.
-export function LogoMark({ className }) {
+export function LogoMark({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 120 120" fill="none" aria-hidden="true">
       <path d="M60 40 V20" stroke="#6F9C80" strokeWidth="4" strokeLinecap="round" />
@@ -18,7 +18,12 @@ export function LogoMark({ className }) {
 }
 
 // 'sm' is one row for the app header; 'lg' stacks the mark over the name for the pages shown before logging in.
-export default function Logo({ size = 'sm', tagline = false }) {
+export interface LogoProps {
+  size?: 'sm' | 'lg';
+  tagline?: boolean;
+}
+
+export default function Logo({ size = 'sm', tagline = false }: LogoProps) {
   const large = size === 'lg';
   return (
     <div className={cn('flex min-w-0 items-center gap-2', large && 'flex-col gap-1 text-center')}>

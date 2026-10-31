@@ -10,19 +10,30 @@ import TooYoungScreen from './screens/TooYoungScreen.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, getLanguage, t } from './i18n/index.js';
+import type { Api } from './api.js';
+import { asApiError, type ApiError } from './api.js';
+import type { ApiRecipe, ApiState, ApiUser, SharedItem } from './apiTypes.js';
+import type { CatalogKey } from './i18n/en.js';
+import { errorText, getLanguage, t, type ErrorInfo } from './i18n/index.js';
 import { titleIn, titleKey } from './localize.js';
 import { useRecipeTranslation } from './useRecipeTranslation.js';
+import type { GroupFilter } from './screens/SharedScreen.jsx';
 
 const MIN_MONTHS = 6;
 
+type Screen = 'setup' | 'too-young' | 'home' | 'liked' | 'shared' | 'recipe';
+// Where a recipe was opened from.
+type Origin = 'home' | 'liked' | 'shared';
+// The page the app opens on when it comes back from the admin page (null: the start screen).
+export type LandOn = 'liked' | 'shared' | null;
+
 // Where the recipe screen's back button goes, by where the recipe was opened from. A freshly suggested recipe has none: the menu leads out.
-const BACK = {
+const BACK: Partial<Record<Origin, { screen: Screen; label: CatalogKey }>> = {
   liked: { screen: 'liked', label: 'recipe.backLiked' },
   shared: { screen: 'shared', label: 'recipe.backCommunity' },
 };
 
-function startScreen(birthdate, now) {
+function startScreen(birthdate: string | null, now: Date): Screen {
   if (!birthdate) return 'setup';
   try {
     return ageInMonths(birthdate, now) < MIN_MONTHS ? 'too-young' : 'home';
@@ -31,26 +42,37 @@ function startScreen(birthdate, now) {
   }
 }
 
-export default function MainApp({ api, user, now, landOn = null, onSessionLost = () => {}, onLogout, onDelete, onAdmin }) {
-  const [server, setServer] = useState(null);
-  const [loadError, setLoadError] = useState(null);
-  const [screen, setScreen] = useState(null);
-  const [ingredients, setIngredients] = useState([]);
-  const [recipe, setRecipe] = useState(null);
+export interface MainAppProps {
+  api: Api;
+  user: ApiUser;
+  now: () => Date;
+  landOn?: LandOn;
+  onSessionLost?: () => void;
+  onLogout: () => void;
+  onDelete: () => void;
+  onAdmin: () => void;
+}
+
+export default function MainApp({ api, user, now, landOn = null, onSessionLost = () => {}, onLogout, onDelete, onAdmin }: MainAppProps) {
+  const [server, setServer] = useState<ApiState | null>(null);
+  const [loadError, setLoadError] = useState<ErrorInfo | null>(null);
+  const [screen, setScreen] = useState<Screen | null>(null);
+  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [recipe, setRecipe] = useState<ApiRecipe | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [origin, setOrigin] = useState('home');
-  const [community, setCommunity] = useState([]);
-  const [communityGroup, setCommunityGroup] = useState('All');
+  const [error, setError] = useState<ErrorInfo | null>(null);
+  const [origin, setOrigin] = useState<Origin>('home');
+  const [community, setCommunity] = useState<SharedItem[]>([]);
+  const [communityGroup, setCommunityGroup] = useState<GroupFilter>('All');
   const [saved, setSaved] = useState(false);
-  const [titles, setTitles] = useState({});
-  const [, rerender] = useReducer((n) => n + 1, 0);
+  const [titles, setTitles] = useState<Record<string, string>>({});
+  const [, rerender] = useReducer((n: number) => n + 1, 0);
   const requestId = useRef(0);
-  const asked = useRef(new Set());
+  const asked = useRef(new Set<string>());
   const language = getLanguage();
   const translated = useRecipeTranslation(api, recipe, language, screen === 'recipe');
 
-  async function refresh() {
+  async function refresh(): Promise<ApiState> {
     const next = await api.state();
     setServer(next);
     return next;
@@ -68,7 +90,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
         if (list) setCommunity(list);
         setScreen(start === 'home' && landOn ? landOn : start);
       })
-      .catch((err) => live && (err.status === 401 ? onSessionLost() : setLoadError(err)));
+      .catch((err: unknown) => live && (asApiError(err).status === 401 ? onSessionLost() : setLoadError(asApiError(err))));
     return () => { live = false; };
   }, [api]);
 
@@ -82,13 +104,13 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
     missing.forEach((title) => asked.current.add(titleKey(language, title)));
     api.translateTitles(language, missing)
       .then((answer) => setTitles((previous) => ({
-        ...previous, ...Object.fromEntries(Object.entries(answer).map(([title, translated]) => [titleKey(language, title), translated])),
+        ...previous, ...Object.fromEntries(Object.entries(answer).map(([title, translated]): [string, string] => [titleKey(language, title), translated])),
       })))
       .catch(() => missing.forEach((title) => asked.current.delete(titleKey(language, title))));
   }, [screen, language, server, community]);
 
   // Leaving a screen drops any pending request and its error. Arriving home starts a fresh ingredient list.
-  function go(next) {
+  function go(next: Screen) {
     requestId.current += 1;
     setLoading(false);
     setError(null);
@@ -97,25 +119,25 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   }
 
   // A 401 means the session ended (expired, or the account was removed): back to the login form.
-  function failed(err) {
+  function failed(err: ApiError) {
     if (err.status === 401) onSessionLost();
     else setError(err);
   }
 
-  async function guarded(action) {
+  async function guarded(action: () => Promise<unknown>) {
     try {
       await action();
     } catch (err) {
-      failed(err);
+      failed(asApiError(err));
     }
     rerender();
   }
 
-  async function saveBirthday(date) {
+  async function saveBirthday(date: string): Promise<void> {
     try {
       await api.setBirthdate(date);
     } catch (err) {
-      if (err.status === 401) return onSessionLost();
+      if (asApiError(err).status === 401) return onSessionLost();
       throw err;
     }
     const next = await refresh();
@@ -136,26 +158,28 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
       setScreen('recipe');
       refresh().catch(() => {});
     } catch (err) {
-      if (id === requestId.current) failed(err);
+      if (id === requestId.current) failed(asApiError(err));
     } finally {
       if (id === requestId.current) setLoading(false);
     }
   }
 
   const like = () => guarded(async () => {
+    if (!recipe) return;
     await api.like(recipe);
     setSaved(true);
     await refresh();
   });
 
   const dislike = () => guarded(async () => {
+    if (!recipe) return;
     await api.dislike(recipe);
     setSaved(false);
     await refresh();
     suggest();
   });
 
-  function open(opened, from = 'liked') {
+  function open(opened: ApiRecipe, from: Origin = 'liked') {
     setRecipe(opened);
     setOrigin(from);
     go('recipe');
@@ -166,7 +190,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
     go('shared');
   });
 
-  const toggleCommunityLike = (item) => guarded(async () => {
+  const toggleCommunityLike = (item: SharedItem) => guarded(async () => {
     await (item.liked ? api.unlikeShared(item.id) : api.likeShared(item.id));
     setCommunity(await api.listShared());
     await refresh();
@@ -176,7 +200,8 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
   if (loadError) return <>{account}<Notice kind="error">{errorText(loadError)}</Notice></>;
   if (!server || !screen) return <>{account}<Notice>{t('common.loading')}</Notice></>;
 
-  function renderScreen() {
+  // An arrow, not a declaration, so the `server` narrowed above still holds inside.
+  const renderScreen = () => {
     if (screen === 'setup') return <SetupScreen onSave={saveBirthday} now={now} />;
     if (screen === 'too-young') return <TooYoungScreen onChangeBirthday={() => go('setup')} />;
     if (screen === 'liked') {
@@ -209,13 +234,14 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
         />
       );
     }
-    if (screen === 'recipe' && recipe) {
+    if (screen === 'recipe' && translated.recipe) {
+      const back = BACK[origin];
       return (
         <>
-          {BACK[origin] && (
-            <Button variant="ghost" size="sm" className="self-start" onClick={() => go(BACK[origin].screen)}>
+          {back && (
+            <Button variant="ghost" size="sm" className="self-start" onClick={() => go(back.screen)}>
               <Emoji>←</Emoji>
-              {t(BACK[origin].label)}
+              {t(back.label)}
             </Button>
           )}
           {/* The recipe is shown whole in one language: a notice while its translation is on the way. */}
@@ -223,7 +249,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
             ? <Notice>{t('recipe.translating')}</Notice>
             : (
               <RecipeScreen
-                key={recipe.id}
+                key={translated.recipe.id}
                 recipe={translated.recipe}
                 busy={loading}
                 onAnother={origin === 'home' ? suggest : undefined}
@@ -247,7 +273,7 @@ export default function MainApp({ api, user, now, landOn = null, onSessionLost =
         error={error}
       />
     );
-  }
+  };
 
   // The page links only make sense once the app proper has started; the recipe page marks no page as current.
   const inApp = ['home', 'liked', 'shared', 'recipe'].includes(screen);

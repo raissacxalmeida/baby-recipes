@@ -8,7 +8,8 @@ import '@fontsource/nunito/latin-700.css';
 import '@fontsource/nunito/latin-800.css';
 import './style.css';
 
-createRoot(document.getElementById('root')).render(
+// index.html always has the #root element; getElementById cannot know that.
+createRoot(document.getElementById('root') as HTMLElement).render(
   <StrictMode>
     <App api={createApi()} />
   </StrictMode>,

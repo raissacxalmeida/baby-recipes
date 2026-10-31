@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,7 +12,15 @@ import {
 } from '@/components/ui/alert-dialog.jsx';
 import { t } from '../../i18n/index.js';
 
-export function ConfirmDialog({ trigger, title, description, confirmLabel, onConfirm }) {
+export interface ConfirmDialogProps {
+  trigger: ReactNode;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+}
+
+export function ConfirmDialog({ trigger, title, description, confirmLabel, onConfirm }: ConfirmDialogProps) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>

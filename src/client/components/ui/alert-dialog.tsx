@@ -1,4 +1,4 @@
-import { forwardRef } from 'react';
+import { forwardRef, type ComponentPropsWithoutRef, type ElementRef } from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { cn } from '@/lib/utils.js';
 import { buttonVariants } from '@/components/ui/button.jsx';
@@ -6,7 +6,10 @@ import { buttonVariants } from '@/components/ui/button.jsx';
 export const AlertDialog = AlertDialogPrimitive.Root;
 export const AlertDialogTrigger = AlertDialogPrimitive.Trigger;
 
-export const AlertDialogContent = forwardRef(function AlertDialogContent({ className, ...props }, ref) {
+export const AlertDialogContent = forwardRef<
+  ElementRef<typeof AlertDialogPrimitive.Content>,
+  ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Content>
+>(function AlertDialogContent({ className, ...props }, ref) {
   return (
     <AlertDialogPrimitive.Portal>
       <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgba(36,52,73,0.45)]" />
@@ -22,26 +25,38 @@ export const AlertDialogContent = forwardRef(function AlertDialogContent({ class
   );
 });
 
-export function AlertDialogHeader({ className, ...props }) {
+export function AlertDialogHeader({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
   return <div className={cn('grid gap-2', className)} {...props} />;
 }
 
-export function AlertDialogFooter({ className, ...props }) {
+export function AlertDialogFooter({ className, ...props }: ComponentPropsWithoutRef<'div'>) {
   return <div className={cn('flex flex-wrap justify-end gap-2', className)} {...props} />;
 }
 
-export const AlertDialogTitle = forwardRef(function AlertDialogTitle({ className, ...props }, ref) {
+export const AlertDialogTitle = forwardRef<
+  ElementRef<typeof AlertDialogPrimitive.Title>,
+  ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Title>
+>(function AlertDialogTitle({ className, ...props }, ref) {
   return <AlertDialogPrimitive.Title ref={ref} className={cn('m-0 text-lg font-bold', className)} {...props} />;
 });
 
-export const AlertDialogDescription = forwardRef(function AlertDialogDescription({ className, ...props }, ref) {
+export const AlertDialogDescription = forwardRef<
+  ElementRef<typeof AlertDialogPrimitive.Description>,
+  ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Description>
+>(function AlertDialogDescription({ className, ...props }, ref) {
   return <AlertDialogPrimitive.Description ref={ref} className={cn('m-0 text-sm text-muted-foreground wrap-anywhere', className)} {...props} />;
 });
 
-export const AlertDialogAction = forwardRef(function AlertDialogAction({ className, ...props }, ref) {
+export const AlertDialogAction = forwardRef<
+  ElementRef<typeof AlertDialogPrimitive.Action>,
+  ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
+>(function AlertDialogAction({ className, ...props }, ref) {
   return <AlertDialogPrimitive.Action ref={ref} className={cn(buttonVariants({ variant: 'destructive' }), className)} {...props} />;
 });
 
-export const AlertDialogCancel = forwardRef(function AlertDialogCancel({ className, ...props }, ref) {
+export const AlertDialogCancel = forwardRef<
+  ElementRef<typeof AlertDialogPrimitive.Cancel>,
+  ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel>
+>(function AlertDialogCancel({ className, ...props }, ref) {
   return <AlertDialogPrimitive.Cancel ref={ref} className={cn(buttonVariants({ variant: 'outline' }), className)} {...props} />;
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentPropsWithoutRef, type FormEvent, type ReactNode } from 'react';
 import { cn } from '@/lib/utils.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
@@ -6,10 +6,13 @@ import { Card } from '@/components/ui/card.jsx';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, t } from '../i18n/index.js';
+import type { Api } from '../api.js';
+import { asApiError } from '../api.js';
+import type { AdminInvite, AdminOverview, ApiUser } from '../apiTypes.js';
+import { errorText, t, type ErrorInfo } from '../i18n/index.js';
 
-const day = (iso) => (iso ? iso.slice(0, 10) : t('admin.never'));
-const statusText = (invite) => {
+const day = (iso: string | null) => (iso ? iso.slice(0, 10) : t('admin.never'));
+const statusText = (invite: AdminInvite) => {
   if (invite.status === 'pending') return t('admin.pending', { count: invite.daysLeft });
   return invite.status === 'used' ? t('admin.used') : t('admin.expired');
 };
@@ -18,7 +21,7 @@ const statusText = (invite) => {
 // The explicit roles keep the table semantics when the display is overridden.
 const cellClass = 'block empty:hidden before:text-xs before:font-semibold before:text-muted-foreground before:content-[attr(data-label)]';
 
-function Table({ label, headings, children }) {
+function Table({ label, headings, children }: { label: string; headings: string[]; children: ReactNode }) {
   return (
     <table aria-label={label} role="table" className="block w-full text-left text-sm">
       <thead role="rowgroup" className="sr-only">
@@ -33,18 +36,25 @@ function Table({ label, headings, children }) {
   );
 }
 
-function Tr(props) {
+function Tr(props: ComponentPropsWithoutRef<'tr'>) {
   return <tr role="row" className="grid gap-1 border-b border-border py-3 last:border-0" {...props} />;
 }
 
-function Td({ label, className, ...props }) {
+function Td({ label, className, ...props }: ComponentPropsWithoutRef<'td'> & { label?: string }) {
   return <td role="cell" data-label={label ? `${label}:` : undefined} className={cn(cellClass, label && 'before:mr-1', className)} {...props} />;
 }
 
-function IssuedLink({ issued }) {
+// The link just handed out, shown once: for an invite or for a password reset.
+interface Issued {
+  kind: 'invite' | 'reset';
+  email: string;
+  link: string;
+}
+
+function IssuedLink({ issued }: { issued: Issued }) {
   const label = t(issued.kind === 'invite' ? 'admin.inviteLink' : 'admin.resetLink', { email: issued.email });
   const [copied, setCopied] = useState(false);
-  const [field, setField] = useState(null);
+  const [field, setField] = useState<HTMLInputElement | null>(null);
 
   async function copy() {
     try {
@@ -67,29 +77,29 @@ function IssuedLink({ issued }) {
   );
 }
 
-function AdminPage({ api }) {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [issued, setIssued] = useState(null);
+function AdminPage({ api }: { api: Api }) {
+  const [data, setData] = useState<AdminOverview | null>(null);
+  const [error, setError] = useState<ErrorInfo | null>(null);
+  const [issued, setIssued] = useState<Issued | null>(null);
   const [email, setEmail] = useState('');
 
-  const load = () => api.admin.overview().then(setData).catch((err) => setError(err));
+  const load = () => api.admin.overview().then(setData).catch((err: unknown) => setError(asApiError(err)));
   useEffect(() => { load(); }, []);
 
-  async function act(action) {
+  async function act(action: () => Promise<unknown>) {
     setError(null);
     let ok = true;
     try {
       await action();
     } catch (err) {
-      setError(err);
+      setError(asApiError(err));
       ok = false;
     }
     await load();
     return ok;
   }
 
-  const invite = (address) => act(async () => {
+  const invite = (address: string) => act(async () => {
     const { link } = await api.admin.createInvite(address);
     setIssued({ kind: 'invite', email: address, link });
   });
@@ -99,7 +109,7 @@ function AdminPage({ api }) {
       <h1>{t('admin.title')}</h1>
       <h2>{t('admin.inviteSomeone')}</h2>
       <Card>
-        <form className="grid gap-3" onSubmit={async (e) => { e.preventDefault(); if (await invite(email.trim())) setEmail(''); }}>
+        <form className="grid gap-3" onSubmit={async (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); if (await invite(email.trim())) setEmail(''); }}>
           <Field label={t('admin.inviteEmail')} type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <Button type="submit">{t('admin.createInvite')}</Button>
         </form>
@@ -177,7 +187,12 @@ function AdminPage({ api }) {
   );
 }
 
-export default function AdminScreen({ api, me }) {
+export interface AdminScreenProps {
+  api: Api;
+  me: ApiUser;
+}
+
+export default function AdminScreen({ api, me }: AdminScreenProps) {
   if (!me.isAdmin) return <p>{t('admin.notFound')}</p>;
   return <AdminPage api={api} />;
 }

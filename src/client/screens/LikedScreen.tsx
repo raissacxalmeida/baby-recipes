@@ -1,10 +1,12 @@
+import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, t } from '../i18n/index.js';
+import type { ApiRecipe } from '../apiTypes.js';
+import { errorText, t, type ErrorInfo } from '../i18n/index.js';
 
-function Row({ title, children }) {
+function Row({ title, children }: { title: string; children: ReactNode }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-2 last:border-0">
       <span className="min-w-32 flex-1 wrap-anywhere font-semibold">{title}</span>
@@ -13,10 +15,25 @@ function Row({ title, children }) {
   );
 }
 
+export interface LikedScreenProps {
+  liked: ApiRecipe[];
+  disliked: ApiRecipe[];
+  onOpen: (recipe: ApiRecipe) => void;
+  onUnlike: (recipeId: string) => void;
+  onRestore: (recipeId: string) => void;
+  sharedIds?: string[];
+  copiedIds?: string[];
+  // Sharing is offered only when onShare is passed.
+  onShare?: (recipe: ApiRecipe) => void;
+  onUnshare?: (recipe: ApiRecipe) => void;
+  error?: ErrorInfo | null;
+  titleOf?: (title: string) => string;
+}
+
 export default function LikedScreen({
   liked, disliked, onOpen, onUnlike, onRestore,
   sharedIds = [], copiedIds = [], onShare, onUnshare, error = null, titleOf = (title) => title,
-}) {
+}: LikedScreenProps) {
   return (
     <section className="grid gap-4">
       <h1><Emoji>♡</Emoji> {t('liked.title')}</h1>
@@ -29,7 +46,7 @@ export default function LikedScreen({
               <Button size="sm" variant="outline" aria-label={t('common.openLabel', { title: titleOf(r.title) })} onClick={() => onOpen(r)}>{t('common.open')}</Button>
               {onShare && !copiedIds.includes(r.id) && (
                 sharedIds.includes(r.id)
-                  ? <Button size="sm" variant="outline" aria-label={t('liked.unshareLabel', { title: titleOf(r.title) })} onClick={() => onUnshare(r)}>{t('liked.unshare')}</Button>
+                  ? <Button size="sm" variant="outline" aria-label={t('liked.unshareLabel', { title: titleOf(r.title) })} onClick={() => onUnshare?.(r)}>{t('liked.unshare')}</Button>
                   : <Button size="sm" variant="outline" aria-label={t('liked.shareLabel', { title: titleOf(r.title) })} onClick={() => onShare(r)}>{t('liked.share')}</Button>
               )}
               <Button size="sm" variant="ghost" aria-label={t('liked.removeLabel', { title: titleOf(r.title) })} onClick={() => onUnlike(r.id)}>{t('liked.remove')}</Button>

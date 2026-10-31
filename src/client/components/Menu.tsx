@@ -3,10 +3,18 @@ import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
+import type { ApiUser } from '../apiTypes.js';
 import { t } from '../i18n/index.js';
 import Logo from './Logo.jsx';
 
-function MenuItem({ emoji, label, active, onClick }) {
+interface MenuItemProps {
+  emoji: string;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+}
+
+function MenuItem({ emoji, label, active, onClick }: MenuItemProps) {
   return (
     <Button variant="ghost" className="justify-start" aria-current={active ? 'page' : undefined} onClick={onClick}>
       <Emoji>{emoji}</Emoji>
@@ -17,10 +25,21 @@ function MenuItem({ emoji, label, active, onClick }) {
 
 // The page links only show for the pages whose handler is passed, so screens that come before the app proper
 // (birthday, too young) get just the account actions. `current` marks the page the user is on.
-export default function Menu({ user, current = null, onHome, onLiked, onCommunity, onAdmin, onLogout, onDelete }) {
+export interface MenuProps {
+  user: ApiUser;
+  current?: string | null;
+  onHome?: () => void;
+  onLiked?: () => void;
+  onCommunity?: () => void;
+  onAdmin: () => void;
+  onLogout: () => void;
+  onDelete: () => void;
+}
+
+export default function Menu({ user, current = null, onHome, onLiked, onCommunity, onAdmin, onLogout, onDelete }: MenuProps) {
   const [open, setOpen] = useState(false);
 
-  const closing = (action) => () => {
+  const closing = (action: () => void) => () => {
     setOpen(false);
     action();
   };

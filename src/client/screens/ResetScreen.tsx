@@ -1,16 +1,24 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Card } from '@/components/ui/card.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, t } from '../i18n/index.js';
+import type { Api } from '../api.js';
+import { asApiError } from '../api.js';
+import { errorText, t, type ErrorInfo } from '../i18n/index.js';
 
 const MIN_PASSWORD = 10;
 
-export default function ResetScreen({ api, token, onDone }) {
-  const [email, setEmail] = useState(null);
+export interface ResetScreenProps {
+  api: Api;
+  token: string;
+  onDone: () => void;
+}
+
+export default function ResetScreen({ api, token, onDone }: ResetScreenProps) {
+  const [email, setEmail] = useState<string | null>(null);
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<ErrorInfo | null>(null);
   const [invalid, setInvalid] = useState(false);
   const [changed, setChanged] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -19,14 +27,15 @@ export default function ResetScreen({ api, token, onDone }) {
     let live = true;
     api.resetInfo(token)
       .then((r) => live && setEmail(r.email))
-      .catch((err) => { if (live) { setInvalid(true); setError(err); } });
+      .catch((err: unknown) => { if (live) { setInvalid(true); setError(asApiError(err)); } });
     return () => { live = false; };
   }, [api, token]);
 
-  async function submit(e) {
+  async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (password.length < MIN_PASSWORD) {
-      setError({ key: 'err.passwordShort', params: { min: MIN_PASSWORD } });
+      // Kept as data (key and values) so a language switch words it again; `message` is the text for now.
+      setError({ message: t('err.passwordShort', { min: MIN_PASSWORD }), key: 'err.passwordShort', params: { min: MIN_PASSWORD } });
       return;
     }
     setBusy(true);
@@ -35,7 +44,7 @@ export default function ResetScreen({ api, token, onDone }) {
       await api.reset(token, password);
       setChanged(true);
     } catch (err) {
-      setError(err);
+      setError(asApiError(err));
       setBusy(false);
     }
   }
@@ -43,7 +52,7 @@ export default function ResetScreen({ api, token, onDone }) {
   if (invalid) {
     return (
       <Card>
-        <section className="grid gap-4"><h1>{t('reset.title')}</h1><Notice kind="error">{errorText(error)}</Notice></section>
+        <section className="grid gap-4"><h1>{t('reset.title')}</h1>{error && <Notice kind="error">{errorText(error)}</Notice>}</section>
       </Card>
     );
   }

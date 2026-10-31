@@ -1,9 +1,14 @@
 import { LANGUAGES, LANGUAGE_NAMES } from '../../shared/languages.js';
+import type { Language } from '../../shared/types.js';
 import { getLanguage, t } from '../i18n/index.js';
 import { cn } from '@/lib/utils.js';
 
 // The names are written in their own language on purpose: they are how a person finds theirs.
-export default function LanguageSwitch({ onChange }) {
+export interface LanguageSwitchProps {
+  onChange: (language: Language) => void;
+}
+
+export default function LanguageSwitch({ onChange }: LanguageSwitchProps) {
   const current = getLanguage();
   return (
     <nav aria-label={t('language.label')} className="flex flex-wrap justify-center gap-x-3 gap-y-1">

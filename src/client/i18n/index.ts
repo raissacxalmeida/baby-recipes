@@ -50,9 +50,12 @@ export const useLanguage = () => useSyncExternalStore(subscribe, getLanguage);
 export const t = (key: CatalogKey, params?: TranslateParams): string => translate(current, key, params);
 export const hasKey = (key: string): key is CatalogKey => Object.hasOwn(catalogs.en, key);
 
+// An error as a screen keeps it in state: its text, or an Error with the i18n key and values it can be worded again from.
+export type ErrorInfo = string | { message: string; key?: string; params?: TranslateParams };
+
 // What to show for an error kept in state: the text for its key in the language showing now, else its own message.
 // Errors are kept as data (not as finished text) so a language switch changes the wording of one already on screen.
-export function errorText(error: string | { message: string; key?: string; params?: TranslateParams }): string {
+export function errorText(error: ErrorInfo): string {
   if (typeof error === 'string') return error;
   return error.key && hasKey(error.key) ? t(error.key, error.params) : error.message;
 }

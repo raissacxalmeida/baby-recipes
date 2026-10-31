@@ -4,7 +4,11 @@ import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
 import { t } from '../i18n/index.js';
 
-export default function TooYoungScreen({ onChangeBirthday }) {
+export interface TooYoungScreenProps {
+  onChangeBirthday: () => void;
+}
+
+export default function TooYoungScreen({ onChangeBirthday }: TooYoungScreenProps) {
   return (
     <Card>
       <section className="grid gap-4">

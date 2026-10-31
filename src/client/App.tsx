@@ -3,16 +3,20 @@ import AdminScreen from './screens/AdminScreen.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
 import ResetScreen from './screens/ResetScreen.jsx';
 import SignupScreen from './screens/SignupScreen.jsx';
-import MainApp from './MainApp.jsx';
+import MainApp, { type LandOn } from './MainApp.jsx';
 import Logo from './components/Logo.jsx';
 import LanguageSwitch from './components/LanguageSwitch.jsx';
 import Menu from './components/Menu.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, getLanguage, setLanguage, t, useLanguage } from './i18n/index.js';
+import type { Api } from './api.js';
+import { asApiError } from './api.js';
+import type { ApiUser } from './apiTypes.js';
+import { errorText, getLanguage, setLanguage, t, useLanguage, type ErrorInfo } from './i18n/index.js';
 import { isLanguage } from '../shared/languages.js';
+import type { Language } from '../shared/types.js';
 
-const defaultNavigate = (path) => window.history.pushState({}, '', path);
-const safeDecode = (s) => {
+const defaultNavigate = (path: string) => window.history.pushState({}, '', path);
+const safeDecode = (s: string) => {
   try {
     return decodeURIComponent(s);
   } catch {
@@ -20,13 +24,25 @@ const safeDecode = (s) => {
   }
 };
 
-export default function App({ api, now = () => new Date(), path: initialPath, navigate = defaultNavigate }) {
+type SessionState =
+  | { status: 'loading'; user: null }
+  | { status: 'anon'; user: null }
+  | { status: 'ready'; user: ApiUser };
+
+export interface AppProps {
+  api: Api;
+  now?: () => Date;
+  path?: string;
+  navigate?: (path: string) => void;
+}
+
+export default function App({ api, now = () => new Date(), path: initialPath, navigate = defaultNavigate }: AppProps) {
   const [path, setPath] = useState(() => initialPath ?? window.location.pathname);
-  const [session, setSession] = useState({ status: 'loading', user: null });
-  const [notice, setNotice] = useState(null);
-  const [accountError, setAccountError] = useState(null);
+  const [session, setSession] = useState<SessionState>({ status: 'loading', user: null });
+  const [notice, setNotice] = useState<ErrorInfo | null>(null);
+  const [accountError, setAccountError] = useState<ErrorInfo | null>(null);
   // Which page the app should open on when it comes back from the admin page.
-  const [landOn, setLandOn] = useState(null);
+  const [landOn, setLandOn] = useState<LandOn>(null);
 
   // App is the one component that follows the language: its re-render carries every screen below it.
   useLanguage();
@@ -52,18 +68,18 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
     else api.setLanguage(getLanguage()).catch(() => {});
   }, [session.user]);
 
-  function chooseLanguage(code) {
+  function chooseLanguage(code: Language) {
     setLanguage(code);
     if (session.user) api.setLanguage(code).catch(() => {});
   }
 
-  function go(next) {
+  function go(next: string) {
     navigate(next);
     setPath(next);
   }
-  const signedIn = (user) => { setNotice(null); setSession({ status: 'ready', user }); };
+  const signedIn = (user: ApiUser) => { setNotice(null); setSession({ status: 'ready', user }); };
   const signedOut = () => { setLandOn(null); setSession({ status: 'anon', user: null }); };
-  const sessionLost = () => { setNotice({ key: 'auth.sessionEnded' }); signedOut(); };
+  const sessionLost = () => { setNotice({ message: t('auth.sessionEnded'), key: 'auth.sessionEnded' }); signedOut(); };
 
   let body;
   if (invite) {
@@ -89,12 +105,12 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
           signedOut();
           go('/');
         } catch (err) {
-          setAccountError(err);
+          setAccountError(asApiError(err));
         }
       },
       onAdmin: () => { setLandOn(null); go('/admin'); },
     };
-    const land = (page) => () => { setLandOn(page); go('/'); };
+    const land = (page: LandOn) => () => { setLandOn(page); go('/'); };
     body = path === '/admin'
       ? (
         <>

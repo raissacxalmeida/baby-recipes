@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { parseIngredientList } from '../../shared/ingredients.js';
 import { ingredientEmoji } from '../../shared/ingredientEmoji.js';
 import { Button } from '@/components/ui/button.jsx';
@@ -6,14 +6,25 @@ import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Field } from '@/components/ui/field.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, getLanguage, t } from '../i18n/index.js';
+import type { Usage } from '../apiTypes.js';
+import { errorText, getLanguage, t, type ErrorInfo } from '../i18n/index.js';
 
-const percent = (used, limit) => (limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0);
+const percent = (used: number, limit: number) => (limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0);
 
-export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, loading, error, usage = null }) {
+export interface HomeScreenProps {
+  ageText: string;
+  ingredients: string[];
+  onChange: (ingredients: string[]) => void;
+  onSuggest: () => void;
+  loading: boolean;
+  error: ErrorInfo | null;
+  usage?: Usage | null;
+}
+
+export default function HomeScreen({ ageText, ingredients, onChange, onSuggest, loading, error, usage = null }: HomeScreenProps) {
   const [text, setText] = useState('');
 
-  function add(e) {
+  function add(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     onChange(parseIngredientList([...ingredients, text], { plurals: getLanguage() === 'en' }));
     setText('');

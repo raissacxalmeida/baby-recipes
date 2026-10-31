@@ -1,18 +1,34 @@
 import { GROUPS } from '../../shared/recipeGroup.js';
+import type { GroupName } from '../../shared/types.js';
 import { Badge } from '@/components/ui/badge.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import { Notice } from '@/components/ui/notice.jsx';
-import { errorText, t } from '../i18n/index.js';
+import type { SharedItem } from '../apiTypes.js';
+import { errorText, t, type ErrorInfo } from '../i18n/index.js';
 
-const emojiFor = (name) => GROUPS.find((g) => g.name === name)?.emoji;
+// The chip that shows every group.
+export type GroupFilter = GroupName | 'All';
+
+const emojiFor = (name: GroupName) => GROUPS.find((g) => g.name === name)?.emoji;
+
+export interface SharedScreenProps {
+  recipes: SharedItem[];
+  group: GroupFilter;
+  onGroup: (group: GroupFilter) => void;
+  onOpen: (item: SharedItem) => void;
+  onToggleLike: (item: SharedItem) => void;
+  error?: ErrorInfo | null;
+  titleOf?: (title: string) => string;
+}
 
 export default function SharedScreen({
   recipes, group, onGroup, onOpen, onToggleLike, error = null, titleOf = (title) => title,
-}) {
+}: SharedScreenProps) {
   const present = GROUPS.filter((g) => recipes.some((r) => r.group === g.name));
   const selected = present.some((g) => g.name === group) ? group : 'All';
+  const chips: Array<{ name: GroupFilter; emoji?: string }> = [{ name: 'All' }, ...present];
   const shown = selected === 'All' ? recipes : recipes.filter((r) => r.group === selected);
 
   return (
@@ -22,7 +38,7 @@ export default function SharedScreen({
       {recipes.length === 0 && <Notice kind="note">{t('shared.none')}</Notice>}
       {present.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {[{ name: 'All' }, ...present].map((g) => (
+          {chips.map((g) => (
             <Button
               key={g.name}
               size="sm"

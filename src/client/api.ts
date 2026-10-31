@@ -9,6 +9,9 @@ import { getLanguage, hasKey, t } from './i18n/index.js';
 // can word the error again after a language switch.
 export type ApiError = Error & { status?: number; code?: string; key?: string; params?: Record<string, unknown> };
 
+// A catch clause holds `unknown`. Every request fails with an ApiError, so this is where a caught value is read as one.
+export const asApiError = (caught: unknown): ApiError => caught as ApiError;
+
 // The part of fetch's answer that is read; a test can hand back a plain object.
 export interface FetchResponse {
   ok: boolean;
