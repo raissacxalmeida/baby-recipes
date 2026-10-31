@@ -7,9 +7,7 @@
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true,
-    "allowJs": true,
-    "checkJs": false,
     "paths": { "@/*": ["./src/client/*"] }
   },
-  "include": ["src", "test", "vite.config.js"]
+  "include": ["src", "test"]
 }

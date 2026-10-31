@@ -29,7 +29,7 @@ const contrast = (a: string, b: string) => {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
 };
-const ERROR_NOTICE_BACKGROUND = '#fdeae5'; // bg-[#fdeae5] in components/ui/notice.jsx
+const ERROR_NOTICE_BACKGROUND = '#fdeae5'; // bg-[#fdeae5] in components/ui/notice.tsx
 
 test('button labels meet 4.5:1 contrast', () => {
   expect(contrast(tokens['primary-foreground'], tokens.primary)).toBeGreaterThanOrEqual(4.5);
