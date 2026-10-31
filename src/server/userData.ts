@@ -1,4 +1,4 @@
-import { AppError, invalidInputFrom } from './errors.js';
+import { AppError } from './errors.js';
 import { ageInMonths } from '../shared/age.js';
 import { isLanguage } from '../shared/languages.js';
 import { isRecipe } from '../shared/recipeShape.js';
@@ -43,7 +43,9 @@ export async function setBirthdate(db: Db, userId: string, birthdate: string, no
   try {
     ageInMonths(birthdate, now);
   } catch (err) {
-    throw invalidInputFrom(err);
+    // A caught value is untyped at this edge; ageInMonths throws a RangeError that carries an i18n key.
+    const { message, key } = err as { message: string; key?: string };
+    throw new AppError('invalid-input', message, { key });
   }
   await db.query('update users set birthdate = $2::date where id = $1', [userId, birthdate]);
 }

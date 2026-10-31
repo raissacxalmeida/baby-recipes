@@ -48,13 +48,16 @@ export interface CallOptions {
   fetchImpl?: typeof fetch;
 }
 
-// The reply text of a chat completion. Anything else is a plain TypeError, as reading a missing field always was.
+// The reply text of a chat completion. A reply with no choices or message is a plain TypeError, as reading
+// the missing field always was. The content itself is passed on as JSON.parse always received it: a refusal
+// has null content, which parses to null, and the translator then rejects that with its friendly error.
 function replyText(data: unknown): string {
-  const choice = isObject(data) && Array.isArray(data.choices) ? data.choices[0] : undefined;
+  const choices = isObject(data) ? data.choices : undefined;
+  const choice = isObject(choices) ? choices[0] : undefined;
   const message = isObject(choice) ? choice.message : undefined;
-  const content = isObject(message) ? message.content : undefined;
-  if (typeof content !== 'string') throw new TypeError('OpenAI answered in an unexpected shape');
-  return content;
+  if (!isObject(message)) throw new TypeError('OpenAI answered in an unexpected shape');
+  // JSON.parse converts its argument to text; doing it here keeps null as "null" and undefined as "undefined".
+  return String(message.content);
 }
 
 // One chat completion that answers with JSON matching `schema`; the key travels only in the header.

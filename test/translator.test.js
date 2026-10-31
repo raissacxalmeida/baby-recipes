@@ -59,3 +59,8 @@ test('a network failure throws upstream-error', async () => {
   const fetchImpl = async () => { throw new TypeError('fetch failed'); };
   await expect(callTranslate({ kind: 'titles', language: 'pt', titles: ['A'] }, { apiKey: 'k', fetchImpl })).rejects.toMatchObject({ code: 'upstream-error' });
 });
+
+test('a refusal (null content) comes back as null, for the caller to reject', async () => {
+  const fetchImpl = async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: null, refusal: 'no' } }] }) });
+  expect(await callTranslate({ kind: 'recipe', language: 'pt', recipe: { title: 'A', ingredients: ['b'], steps: ['c'] } }, { apiKey: 'k', fetchImpl })).toBeNull();
+});

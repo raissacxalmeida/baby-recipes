@@ -1,7 +1,7 @@
-import { AppError, invalidInputFrom } from './errors.js';
+import { AppError } from './errors.js';
 import { ageInMonths } from '../shared/age.js';
 import { groupFor } from '../shared/recipeGroup.js';
-import { isRecipe } from '../shared/recipeShape.js';
+import type { Recipe } from '../shared/types.js';
 import { isUuid } from './users.js';
 import type { Db, RecipeRow, SharedRecipeRow } from './types.js';
 
@@ -24,8 +24,7 @@ export async function shareRecipe(db: Db, userId: string, recipeId: unknown, now
       "select data, copied_from from recipes where user_id = $1 and id = $2 and status = 'liked'",
       [userId, String(recipeId)],
     )).rows[0];
-    // Saved recipes passed isRecipe when they were stored, so a row that fails it is treated as missing.
-    if (!saved || !isRecipe(saved.data)) throw new AppError('not-found', 'Like the recipe first, then share it', { key: 'err.likeFirst' });
+    if (!saved) throw new AppError('not-found', 'Like the recipe first, then share it', { key: 'err.likeFirst' });
     if (saved.copied_from) throw new AppError('conflict', 'This recipe came from the community already', { key: 'err.alreadyCommunity' });
     const user = (await tx.query<{ birthdate: string | null }>("select to_char(birthdate, 'YYYY-MM-DD') as birthdate from users where id = $1", [userId])).rows[0];
     if (!user?.birthdate) throw new AppError('invalid-input', "Set your baby's birthday first", { key: 'err.birthdayFirst' });
@@ -33,12 +32,14 @@ export async function shareRecipe(db: Db, userId: string, recipeId: unknown, now
     try {
       months = ageInMonths(user.birthdate, now);
     } catch (err) {
-      throw invalidInputFrom(err);
+      // A caught value is untyped at this edge; ageInMonths throws a RangeError that carries an i18n key.
+      const { message, key } = err as { message: string; key?: string };
+      throw new AppError('invalid-input', message, { key });
     }
     await tx.query(
       `insert into shared_recipes (user_id, recipe_id, data, grp, baby_months) values ($1, $2, $3, $4, $5)
        on conflict (user_id, recipe_id) do nothing`,
-      [userId, String(recipeId), JSON.stringify(saved.data), groupFor(saved.data), months],
+      [userId, String(recipeId), JSON.stringify(saved.data), groupFor(saved.data as Recipe), months],
     );
   });
 }
@@ -66,8 +67,7 @@ export async function likeShared(db: Db, userId: string, sharedId: unknown): Pro
   if (!isUuid(sharedId)) throw notFound();
   await db.transaction(async (tx) => {
     const shared = (await tx.query<Pick<SharedRecipeRow, 'user_id' | 'data'>>('select user_id, data from shared_recipes where id = $1', [sharedId])).rows[0];
-    // Shared recipes were copied from saved ones, which passed isRecipe, so a row that fails it is treated as missing.
-    if (!shared || !isRecipe(shared.data)) throw notFound();
+    if (!shared) throw notFound();
     if (shared.user_id === userId) throw new AppError('invalid-input', 'You shared this one', { key: 'err.ownShared' });
     await tx.query('insert into shared_likes (shared_id, user_id) values ($1, $2) on conflict do nothing', [sharedId, userId]);
     // A liked recipe with the same id is the parent's own and is kept; a disliked one is replaced.
@@ -76,7 +76,7 @@ export async function likeShared(db: Db, userId: string, sharedId: unknown): Pro
        on conflict (user_id, id) do update
          set data = $3, status = 'liked', copied_from = $4, updated_at = now()
          where recipes.status = 'disliked'`,
-      [userId, shared.data.id, JSON.stringify(shared.data), sharedId],
+      [userId, (shared.data as Recipe).id, JSON.stringify(shared.data), sharedId],
     );
   });
 }
@@ -86,10 +86,10 @@ export async function unlikeShared(db: Db, userId: string, sharedId: unknown): P
   await db.transaction(async (tx) => {
     const shared = (await tx.query<Pick<SharedRecipeRow, 'data'>>('select data from shared_recipes where id = $1', [sharedId])).rows[0];
     await tx.query('delete from shared_likes where shared_id = $1 and user_id = $2', [sharedId, userId]);
-    if (shared && isRecipe(shared.data)) {
+    if (shared) {
       await tx.query(
         "delete from recipes where user_id = $1 and id = $2 and status = 'liked' and copied_from = $3",
-        [userId, shared.data.id, sharedId],
+        [userId, (shared.data as Recipe).id, sharedId],
       );
     }
   });

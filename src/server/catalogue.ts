@@ -1,18 +1,12 @@
 import { matchRecipe } from '../shared/recipeMatch.js';
 import { normalizeTitle } from './generate.js';
-import { isObject, isStrings } from './guards.js';
 import { checkSafety } from './safety.js';
 import type { CatalogueRecipeRow, Db, StoredRecipe } from './types.js';
 
 const MAX_OVERLAPPING = 30;
 
-// The same checks the other jsonb readers make: the column is unknown until it has the shape of a stored recipe.
-const isStoredRecipe = (v: unknown): v is StoredRecipe =>
-  isObject(v) &&
-  typeof v.title === 'string' && typeof v.basePortions === 'number' &&
-  Array.isArray(v.ingredients) && v.ingredients.every((i: unknown) => isObject(i) && typeof i.name === 'string' && typeof i.grams === 'number') &&
-  isStrings(v.steps) && isStrings(v.allergens) &&
-  (v.texture === undefined || typeof v.texture === 'string');
+// The data column is jsonb, so it comes back unknown. Only toStored writes it, so this is the stored shape.
+const storedData = (row: Pick<CatalogueRecipeRow, 'data'>): StoredRecipe => row.data as StoredRecipe;
 
 // Only the recipe itself is stored: no id (made from the title when served) and no per-parent inList flags.
 const toStored = (r: StoredRecipe): StoredRecipe => ({
@@ -47,8 +41,7 @@ export async function findSuitable(
   const seenKeys = new Set(seen.map(normalizeTitle));
   const { rows } = await db.query<Pick<CatalogueRecipeRow, 'data'>>('select data from catalogue_recipes where age_from_months <= $1', [ageMonths]);
   const candidates = rows
-    .map((r) => r.data)
-    .filter(isStoredRecipe)
+    .map(storedData)
     .filter((data) => !seenKeys.has(normalizeTitle(data.title)) && checkSafety(data, ageMonths).length === 0)
     .map((data) => ({ data, ...matchRecipe(data, ingredients) }))
     .filter((m) => m.suitable)
@@ -62,8 +55,7 @@ export async function overlappingTitles(
 ): Promise<string[]> {
   const { rows } = await db.query<Pick<CatalogueRecipeRow, 'data'>>('select data from catalogue_recipes');
   return rows
-    .map((r) => r.data)
-    .filter(isStoredRecipe)
+    .map(storedData)
     .map((data) => ({ data, used: matchRecipe(data, ingredients).used }))
     .filter((m) => m.used > 0)
     .sort((a, b) => b.used - a.used || byTitle(a.data, b.data))

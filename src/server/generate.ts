@@ -1,6 +1,6 @@
 import { ageInMonths } from '../shared/age.js';
 import { isListed, parseIngredientList } from '../shared/ingredients.js';
-import { AppError, invalidInputFrom } from './errors.js';
+import { AppError } from './errors.js';
 import { isStrings } from './guards.js';
 import { checkSafety, detectAllergens } from './safety.js';
 import { validateRecipe } from './recipe.js';
@@ -33,7 +33,9 @@ export function validateRequest(
   try {
     ageMonths = ageInMonths(birthdate, now());
   } catch (err) {
-    throw invalidInputFrom(err);
+    // A caught value is untyped at this edge; ageInMonths throws a RangeError that carries an i18n key.
+    const { message, key } = err as { message: string; key?: string };
+    throw new AppError('invalid-input', message, { key });
   }
   const list = parseIngredientList(items);
   if (list.length === 0) throw new AppError('invalid-input', 'Add at least one ingredient', { key: 'err.ingredientsNeeded' });

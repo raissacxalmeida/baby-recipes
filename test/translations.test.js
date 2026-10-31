@@ -5,6 +5,7 @@ import { createInvite, acceptInvite, createAdmin } from '../src/server/users.js'
 import { like } from '../src/server/userData.js';
 import { saveToCatalogue } from '../src/server/catalogue.js';
 import { LIMITS } from '../src/server/usage.js';
+import { callTranslate as callOpenAi } from '../src/server/openai.js';
 import { AppError } from '../src/server/errors.js';
 import { recipeHash, translateIngredients, translateRecipe, translateTitles } from '../src/server/translations.js';
 
@@ -232,4 +233,18 @@ test('an empty list makes no call', async () => {
   const ct = createFakeTranslator();
   expect(await translateIngredients(db, user, 'pt', [], deps(ct))).toEqual([]);
   expect(ct).not.toHaveBeenCalled();
+});
+
+test('a refused translation (null content from OpenAI) is the friendly translation-failed error', async () => {
+  await catalogue('Banana mash');
+  // The title call is answered normally; only the recipe call is refused.
+  const fetchImpl = async (_url, init) => {
+    const refused = JSON.parse(init.body).response_format.json_schema.name === 'recipe';
+    const content = refused ? null : JSON.stringify({ titles: ['Papa de banana'] });
+    return { ok: true, json: async () => ({ choices: [{ message: { content } }] }) };
+  };
+  const callTranslate = (task) => callOpenAi(task, { apiKey: 'k', fetchImpl });
+  await expect(translateRecipe(db, user, 'pt', served(), deps(callTranslate))).rejects.toMatchObject({
+    code: 'upstream-error', key: 'err.translationFailed',
+  });
 });

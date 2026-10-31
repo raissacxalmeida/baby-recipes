@@ -11,10 +11,3 @@ export class AppError extends Error {
     this.params = info.params;
   }
 }
-
-// A failure from a shared helper such as ageInMonths, which attaches the i18n `key` to the error it throws.
-export function invalidInputFrom(err: unknown): AppError {
-  const message = err instanceof Error ? err.message : String(err);
-  const key = typeof err === 'object' && err !== null && 'key' in err && typeof err.key === 'string' ? err.key : undefined;
-  return new AppError('invalid-input', message, { key });
-}
