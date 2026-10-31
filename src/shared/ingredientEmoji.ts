@@ -1,6 +1,6 @@
 const FALLBACK = '🥣';
 
-const EMOJI = {
+const EMOJI: Record<string, string> = {
   carrot: '🥕',
   'sweet potato': '🍠',
   potato: '🥔',
@@ -38,9 +38,9 @@ const EMOJI = {
 };
 
 // Plural endings to try removing: "carrots" -> "carrot", "tomatoes" -> "tomato".
-const singulars = (word) => [word, word.replace(/es$/, ''), word.replace(/s$/, '')];
+const singulars = (word: string) => [word, word.replace(/es$/, ''), word.replace(/s$/, '')];
 
-export function ingredientEmoji(name) {
+export function ingredientEmoji(name: unknown): string {
   if (typeof name !== 'string') return FALLBACK;
   const word = name.trim().toLowerCase().replace(/\s+/g, ' ');
   if (!word) return FALLBACK;

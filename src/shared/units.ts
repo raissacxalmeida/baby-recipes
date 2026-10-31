@@ -1,10 +1,12 @@
+import type { Recipe } from './types.js';
+
 // Whole grams below a kilo, otherwise kilos with up to two decimals, using the decimal mark of `language`.
-export function formatAmount(grams, language = 'en') {
+export function formatAmount(grams: number, language = 'en'): string {
   if (grams < 1000) return `${Math.round(grams)} g`;
   return `${new Intl.NumberFormat(language, { maximumFractionDigits: 2 }).format(Math.round(grams / 10) / 100)} kg`;
 }
 
-export function scaleRecipe(recipe, portions) {
+export function scaleRecipe<R extends Recipe>(recipe: R, portions: number): R {
   if (!Number.isInteger(portions) || portions < 1 || portions > 12) {
     throw new RangeError('Portions must be a whole number from 1 to 12');
   }

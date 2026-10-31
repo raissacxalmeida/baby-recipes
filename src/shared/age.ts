@@ -1,6 +1,6 @@
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-export function ageInMonths(birthdate, now) {
+export function ageInMonths(birthdate: string | null | undefined, now: Date): number {
   const m = DATE_RE.exec(birthdate ?? '');
   const [by, bm, bd] = m ? m.slice(1).map(Number) : [];
   const parsed = m && new Date(by, bm - 1, bd);

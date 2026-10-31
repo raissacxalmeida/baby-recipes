@@ -1,4 +1,5 @@
 import { isListed } from './ingredients.js';
+import type { GroupName, Ingredient } from './types.js';
 
 // Chip order on the community page. "All" is added by the screen.
 export const GROUPS = [
@@ -12,16 +13,18 @@ export const GROUPS = [
   { name: 'Cake', emoji: '🍰' },
   { name: 'Soup', emoji: '🍲' },
   { name: 'Other', emoji: '🥣' },
-];
+] as const;
 
 // Dish types are matched on the title and win over ingredients; Cake is checked before Soup.
-const DISHES = [
+type Table = ReadonlyArray<readonly [GroupName, readonly string[]]>;
+
+const DISHES: Table = [
   ['Cake', ['cake', 'muffin', 'cupcake']],
   ['Soup', ['soup', 'broth', 'stew']],
 ];
 
 // Fish and meat win whenever they appear, however little there is.
-const PROTEINS = [
+const PROTEINS: Table = [
   ['Fish', ['fish', 'salmon', 'cod', 'tuna', 'trout', 'haddock', 'hake', 'sardine', 'mackerel', 'sea bass']],
   ['Meat', ['chicken', 'beef', 'pork', 'turkey', 'lamb', 'veal', 'duck', 'meat', 'mince']],
 ];
@@ -30,7 +33,7 @@ const PROTEINS = [
 export const PROTEIN_WORDS = [...PROTEINS.flatMap(([, words]) => words), 'egg'];
 
 // Otherwise the heaviest remaining ingredient decides.
-const INGREDIENTS = [
+const INGREDIENTS: Table = [
   ['Eggs', ['egg']],
   ['Vegetables', [
     'carrot', 'potato', 'sweet potato', 'broccoli', 'cauliflower', 'pumpkin', 'squash', 'zucchini', 'courgette',
@@ -46,11 +49,11 @@ const INGREDIENTS = [
 ];
 
 // Cooking liquids and fats are usually the heaviest item without being the point of the dish.
-const IGNORED = ['water', 'oil', 'butter', 'salt'];
+const IGNORED: readonly string[] = ['water', 'oil', 'butter', 'salt'];
 
-const find = (table, test) => table.find(([, words]) => test(words))?.[0];
+const find = (table: Table, test: (words: readonly string[]) => boolean): GroupName | undefined => table.find(([, words]) => test(words))?.[0];
 
-export function groupFor({ title, ingredients }) {
+export function groupFor({ title, ingredients }: { title: string; ingredients: Ingredient[] }): GroupName {
   const dish = find(DISHES, (words) => isListed(title, words));
   if (dish) return dish;
   const names = ingredients.map((i) => i.name);
