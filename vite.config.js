@@ -32,7 +32,7 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, '.claude/worktrees/**'],
     hookTimeout: 60000,
     testTimeout: 30000,
-    environmentMatchGlobs: [['test/**/*.test.jsx', 'jsdom']],
-    setupFiles: ['./test/setup.jsdom.js'],
+    environmentMatchGlobs: [['test/**/*.test.tsx', 'jsdom']],
+    setupFiles: ['./test/setup.jsdom.ts'],
   },
 });
