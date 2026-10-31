@@ -23,5 +23,5 @@ test('the README is titled Tiny Pantry', () => {
 });
 
 test('the OpenAI prompt keeps its wording', () => {
-  expect(readFileSync('src/server/openai.js', 'utf8')).toContain('writes simple baby recipes');
+  expect(readFileSync('src/server/openai.ts', 'utf8')).toContain('writes simple baby recipes');
 });

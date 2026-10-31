@@ -1,19 +1,31 @@
+import { isObject, isStrings } from './guards.js';
+
 export const TEXTURES = ['puree', 'mashed', 'soft-pieces', 'finger-food'];
 
-const isText = (v) => typeof v === 'string' && v.trim() !== '';
+const isText = (v: unknown): v is string => typeof v === 'string' && v.trim() !== '';
 const HAS_AMOUNT = /\d\s*(?:ml|l|oz|cups?|tbsp|tsp|tablespoons?|teaspoons?|kg|g|grams?)\b/i;
 
-export function validateRecipe(raw) {
-  if (!raw || typeof raw !== 'object') throw new Error('recipe must be an object');
+// What the model's answer is turned into once every field has been checked.
+export interface ValidatedRecipe {
+  title: string;
+  basePortions: number;
+  ingredients: { name: string; grams: number }[];
+  steps: string[];
+  texture: string;
+  aiAllergens: string[];
+}
+
+export function validateRecipe(raw: unknown): ValidatedRecipe {
+  if (!isObject(raw)) throw new Error('recipe must be an object');
   if (!isText(raw.title)) throw new Error('title must be a non-empty string');
-  if (!Number.isInteger(raw.basePortions) || raw.basePortions < 1 || raw.basePortions > 12) {
+  if (typeof raw.basePortions !== 'number' || !Number.isInteger(raw.basePortions) || raw.basePortions < 1 || raw.basePortions > 12) {
     throw new Error('basePortions must be an integer from 1 to 12');
   }
   if (!Array.isArray(raw.ingredients) || raw.ingredients.length === 0) {
     throw new Error('ingredients must be a non-empty array');
   }
-  const ingredients = raw.ingredients.map((i, n) => {
-    if (!i || !isText(i.name)) throw new Error(`ingredients[${n}].name must be a non-empty string`);
+  const ingredients = raw.ingredients.map((i: unknown, n) => {
+    if (!isObject(i) || !isText(i.name)) throw new Error(`ingredients[${n}].name must be a non-empty string`);
     if (typeof i.grams !== 'number' || !Number.isFinite(i.grams) || i.grams <= 0) {
       throw new Error(`ingredients[${n}].grams must be a number above 0`);
     }
@@ -23,8 +35,8 @@ export function validateRecipe(raw) {
     throw new Error('steps must be a non-empty array of non-empty strings');
   }
   if (raw.steps.some((s) => HAS_AMOUNT.test(s))) throw new Error('steps must not contain amounts or units');
-  if (!TEXTURES.includes(raw.texture)) throw new Error(`texture must be one of ${TEXTURES.join(', ')}`);
-  if (!Array.isArray(raw.allergens) || !raw.allergens.every((a) => typeof a === 'string')) {
+  if (typeof raw.texture !== 'string' || !TEXTURES.includes(raw.texture)) throw new Error(`texture must be one of ${TEXTURES.join(', ')}`);
+  if (!isStrings(raw.allergens)) {
     throw new Error('allergens must be an array of strings');
   }
   return {

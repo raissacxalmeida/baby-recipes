@@ -1,18 +1,28 @@
 import { AppError } from './errors.js';
+import type { Db, ModelCall, SessionUser, TranslateCall } from './types.js';
 import { parseIngredientList } from '../shared/ingredients.js';
+import type { Language } from '../shared/types.js';
 import { translateIngredients } from './translations.js';
 import { findSuitable, overlappingTitles, saveToCatalogue } from './catalogue.js';
-import { generateRecipe, presentRecipe, validateRequest } from './generate.js';
+import { generateRecipe, presentRecipe, validateRequest, type PresentedRecipe } from './generate.js';
+import { isStrings } from './guards.js';
 import { addShown, excludeTitles, getState } from './userData.js';
 import { limitError, releaseRecipe, reserveCall, reserveRecipe } from './usage.js';
 
-export async function requestRecipe(db, user, ingredients, { callModel, callTranslate, now, language = 'en' }) {
+export async function requestRecipe(
+  db: Db,
+  user: SessionUser,
+  ingredients: unknown,
+  { callModel, callTranslate, now, language = 'en' }: { callModel: ModelCall; callTranslate: TranslateCall; now: () => Date; language?: Language },
+): Promise<PresentedRecipe> {
   const state = await getState(db, user.id);
   if (!state.birthdate) throw new AppError('invalid-input', "Set your baby's birthday first", { key: 'err.birthdayFirst' });
   const checked = validateRequest({ birthdate: state.birthdate, ingredients, exclude: [] }, now);
   const { ageMonths } = checked;
+  // validateRequest has just thrown for anything but a list of text; this lets the compiler know it too.
+  const typed = isStrings(ingredients) ? ingredients : [];
   // Words typed in another language become English here, before anything matches or checks them.
-  const english = language === 'en' ? ingredients : await translateIngredients(db, user, language, ingredients, { callTranslate, now });
+  const english = language === 'en' ? typed : await translateIngredients(db, user, language, typed, { callTranslate, now });
   const list = language === 'en' ? checked.list : parseIngredientList(english);
   if (list.length === 0) throw new AppError('invalid-input', 'Add at least one ingredient', { key: 'err.ingredientsNeeded' });
   const seen = await excludeTitles(db, user.id);
@@ -30,7 +40,7 @@ export async function requestRecipe(db, user, ingredients, { callModel, callTran
   }
   try {
     const exclude = [...seen, ...(await overlappingTitles(db, { ingredients: list }))];
-    const guarded = async (input) => {
+    const guarded: ModelCall = async (input) => {
       if (!user.isAdmin && !(await reserveCall(db, user.id, now()))) {
         throw limitError(now());
       }
@@ -43,7 +53,7 @@ export async function requestRecipe(db, user, ingredients, { callModel, callTran
     try {
       await saveToCatalogue(db, recipe, { ageFromMonths: ageMonths, source: 'ai' });
     } catch (err) {
-      console.error(`Could not save the recipe to the catalogue: ${err.message}`);
+      console.error(`Could not save the recipe to the catalogue: ${err instanceof Error ? err.message : String(err)}`);
     }
     await addShown(db, user.id, recipe.title, now());
     return recipe;

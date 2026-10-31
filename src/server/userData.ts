@@ -1,24 +1,35 @@
-import { AppError } from './errors.js';
+import { AppError, invalidInputFrom } from './errors.js';
 import { ageInMonths } from '../shared/age.js';
 import { isLanguage } from '../shared/languages.js';
 import { isRecipe } from '../shared/recipeShape.js';
+import type { Recipe } from '../shared/types.js';
+import type { Db, RecipeRow, ShownRow, SharedRecipeRow } from './types.js';
 
 const MAX_SHOWN = 50;
 const MAX_RECIPE_BYTES = 20000;
 
-function checkRecipe(recipe) {
+function checkRecipe(recipe: unknown): asserts recipe is Recipe {
   if (!isRecipe(recipe) || JSON.stringify(recipe).length > MAX_RECIPE_BYTES) {
     throw new AppError('invalid-input', 'That recipe is not valid', { key: 'err.recipeInvalid' });
   }
 }
 
-export async function getState(db, userId) {
-  const user = await db.query("select to_char(birthdate, 'YYYY-MM-DD') as birthdate from users where id = $1", [userId]);
-  const recipes = await db.query(
+// What the browser gets for /api/state (before the usage block is added). The recipes are the stored jsonb.
+export interface UserState {
+  birthdate: string | null;
+  liked: unknown[];
+  disliked: unknown[];
+  sharedIds: string[];
+  copiedIds: string[];
+}
+
+export async function getState(db: Db, userId: string): Promise<UserState> {
+  const user = await db.query<{ birthdate: string | null }>("select to_char(birthdate, 'YYYY-MM-DD') as birthdate from users where id = $1", [userId]);
+  const recipes = await db.query<Pick<RecipeRow, 'id' | 'data' | 'status' | 'copied_from'>>(
     'select id, data, status, copied_from from recipes where user_id = $1 order by updated_at, id', [userId],
   );
-  const shared = await db.query('select recipe_id from shared_recipes where user_id = $1 order by created_at, id', [userId]);
-  const by = (status) => recipes.rows.filter((r) => r.status === status).map((r) => r.data);
+  const shared = await db.query<Pick<SharedRecipeRow, 'recipe_id'>>('select recipe_id from shared_recipes where user_id = $1 order by created_at, id', [userId]);
+  const by = (status: RecipeRow['status']): unknown[] => recipes.rows.filter((r) => r.status === status).map((r) => r.data);
   return {
     birthdate: user.rows[0]?.birthdate ?? null,
     liked: by('liked'),
@@ -28,40 +39,43 @@ export async function getState(db, userId) {
   };
 }
 
-export async function setBirthdate(db, userId, birthdate, now) {
+export async function setBirthdate(db: Db, userId: string, birthdate: string, now: Date): Promise<void> {
   try {
     ageInMonths(birthdate, now);
   } catch (err) {
-    throw new AppError('invalid-input', err.message, { key: err.key });
+    throw invalidInputFrom(err);
   }
   await db.query('update users set birthdate = $2::date where id = $1', [userId, birthdate]);
 }
 
-export async function setLanguage(db, userId, language) {
+export async function setLanguage(db: Db, userId: string, language: unknown): Promise<void> {
   if (!isLanguage(language)) throw new AppError('invalid-input', 'Choose a supported language', { key: 'err.language' });
   await db.query('update users set language = $2 where id = $1', [userId, language]);
 }
 
-async function save(db, userId, recipe, status) {
+async function save(db: Db, userId: string, recipe: unknown, status: RecipeRow['status']): Promise<Recipe> {
   checkRecipe(recipe);
   await db.query(
     `insert into recipes (user_id, id, data, status) values ($1, $2, $3, $4)
      on conflict (user_id, id) do update set data = $3, status = $4, copied_from = null, updated_at = now()`,
     [userId, recipe.id, JSON.stringify(recipe), status],
   );
+  return recipe;
 }
 
-export const like = (db, userId, recipe) => save(db, userId, recipe, 'liked');
-export async function dislike(db, userId, recipe) {
-  await save(db, userId, recipe, 'disliked');
+export async function like(db: Db, userId: string, recipe: unknown): Promise<void> {
+  await save(db, userId, recipe, 'liked');
+}
+export async function dislike(db: Db, userId: string, recipe: unknown): Promise<void> {
+  const saved = await save(db, userId, recipe, 'disliked');
   // A recipe that is no longer liked cannot stay shared.
-  await db.query('delete from shared_recipes where user_id = $1 and recipe_id = $2', [userId, recipe.id]);
+  await db.query('delete from shared_recipes where user_id = $1 and recipe_id = $2', [userId, saved.id]);
 }
 
 // Removing a liked recipe also unshares it, and takes back the like if it was saved from the community.
-export async function unlike(db, userId, id) {
+export async function unlike(db: Db, userId: string, id: unknown): Promise<void> {
   await db.transaction(async (tx) => {
-    const removed = await tx.query(
+    const removed = await tx.query<Pick<RecipeRow, 'copied_from'>>(
       "delete from recipes where user_id = $1 and id = $2 and status = 'liked' returning copied_from",
       [userId, String(id)],
     );
@@ -73,9 +87,9 @@ export async function unlike(db, userId, id) {
   });
 }
 
-export async function restore(db, userId, id) {
+export async function restore(db: Db, userId: string, id: unknown): Promise<void> {
   await db.transaction(async (tx) => {
-    const removed = await tx.query(
+    const removed = await tx.query<{ title: string }>(
       "delete from recipes where user_id = $1 and id = $2 and status = 'disliked' returning data->>'title' as title",
       [userId, String(id)],
     );
@@ -85,7 +99,7 @@ export async function restore(db, userId, id) {
   });
 }
 
-export async function addShown(db, userId, title, now) {
+export async function addShown(db: Db, userId: string, title: unknown, now: Date): Promise<void> {
   await db.transaction(async (tx) => {
     await tx.query(
       `insert into shown (user_id, title, shown_at) values ($1, $2, $3)
@@ -100,8 +114,8 @@ export async function addShown(db, userId, title, now) {
   });
 }
 
-export async function excludeTitles(db, userId) {
-  const { rows } = await db.query(
+export async function excludeTitles(db: Db, userId: string): Promise<string[]> {
+  const { rows } = await db.query<Pick<ShownRow, 'title'>>(
     `select title from shown where user_id = $1
      union select data->>'title' from recipes where user_id = $1`,
     [userId],

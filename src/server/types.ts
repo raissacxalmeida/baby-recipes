@@ -1,4 +1,4 @@
-import type { GroupName, Ingredient, Language } from '../shared/types.js';
+import type { GroupName, Ingredient, Language, Recipe, TranslatedLanguage } from '../shared/types.js';
 
 export type Row = Record<string, unknown>;
 
@@ -21,8 +21,8 @@ export interface Config {
   port: number;
 }
 
-// The languages recipe text is translated into (every language but English).
-export type TranslatedLanguage = Exclude<Language, 'en'>;
+// The languages recipe text is translated into (every language but English); defined with the shared types.
+export type { TranslatedLanguage };
 
 // One row type per table in migrations.ts. Timestamps and dates arrive as Date, uuids as string.
 export interface UserRow {
@@ -146,3 +146,21 @@ export interface SafetyRecipe {
   // Allergens the model named, when it did; detectAllergens adds the ones it finds itself.
   aiAllergens?: string[];
 }
+
+// A recipe as the catalogue stores it: no id (made from the title when served) and no per-parent inList flags.
+export type StoredRecipe = Omit<Recipe, 'id'>;
+
+// What the recipe model is asked for. Its answer is untrusted JSON, so it comes back unknown.
+export interface ModelInput {
+  ageMonths: number;
+  ingredients: string[];
+  exclude: string[];
+}
+export type ModelCall = (input: ModelInput) => Promise<unknown>;
+
+// The three things the translator is asked for; its answer is untrusted JSON, so it comes back unknown.
+export type TranslateTask =
+  | { kind: 'ingredients'; language: TranslatedLanguage; items: string[] }
+  | { kind: 'titles'; language: TranslatedLanguage; titles: string[] }
+  | { kind: 'recipe'; language: TranslatedLanguage; recipe: { title: string; ingredients: string[]; steps: string[] } };
+export type TranslateCall = (task: TranslateTask) => Promise<unknown>;
