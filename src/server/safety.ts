@@ -32,7 +32,7 @@ const GRAPES_PREPARED = /\b(?:quartered|quarter|halved|halve|chopped|mashed|pur[
 const ALLOWED_TEXTURES = (months: number): string[] =>
   months < 9 ? ['puree', 'mashed'] : months < 12 ? ['mashed', 'soft-pieces'] : ['puree', 'mashed', 'soft-pieces', 'finger-food'];
 
-const ALLERGEN_KEYWORDS: Record<string, string[]> = {
+const ALLERGEN_KEYWORDS = {
   peanut: ['peanut'],
   'tree nut': ['tree nut', 'almond', 'walnut', 'cashew', 'hazelnut', 'pecan', 'pistachio'],
   egg: ['egg'],

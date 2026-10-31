@@ -52,14 +52,14 @@ test('plural entries have one and other, both with the count, in every language'
 });
 
 test('every key the client asks for exists in English', () => {
-  const used = literalsIn('src/client', ['.js', '.jsx'], /\bt\(\s*'([^']+)'/g);
+  const used = literalsIn('src/client', ['.js', '.jsx', '.ts', '.tsx'], /\bt\(\s*'([^']+)'/g);
   for (const key of used) expect(catalogs.en, key).toHaveProperty([key]);
 });
 
 test('every key the server and shared code send exists in English', () => {
   const sent = [
-    ...literalsIn('src/server', ['.js'], /\bkey:\s*'([^']+)'/g),
-    ...literalsIn('src/shared', ['.js'], /\bkey:\s*'([^']+)'/g),
+    ...literalsIn('src/server', ['.js', '.ts'], /\bkey:\s*'([^']+)'/g),
+    ...literalsIn('src/shared', ['.js', '.ts'], /\bkey:\s*'([^']+)'/g),
   ];
   for (const key of sent) expect(catalogs.en, key).toHaveProperty([key]);
 });
@@ -70,7 +70,7 @@ test('every food group and the All chip have a name in English', () => {
 });
 
 test('every allergen the safety check can name has a name in English', () => {
-  const source = readFileSync('src/server/safety.js', 'utf8');
+  const source = readFileSync('src/server/safety.ts', 'utf8');
   const block = /const ALLERGEN_KEYWORDS = \{([\s\S]*?)\n\};/.exec(source)[1];
   const names = [...block.matchAll(/^\s+'?([a-z ]+)'?:/gm)].map((m) => m[1]);
   expect(names.length).toBeGreaterThan(5);
