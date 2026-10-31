@@ -41,8 +41,8 @@ export async function getState(db: Db, userId: string): Promise<UserState> {
 
 export async function setBirthdate(db: Db, userId: string, birthdate: unknown, now: Date): Promise<void> {
   try {
-    // Anything but text is no birthday: null gets the same error as a malformed date.
-    ageInMonths(typeof birthdate === 'string' ? birthdate : null, now);
+    // The body value is untrusted: like the regex inside ageInMonths, this reads it as text (null and undefined as empty).
+    ageInMonths(String(birthdate ?? ''), now);
   } catch (err) {
     // A caught value is untyped at this edge; ageInMonths throws a RangeError that carries an i18n key.
     const { message, key } = err as { message: string; key?: string };

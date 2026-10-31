@@ -63,6 +63,12 @@ test('a future birthday is 400 and a missing birthday blocks recipes', async () 
   expect((await suggest(ana)).status).toBe(400);
 });
 
+test('a birthdate that is a one-date list passes the check and is rejected by the database', async () => {
+  expect((await setBirthday(ana, ['2026-03-14'])).status).toBe(500);
+  expect((await setBirthday(ana, { toString: 'x' })).status).toBe(400);
+  expect((await setBirthday(ana, 20260314)).status).toBe(400);
+});
+
 test('a baby under 6 months is 422 and uses no recipe slot', async () => {
   await setBirthday(ana, '2026-07-14');
   expect((await suggest(ana)).status).toBe(422);
