@@ -1,9 +1,11 @@
+import type { Language } from '../../shared/types.js';
+import type { Route } from '../types.js';
 import { login, logout, startSession } from '../sessions.js';
 import { acceptInvite, getInvite, getReset, useReset } from '../users.js';
 
-const publicUser = (u) => ({ email: u.email, isAdmin: u.isAdmin, language: u.language ?? null });
+const publicUser = (u: { email: string; isAdmin: boolean; language?: Language | null }) => ({ email: u.email, isAdmin: u.isAdmin, language: u.language ?? null });
 
-export const authRoutes = [
+export const authRoutes: Route[] = [
   {
     method: 'POST', pattern: '/api/login', access: 'public',
     async handler({ db, body, now }) {

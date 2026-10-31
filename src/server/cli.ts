@@ -2,10 +2,18 @@ import { pathToFileURL } from 'node:url';
 import path from 'node:path';
 import { AppError } from './errors.js';
 import { createAdmin } from './users.js';
+import type { Config, Db } from './types.js';
 
 const USAGE = 'Usage: node src/server/cli.js create-admin <email>';
 
-export async function runCli(argv, { db, config, now, log }) {
+export interface CliDeps {
+  db: Db;
+  config: Pick<Config, 'publicUrl'>;
+  now: () => Date;
+  log: (line: string) => void;
+}
+
+export async function runCli(argv: string[], { db, config, now, log }: CliDeps): Promise<number> {
   const [command, email] = argv;
   if (command !== 'create-admin') {
     log(USAGE);
@@ -43,7 +51,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
       await db.close();
     }
   } catch (err) {
-    console.error(`Error: ${err.message}`);
+    console.error(`Error: ${err instanceof Error ? err.message : String(err)}`);
   }
   process.exit(code);
 }

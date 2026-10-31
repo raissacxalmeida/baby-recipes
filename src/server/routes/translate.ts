@@ -1,6 +1,7 @@
+import type { Route } from '../types.js';
 import { translateRecipe, translateTitles } from '../translations.js';
 
-export const translateRoutes = [
+export const translateRoutes: Route[] = [
   {
     method: 'POST', pattern: '/api/translate/titles', access: 'user',
     async handler({ db, user, body, now, callTranslate }) {

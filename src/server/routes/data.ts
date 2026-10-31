@@ -1,4 +1,5 @@
 import { AppError } from '../errors.js';
+import type { Route } from '../types.js';
 import { isLanguage } from '../../shared/languages.js';
 import { requestRecipe } from '../recipeService.js';
 import {
@@ -10,9 +11,9 @@ import {
 import { LIMITS, nextReset, usageToday } from '../usage.js';
 import { removeUser } from '../users.js';
 
-const ok = () => ({ body: { ok: true } });
+const ok = (): { body: { ok: true } } => ({ body: { ok: true } });
 
-export const dataRoutes = [
+export const dataRoutes: Route[] = [
   {
     method: 'GET', pattern: '/api/state', access: 'user',
     async handler({ db, user, now }) {

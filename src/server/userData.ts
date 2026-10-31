@@ -39,9 +39,10 @@ export async function getState(db: Db, userId: string): Promise<UserState> {
   };
 }
 
-export async function setBirthdate(db: Db, userId: string, birthdate: string, now: Date): Promise<void> {
+export async function setBirthdate(db: Db, userId: string, birthdate: unknown, now: Date): Promise<void> {
   try {
-    ageInMonths(birthdate, now);
+    // Anything but text is no birthday: null gets the same error as a malformed date.
+    ageInMonths(typeof birthdate === 'string' ? birthdate : null, now);
   } catch (err) {
     // A caught value is untyped at this edge; ageInMonths throws a RangeError that carries an i18n key.
     const { message, key } = err as { message: string; key?: string };

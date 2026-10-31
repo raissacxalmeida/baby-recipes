@@ -1,9 +1,10 @@
+import type { Route } from '../types.js';
 import {
   createInvite, createReset, listInvites, listPeople, removeUser, revokeInvite,
 } from '../users.js';
 import { LIMITS } from '../usage.js';
 
-export const adminRoutes = [
+export const adminRoutes: Route[] = [
   {
     method: 'GET', pattern: '/api/admin/overview', access: 'admin',
     async handler({ db, now }) {

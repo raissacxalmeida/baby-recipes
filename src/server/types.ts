@@ -164,3 +164,35 @@ export type TranslateTask =
   | { kind: 'titles'; language: TranslatedLanguage; titles: string[] }
   | { kind: 'recipe'; language: TranslatedLanguage; recipe: { title: string; ingredients: string[]; steps: string[] } };
 export type TranslateCall = (task: TranslateTask) => Promise<unknown>;
+
+// What a route handler is given. `body` is the request's JSON object (empty when none was sent); its values are untrusted, so handlers narrow them.
+export interface RouteContext {
+  db: Db;
+  params: Record<string, string>;
+  body: Record<string, unknown>;
+  now: () => Date;
+  config: Config;
+  callModel: ModelCall;
+  callTranslate: TranslateCall;
+  sessionToken: string | undefined;
+}
+// Public routes can be reached signed out; user and admin routes always have the signed-in person.
+export type PublicContext = RouteContext & { user: null };
+export type UserContext = RouteContext & { user: SessionUser };
+
+// What a handler answers with: the JSON body and status, and whether to set or clear the session cookie.
+export interface RouteResult {
+  status?: number;
+  body?: unknown;
+  setSession?: string;
+  clearSession?: boolean;
+}
+
+interface RouteBase {
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  // A path where `:name` segments are captured into `params`.
+  pattern: string;
+}
+export type Route =
+  | (RouteBase & { access: 'public'; handler: (ctx: PublicContext) => Promise<RouteResult> })
+  | (RouteBase & { access: 'user' | 'admin'; handler: (ctx: UserContext) => Promise<RouteResult> });
