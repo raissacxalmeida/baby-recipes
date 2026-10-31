@@ -12,7 +12,7 @@ test('no opacity suffix is used on the CSS-variable palette colours', () => {
   const token = '(?:background|foreground|card|border|input|primary|muted|destructive|ring|chip|note|warm)(?:-[a-z]+)?';
   const suffixed = new RegExp(`(?:bg|text|border|ring|shadow|fill|stroke|placeholder|divide|outline)-${token}/\\d+`, 'g');
   const hits = files('src/client')
-    .filter((f) => /\.(jsx?|css)$/.test(f))
+    .filter((f) => /\.(jsx?|tsx?|css)$/.test(f))
     .flatMap((f) => (readFileSync(f, 'utf8').match(suffixed) ?? []).map((m) => `${f}: ${m}`));
   expect(hits).toEqual([]);
 });
@@ -90,7 +90,7 @@ test('no orange is left in the theme files', () => {
 
 test('no old brown is left anywhere in the client code', () => {
   const hits = files('src/client')
-    .filter((f) => /\.(jsx?|css)$/.test(f))
+    .filter((f) => /\.(jsx?|tsx?|css)$/.test(f))
     .filter((f) => /59,\s*42,\s*26|#3b2a1a/i.test(readFileSync(f, 'utf8')));
   expect(hits).toEqual([]);
 });

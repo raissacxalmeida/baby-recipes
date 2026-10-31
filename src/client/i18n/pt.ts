@@ -1,4 +1,6 @@
 // Brazilian Portuguese.
+import type { Catalog } from './en.js';
+
 export default {
   'common.loading': 'Carregando...',
   'common.cancel': 'Cancelar',
@@ -174,4 +176,4 @@ export default {
   'admin.copied': 'Copiado',
   'admin.shownOnce': 'Exibido apenas uma vez. Envie você mesmo para {email}.',
   'admin.usage': '{used} de {limit}',
-};
+} satisfies Catalog;

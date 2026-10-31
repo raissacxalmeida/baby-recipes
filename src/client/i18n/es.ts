@@ -1,4 +1,6 @@
 // Neutral Spanish, informal "tú".
+import type { Catalog } from './en.js';
+
 export default {
   'common.loading': 'Cargando...',
   'common.cancel': 'Cancelar',
@@ -174,4 +176,4 @@ export default {
   'admin.copied': 'Copiado',
   'admin.shownOnce': 'Se muestra una sola vez. Envíaselo tú mismo a {email}.',
   'admin.usage': '{used} de {limit}',
-};
+} satisfies Catalog;

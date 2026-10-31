@@ -1,4 +1,6 @@
 // German, informal "du".
+import type { Catalog } from './en.js';
+
 export default {
   'common.loading': 'Wird geladen...',
   'common.cancel': 'Abbrechen',
@@ -174,4 +176,4 @@ export default {
   'admin.copied': 'Kopiert',
   'admin.shownOnce': 'Wird nur einmal angezeigt. Schicke es selbst an {email}.',
   'admin.usage': '{used} von {limit}',
-};
+} satisfies Catalog;

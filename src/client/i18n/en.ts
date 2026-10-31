@@ -1,5 +1,5 @@
 // English is the source text and the fallback for every other language.
-export default {
+const en = {
   'common.loading': 'Loading...',
   'common.cancel': 'Cancel',
   'language.label': 'Language',
@@ -175,3 +175,11 @@ export default {
   'admin.shownOnce': 'Shown only once. Send it to {email} yourself.',
   'admin.usage': '{used} of {limit}',
 };
+
+export default en;
+
+// The text for one key: a string, or { one, other } where the key counts something ({count}).
+export type CatalogEntry = string | { one: string; other: string };
+// English is the source of truth: every other language must have exactly these keys, plural where English is plural.
+export type Catalog = typeof en;
+export type CatalogKey = keyof Catalog;
