@@ -1,0 +1,45 @@
+import { readFileSync } from 'node:fs';
+import { saveToCatalogue } from './catalogue.js';
+import { validateRecipe, type ValidatedRecipe } from './recipe.js';
+import { checkSafety, detectAllergens } from './safety.js';
+import type { Db } from './types.js';
+
+// An entry of seed/baby-recipes.json: the recipe fields (checked by validateRecipe) plus where it came from.
+export interface SeedRecipe {
+  sourceId: string;
+  ageFromMonths: number;
+  [field: string]: unknown;
+}
+
+// JSON.parse is typed any; the file is bundled and every entry is checked again before it is saved.
+export const loadSeed = (): SeedRecipe[] => JSON.parse(readFileSync(new URL('./seed/baby-recipes.json', import.meta.url), 'utf8'));
+
+// Adds the recipes that are missing; never overwrites or removes one already saved.
+// A recipe that fails validation or the safety check for its own age is logged and left out.
+export async function seedCatalogue(db: Db, recipes: SeedRecipe[] = loadSeed()): Promise<{ added: number; skipped: number; rejected: string[] }> {
+  let added = 0;
+  let skipped = 0;
+  const rejected: string[] = [];
+  for (const recipe of recipes) {
+    let valid: ValidatedRecipe;
+    try {
+      valid = validateRecipe(recipe);
+      if (!Number.isInteger(recipe.ageFromMonths) || recipe.ageFromMonths < 6) {
+        throw new Error('ageFromMonths must be a whole number of at least 6');
+      }
+      const problems = checkSafety(valid, recipe.ageFromMonths);
+      if (problems.length > 0) throw new Error(problems.join('; '));
+    } catch (err) {
+      console.warn(`Seed recipe ${recipe.sourceId} was not loaded: ${err instanceof Error ? err.message : String(err)}`);
+      rejected.push(recipe.sourceId);
+      continue;
+    }
+    // Store the checked copy, with allergens worked out here rather than trusted from the file.
+    const inserted = await saveToCatalogue(db, { ...valid, allergens: detectAllergens(valid) }, {
+      ageFromMonths: recipe.ageFromMonths, source: 'seed', sourceId: recipe.sourceId,
+    });
+    if (inserted) added++;
+    else skipped++;
+  }
+  return { added, skipped, rejected };
+}

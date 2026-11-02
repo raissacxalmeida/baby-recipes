@@ -5,3 +5,4 @@ dist/
 backups/
 .claude/worktrees/
 .claude/skills/deploy-docker/.last-deploy
+dist-server/

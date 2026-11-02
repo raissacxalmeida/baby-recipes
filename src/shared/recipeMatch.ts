@@ -1,0 +1,51 @@
+import { isListed } from './ingredients.js';
+import { PROTEIN_WORDS } from './recipeGroup.js';
+import type { Ingredient } from './types.js';
+
+type WithIngredients = { ingredients: Ingredient[] };
+
+// Ingredients that season or loosen a dish; they are never the point of it.
+// No "pepper": it is also bell pepper.
+export const PANTRY: readonly string[] = [
+  'oil', 'butter', 'water', 'juice', 'stock', 'broth', 'tea', 'tomato paste', 'cinnamon', 'vanilla', 'turmeric',
+  'coriander', 'paprika', 'ginger', 'curry', 'thyme', 'rosemary', 'marjoram', 'parsley', 'basil', 'cocoa', 'carob',
+  'yeast', 'fennel seeds', 'celery leaves', 'garlic', 'lemon', 'salt',
+];
+
+// Foods whose name ends in another food: "peas" must not stand in for "snap peas".
+// A recipe ingredient with one of these is covered only by a typed ingredient that names the same food,
+// and a typed one never covers the plain food ("sweet potato" is not "potato").
+const COMPOUND_FOODS: readonly string[] = [
+  'sweet potato', 'snap pea', 'cream cheese', 'sour cream', 'coconut milk', 'coconut cream', 'green bean', 'spring onion',
+];
+
+const MAIN_SHARE = 0.1;
+
+const nonPantry = (recipe: WithIngredients) => recipe.ingredients.filter((i) => !isListed(i.name, PANTRY));
+const compoundIn = (text: string) => COMPOUND_FOODS.find((c) => isListed(text, [c]));
+
+// A typed "chicken breast" covers a recipe's "chicken", and a typed "chicken" covers "chicken breast".
+function covers(name: string, list: readonly string[]): boolean {
+  const compound = compoundIn(name);
+  if (compound) return list.some((item) => isListed(item, [compound]));
+  return list.some((item) => !compoundIn(item) && (isListed(name, [item]) || isListed(item, [name])));
+}
+
+export function mainIngredients(recipe: WithIngredients): string[] {
+  const items = nonPantry(recipe);
+  const total = items.reduce((sum, i) => sum + i.grams, 0);
+  return items
+    .filter((i) => isListed(i.name, PROTEIN_WORDS) || i.grams >= MAIN_SHARE * total)
+    .map((i) => i.name);
+}
+
+// `list` is already normalised by parseIngredientList.
+export function matchRecipe(recipe: WithIngredients, list: readonly string[]): { suitable: boolean; used: number; missing: number } {
+  const mains = mainIngredients(recipe);
+  const used = nonPantry(recipe).filter((i) => covers(i.name, list)).length;
+  return {
+    suitable: mains.length > 0 && mains.every((name) => covers(name, list)),
+    used,
+    missing: nonPantry(recipe).length - used,
+  };
+}

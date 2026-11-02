@@ -84,5 +84,10 @@ The site keeps, for each person: email, a hashed password, the baby's birthday, 
 ```bash
 npm install
 npm test          # runs against an in-process Postgres (PGlite); no Docker needed
-npm run build
+npm run typecheck # TypeScript type-check of src and test; must report no errors
+npm run build     # builds the client into dist/
+npm run build:server # compiles src/server and src/shared into dist-server/
+npm start         # builds both, then runs the compiled server with plain node
 ```
+
+The code is TypeScript. The Docker image compiles the server to JavaScript in its build stage and runs it with plain `node`.
