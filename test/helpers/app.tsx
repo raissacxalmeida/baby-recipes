@@ -23,9 +23,9 @@ export const addIngredient = (text: string) => { type('Ingredient', text); click
 
 // Renders the whole app for a logged-in parent and waits for the first real screen.
 export async function startApp({
-  birthdate = '2026-02-14', user = { email: 'ana@example.com', isAdmin: false }, recipes = [first, second], shared = [], overrides,
+  birthdate = '2026-02-14', user = { email: 'ana@example.com', isAdmin: false }, recipes = [first, second], shared = [], babies, lastBabyId, overrides,
 }: FakeApiOptions = {}) {
-  const api = createFakeApi({ user, birthdate, recipes, shared, overrides });
+  const api = createFakeApi({ user, birthdate, babies, lastBabyId, recipes, shared, overrides });
   render(<App api={api} now={now} path="/" navigate={vi.fn()} />);
   await screen.findByRole('button', { name: 'Menu' });
   await waitFor(() => expect(screen.queryByText('Loading...')).toBeNull());

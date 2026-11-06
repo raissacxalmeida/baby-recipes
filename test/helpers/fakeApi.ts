@@ -1,9 +1,11 @@
 import { vi, type Mock } from 'vitest';
 import { groupFor } from '../../src/shared/recipeGroup.js';
 import type { Api } from '../../src/client/api.js';
-import type { ApiRecipe, ApiUser, SharedItem } from '../../src/client/apiTypes.js';
+import type { ApiBaby, ApiRecipe, ApiUser, SharedItem } from '../../src/client/apiTypes.js';
 
 const LIMIT = 10;
+// The same cap the server holds (MAX_BABIES in src/server/babies.ts).
+const MAX_BABIES = 5;
 
 // Every function of the Api as a vi.fn with the same signature, so a test can both call it and read its calls,
 // and the fake still type-checks as an Api: a method added to or changed on the real one fails here.
@@ -14,16 +16,29 @@ type Mocked<T> = {
 // Tests may leave out `language`: the fake then hands the user back without it, where the server sends null.
 export type FakeUser = Omit<ApiUser, 'language'> & Partial<Pick<ApiUser, 'language'>>;
 
+// What belongs to one baby: their lists, the titles already shown, and which liked recipes came from the community.
+interface BabyData {
+  liked: ApiRecipe[];
+  disliked: ApiRecipe[];
+  shown: string[];
+  copied: Set<string>;
+}
+
+// `liked`, `disliked`, `shown`, `copied` and `birthdate` are the selected baby's (the first one until withBaby picks
+// another). `used`, `queue` and `shared` belong to the account.
 export interface FakeState {
   user: FakeUser | null;
+  babies: ApiBaby[];
+  lastBabyId: string | null;
+  selectedBabyId: string | null;
   birthdate: string | null;
   liked: ApiRecipe[];
   disliked: ApiRecipe[];
   shown: string[];
+  readonly copied: Set<string>;
   used: number;
   queue: ApiRecipe[];
   shared: SharedItem[];
-  copied: Set<string>;
 }
 
 export type FakeApi = Mocked<Api> & { state_: FakeState };
@@ -34,6 +49,9 @@ export type Overrides = Partial<Omit<Api, 'admin'>> & { admin?: Partial<Api['adm
 export interface FakeApiOptions {
   user?: FakeUser | null;
   birthdate?: string | null;
+  // The account's babies. Without it, a birthdate makes one baby { id: 'baby-1', name: 'Mia', birthdate }, and null makes none.
+  babies?: ApiBaby[];
+  lastBabyId?: string | null;
   recipes?: ApiRecipe[];
   shared?: SharedItem[];
   overrides?: Overrides;
@@ -46,13 +64,49 @@ const ok = { ok: true } as const;
 
 // In-memory Api with the same rules as the server, so screen tests need no network.
 // `shared` seeds the community page with items shaped like the server's: { id, recipe, group, ageMonths, likes, mine, liked }.
-export function createFakeApi({ user = null, birthdate = null, recipes = [], shared = [], overrides = {} }: FakeApiOptions = {}): FakeApi {
-  const state: FakeState = {
-    user, birthdate, liked: [], disliked: [], shown: [], used: 0, queue: [...recipes], shared: [...shared], copied: new Set(),
+export function createFakeApi({
+  user = null, birthdate = null, babies, lastBabyId = null, recipes = [], shared = [], overrides = {},
+}: FakeApiOptions = {}): FakeApi {
+  const initial = babies ?? (birthdate !== null ? [{ id: 'baby-1', name: 'Mia', birthdate }] : []);
+  // The data of the baby with no id (an account with no babies) lives under ''.
+  const data = new Map<string, BabyData>();
+  const dataOf = (babyId: string): BabyData => {
+    let found = data.get(babyId);
+    if (!found) { found = { liked: [], disliked: [], shown: [], copied: new Set() }; data.set(babyId, found); }
+    return found;
   };
+  const selectedId = () => (state.babies.find((b) => b.id === state.selectedBabyId) ?? state.babies[0])?.id ?? '';
+  const cur = () => dataOf(selectedId());
+  const state: FakeState = {
+    user,
+    babies: initial.map((b) => ({ ...b })),
+    lastBabyId,
+    selectedBabyId: null,
+    get birthdate() { return state.babies.find((b) => b.id === selectedId())?.birthdate ?? null; },
+    set birthdate(value) { setSelectedBirthdate(value); },
+    get liked() { return cur().liked; },
+    set liked(value) { cur().liked = value; },
+    get disliked() { return cur().disliked; },
+    set disliked(value) { cur().disliked = value; },
+    get shown() { return cur().shown; },
+    set shown(value) { cur().shown = value; },
+    get copied() { return cur().copied; },
+    used: 0,
+    queue: [...recipes],
+    shared: [...shared],
+  };
+  function setSelectedBirthdate(value: string | null) {
+    const baby = state.babies.find((b) => b.id === selectedId());
+    if (baby) baby.birthdate = value;
+    else if (value !== null) state.babies.push({ id: 'baby-1', name: 'Mia', birthdate: value });
+  }
+  const notFound = () => Object.assign(new Error('That baby is not available'), { status: 404 });
   const by = (list: ApiRecipe[], id: string) => list.filter((r) => r.id !== id);
   const unshareOwn = (recipeId: string) => { state.shared = state.shared.filter((s) => !(s.mine && s.recipe.id === recipeId)); };
+  const holdsCopy = (recipeId: string) => [...data.values()].some((d) => d.copied.has(recipeId));
+  // The account's Community like goes once no baby holds a copy saved from it.
   const takeLikeBack = (recipeId: string) => {
+    if (holdsCopy(recipeId)) return;
     const item = state.shared.find((s) => !s.mine && s.liked && s.recipe.id === recipeId);
     if (item) Object.assign(item, { liked: false, likes: item.likes - 1 });
   };
@@ -78,6 +132,7 @@ export function createFakeApi({ user = null, birthdate = null, recipes = [], sha
       copiedIds: [...state.copied],
       usage: state.user?.isAdmin ? null : { recipesToday: state.used, limit: LIMIT, resetsAt: '2026-10-16T00:00:00.000Z' },
     })),
+    // Deprecated with the real one (Task 6 removes both): sets the selected baby's birthdate, making the default baby if none exists.
     setBirthdate: vi.fn<Api['setBirthdate']>(async (d) => { state.birthdate = d; return ok; }),
     setLanguage: vi.fn<Api['setLanguage']>(async (language) => { if (state.user) state.user = { ...state.user, language }; return ok; }),
     suggest: vi.fn<Api['suggest']>(async () => {
@@ -129,19 +184,23 @@ export function createFakeApi({ user = null, birthdate = null, recipes = [], sha
       const item = state.shared.find((s) => s.id === sharedId);
       if (!item) throw Object.assign(new Error('That recipe is not available'), { status: 404 });
       if (item.mine) throw Object.assign(new Error('You shared this one'), { status: 400 });
-      if (item.liked) return ok;
-      Object.assign(item, { liked: true, likes: item.likes + 1 });
+      // The heart is the account's; the copy goes into the selected baby's list (unless it holds the same recipe as its own).
+      if (!item.liked) Object.assign(item, { liked: true, likes: item.likes + 1 });
       if (!state.liked.some((r) => r.id === item.recipe.id)) {
         state.liked = [...state.liked, item.recipe];
+        state.disliked = by(state.disliked, item.recipe.id);
         state.copied.add(item.recipe.id);
       }
       return ok;
     }),
     unlikeShared: vi.fn<Api['unlikeShared']>(async (sharedId) => {
       const item = state.shared.find((s) => s.id === sharedId);
-      if (!item || !item.liked) return ok;
-      Object.assign(item, { liked: false, likes: item.likes - 1 });
-      if (state.copied.delete(item.recipe.id)) state.liked = by(state.liked, item.recipe.id);
+      if (!item) return ok;
+      if (item.liked) Object.assign(item, { liked: false, likes: item.likes - 1 });
+      // The copy goes from whichever baby holds it.
+      for (const d of data.values()) {
+        if (d.copied.delete(item.recipe.id)) d.liked = by(d.liked, item.recipe.id);
+      }
       return ok;
     }),
     restore: vi.fn<Api['restore']>(async (id) => {
@@ -150,6 +209,42 @@ export function createFakeApi({ user = null, birthdate = null, recipes = [], sha
       if (found) state.shown = state.shown.filter((t) => t !== found.title);
       return ok;
     }),
+    babies: vi.fn<Api['babies']>(async () => ({ babies: state.babies.map((b) => ({ ...b })), lastBabyId: state.lastBabyId })),
+    addBaby: vi.fn<Api['addBaby']>(async ({ name, birthdate: born }) => {
+      if (state.babies.length >= MAX_BABIES) {
+        throw Object.assign(new Error(`You can add up to ${MAX_BABIES} babies`), { status: 409 });
+      }
+      let n = state.babies.length + 1;
+      while (state.babies.some((b) => b.id === `baby-${n}`)) n += 1;
+      const baby = { id: `baby-${n}`, name, birthdate: born };
+      state.babies.push(baby);
+      return { ...baby };
+    }),
+    updateBaby: vi.fn<Api['updateBaby']>(async (babyId, { name, birthdate: born }) => {
+      const baby = state.babies.find((b) => b.id === babyId);
+      if (!baby) throw notFound();
+      Object.assign(baby, { name, birthdate: born });
+      return ok;
+    }),
+    removeBaby: vi.fn<Api['removeBaby']>(async (babyId) => {
+      if (!state.babies.some((b) => b.id === babyId)) throw notFound();
+      if (state.babies.length <= 1) throw Object.assign(new Error('You cannot remove your only baby'), { status: 409 });
+      const gone = dataOf(babyId);
+      state.babies = state.babies.filter((b) => b.id !== babyId);
+      data.delete(babyId);
+      // The likes behind the baby's saved copies go unless a sibling still holds a copy.
+      for (const recipeId of gone.copied) takeLikeBack(recipeId);
+      if (state.lastBabyId === babyId) state.lastBabyId = null;
+      if (state.selectedBabyId === babyId) state.selectedBabyId = null;
+      return ok;
+    }),
+    setLastBaby: vi.fn<Api['setLastBaby']>(async (babyId) => {
+      if (!state.babies.some((b) => b.id === babyId)) throw notFound();
+      state.lastBabyId = babyId;
+      return ok;
+    }),
+    // One fake serves every baby: this picks the one the next calls are for, and hands the same fake back.
+    withBaby: vi.fn<Api['withBaby']>((babyId) => { state.selectedBabyId = babyId; return api; }),
     deleteAccount: vi.fn<Api['deleteAccount']>(async () => { state.user = null; return ok; }),
     admin: {
       overview: vi.fn<Api['admin']['overview']>(async () => ({ invites: [], people: [], limit: LIMIT })),
