@@ -39,7 +39,8 @@ export async function getState(db: Db, userId: string): Promise<UserState> {
   };
 }
 
-export async function setBirthdate(db: Db, userId: string, birthdate: unknown, now: Date): Promise<void> {
+// The birthdate the body sent, or an invalid-input error carrying the key for what is wrong with it.
+export function checkBirthdate(birthdate: unknown, now: Date): string {
   try {
     // The body value is untrusted: like the regex inside ageInMonths, this reads it as text (null and undefined as empty).
     ageInMonths(String(birthdate ?? ''), now);
@@ -48,6 +49,11 @@ export async function setBirthdate(db: Db, userId: string, birthdate: unknown, n
     const { message, key } = err as { message: string; key?: string };
     throw new AppError('invalid-input', message, { key });
   }
+  return String(birthdate);
+}
+
+export async function setBirthdate(db: Db, userId: string, birthdate: unknown, now: Date): Promise<void> {
+  checkBirthdate(birthdate, now);
   await db.query('update users set birthdate = $2::date where id = $1', [userId, birthdate]);
 }
 

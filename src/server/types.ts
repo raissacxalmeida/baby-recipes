@@ -34,6 +34,15 @@ export interface UserRow {
   created_at: Date;
   last_login_at: Date | null;
   language: Language | null;
+  last_baby_id: string | null;
+}
+
+export interface BabyRow {
+  id: string;
+  user_id: string;
+  name: string | null;
+  birthdate: Date | null;
+  created_at: Date;
 }
 
 export interface InviteRow {

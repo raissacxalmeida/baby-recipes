@@ -115,6 +115,24 @@ export const MIGRATIONS: string[][] = [
     )`,
     'alter table usage add column translations int not null default 0',
   ],
+  // Babies: a person can have several. Each starts as a copy of the birthdate (and any saved data) the account already had.
+  [
+    `create table babies (
+      id uuid primary key default gen_random_uuid(),
+      user_id uuid not null references users(id) on delete cascade,
+      name text,
+      birthdate date,
+      created_at timestamptz not null default now()
+    )`,
+    'create index babies_user_id on babies (user_id)',
+    'alter table users add column last_baby_id uuid references babies(id) on delete set null',
+    `insert into babies (user_id, birthdate)
+     select id, birthdate from users
+     where birthdate is not null
+       or exists (select 1 from recipes r where r.user_id = users.id)
+       or exists (select 1 from shown s where s.user_id = users.id)`,
+    'update users u set last_baby_id = b.id from babies b where b.user_id = u.id',
+  ],
 ];
 
-export const APP_TABLES: string[] = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes', 'title_translations', 'recipe_translations'];
+export const APP_TABLES: string[] = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes', 'title_translations', 'recipe_translations', 'babies'];
