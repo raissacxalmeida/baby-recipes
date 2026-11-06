@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Api } from './api.js';
 import { asApiError } from './api.js';
 import type { ApiBaby, BabyInput } from './apiTypes.js';
 import { t, type ErrorInfo } from './i18n/index.js';
+
+// The most babies an account holds (MAX_BABIES in src/server/babies.ts): the menu stops offering Add a baby there.
+export const MAX_BABIES = 5;
 
 // A baby's name as shown; a baby made before names existed has none yet.
 export const babyName = (baby: ApiBaby): string => baby.name ?? t('baby.unnamed');
@@ -27,18 +30,28 @@ export function useBabies(api: Api, enabled: boolean, onSessionLost: () => void 
   const [error, setError] = useState<ErrorInfo | null>(null);
   const [babies, setBabies] = useState<ApiBaby[]>([]);
   const [babyId, setBabyId] = useState<string | null>(null);
+  // The list as last set, for writes that finish before the next render (an add and a remove that overlap).
+  const latest = useRef<ApiBaby[]>([]);
+  const update = (next: (list: ApiBaby[]) => ApiBaby[]): ApiBaby[] => {
+    latest.current = next(latest.current);
+    setBabies(latest.current);
+    return latest.current;
+  };
+  // The baby to remember on the server: one request at a time, and only the latest pick is sent after it, so two
+  // quick picks can never reach the server in the wrong order.
+  const remember = useRef<{ sending: boolean; next: string | null }>({ sending: false, next: null });
 
   useEffect(() => {
     setStatus('loading');
     setError(null);
-    setBabies([]);
+    update(() => []);
     setBabyId(null);
     if (!enabled) return undefined;
     let live = true;
     api.babies()
       .then(({ babies: list, lastBabyId }) => {
         if (!live) return;
-        setBabies(list);
+        update(() => list);
         setBabyId(list.find((b) => b.id === lastBabyId)?.id ?? list[0]?.id ?? null);
         setStatus('ready');
       })
@@ -54,25 +67,35 @@ export function useBabies(api: Api, enabled: boolean, onSessionLost: () => void 
   // Remembering the baby on the server is a convenience for the next visit: a failure is not worth a message.
   function select(id: string) {
     setBabyId(id);
-    api.setLastBaby(id).catch(() => {});
+    const queue = remember.current;
+    queue.next = id;
+    if (queue.sending) return;
+    queue.sending = true;
+    void (async () => {
+      while (queue.next !== null) {
+        const next = queue.next;
+        queue.next = null;
+        await api.setLastBaby(next).catch(() => {});
+      }
+      queue.sending = false;
+    })();
   }
 
   async function add(input: BabyInput): Promise<ApiBaby> {
     const baby = await api.addBaby(input);
-    setBabies((list) => [...list, baby]);
+    update((list) => [...list, baby]);
     select(baby.id);
     return baby;
   }
 
   async function edit(id: string, input: BabyInput): Promise<void> {
     await api.updateBaby(id, input);
-    setBabies((list) => list.map((b) => (b.id === id ? { ...b, ...input } : b)));
+    update((list) => list.map((b) => (b.id === id ? { ...b, ...input } : b)));
   }
 
   async function remove(id: string): Promise<void> {
     await api.removeBaby(id);
-    const rest = babies.filter((b) => b.id !== id);
-    setBabies(rest);
+    const rest = update((list) => list.filter((b) => b.id !== id));
     if (rest[0]) select(rest[0].id);
     else setBabyId(null);
   }

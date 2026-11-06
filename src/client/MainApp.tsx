@@ -17,17 +17,18 @@ import type { CatalogKey } from './i18n/en.js';
 import { errorText, getLanguage, t, type ErrorInfo } from './i18n/index.js';
 import { titleIn, titleKey } from './localize.js';
 import { useRecipeTranslation } from './useRecipeTranslation.js';
-import type { Babies } from './useBabies.js';
+import { MAX_BABIES, type Babies } from './useBabies.js';
 import type { GroupFilter } from './screens/SharedScreen.jsx';
 
 const MIN_MONTHS = 6;
 
-type Screen = 'baby' | 'too-young' | 'home' | 'liked' | 'shared' | 'recipe';
+// 'baby' is the baby showing's details (or the first baby of an account with none); 'add' is another baby.
+type Screen = 'baby' | 'add' | 'too-young' | 'home' | 'liked' | 'shared' | 'recipe';
 // Where a recipe was opened from.
 type Origin = 'home' | 'liked' | 'shared';
 // The page the app opens on when it comes back from the admin page or another baby (null: the start screen;
-// 'edit': the baby's details).
-export type LandOn = 'liked' | 'shared' | 'edit' | null;
+// 'edit': the baby's details; 'add': the screen to add another baby).
+export type LandOn = 'liked' | 'shared' | 'edit' | 'add' | null;
 
 // Where the recipe screen's back button goes, by where the recipe was opened from. A freshly suggested recipe has none: the menu leads out.
 const BACK: Partial<Record<Origin, { screen: Screen; label: CatalogKey }>> = {
@@ -46,7 +47,8 @@ function startScreen(name: string | null, birthdate: string | null, now: Date): 
 }
 
 // One baby's app: `api` is already bound to `babies.babyId` (App remounts this per baby), and an account with no baby
-// gets the first-baby screen. `onPickBaby` is how a page under another baby in the menu is reached.
+// gets the first-baby screen. `onPickBaby` is how a page under another baby in the menu is reached. `landOn` is read
+// once, when the app mounts, and `onLanded` then tells App it was used, so a later baby switch starts on Recipe ideas.
 export interface MainAppProps {
   api: Api;
   babies: Babies;
@@ -58,10 +60,12 @@ export interface MainAppProps {
   onDelete: () => void;
   onAdmin: () => void;
   onPickBaby?: (babyId: string, page: LandOn) => void;
+  onLanded?: () => void;
 }
 
 export default function MainApp({
   api, babies, user, now, landOn = null, onSessionLost = () => {}, onLogout, onDelete, onAdmin, onPickBaby = () => {},
+  onLanded = () => {},
 }: MainAppProps) {
   const baby = babies.babies.find((b) => b.id === babies.babyId) ?? null;
   const [server, setServer] = useState<ApiState | null>(null);
@@ -73,6 +77,8 @@ export default function MainApp({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ErrorInfo | null>(null);
   const [origin, setOrigin] = useState<Origin>('home');
+  // Where Cancel on the add screen goes back to.
+  const [beforeAdd, setBeforeAdd] = useState<Screen>('home');
   const [community, setCommunity] = useState<SharedItem[]>([]);
   const [communityGroup, setCommunityGroup] = useState<GroupFilter>('All');
   const [saved, setSaved] = useState(false);
@@ -82,10 +88,18 @@ export default function MainApp({
   const asked = useRef(new Set<string>());
   const language = getLanguage();
   const translated = useRecipeTranslation(api, recipe, language, screen === 'recipe');
+  // False once another baby is picked (App mounts a new app for them): an answer still on its way for this baby is
+  // dropped, and nothing that follows from it (a refresh, the next suggestion after a dislike) is started.
+  const live = useRef(true);
+  useEffect(() => {
+    live.current = true;
+    onLanded();
+    return () => { live.current = false; };
+  }, []);
 
   async function refresh(): Promise<ApiState> {
     const next = await api.state();
-    setServer(next);
+    if (live.current) setServer(next);
     return next;
   }
 
@@ -97,11 +111,12 @@ export default function MainApp({
         const start = startScreen(baby.name, s.birthdate, now());
         // Arriving from another page (the admin page) can ask for the liked or community page instead of Recipe ideas,
         // or for the baby's details.
-        const target: Screen = landOn === 'edit' ? 'baby' : start === 'home' && landOn ? landOn : start;
+        const target: Screen = landOn === 'edit' ? 'baby' : landOn === 'add' ? 'add' : start === 'home' && landOn ? landOn : start;
         const list = target === 'shared' ? await api.listShared() : null;
         if (!live) return;
         setServer(s);
         if (list) setCommunity(list);
+        setBeforeAdd(start);
         setScreen(target);
       })
       .catch((err: unknown) => live && (asApiError(err).status === 401 ? onSessionLost() : setLoadError(asApiError(err))));
@@ -117,7 +132,7 @@ export default function MainApp({
     if (missing.length === 0) return;
     missing.forEach((title) => asked.current.add(titleKey(language, title)));
     api.translateTitles(language, missing)
-      .then((answer) => setTitles((previous) => ({
+      .then((answer) => live.current && setTitles((previous) => ({
         ...previous, ...Object.fromEntries(Object.entries(answer).map(([title, translated]): [string, string] => [titleKey(language, title), translated])),
       })))
       .catch(() => missing.forEach((title) => asked.current.delete(titleKey(language, title))));
@@ -147,23 +162,47 @@ export default function MainApp({
     rerender();
   }
 
-  // The first baby is added (App then shows the app for them); an existing baby's details are changed and the app
-  // goes back to the start screen for their age.
-  async function saveBaby(input: BabyInput): Promise<void> {
+  // A baby screen's write: a 401 ends the session, any other error is left for the screen to show. Resolves to
+  // whether the write went through.
+  async function babyWrite(write: () => Promise<unknown>): Promise<boolean> {
     try {
-      if (!baby) {
-        await babies.add(input);
-        return undefined;
-      }
-      await babies.edit(baby.id, input);
+      await write();
+      return true;
     } catch (err) {
-      if (asApiError(err).status === 401) return onSessionLost();
-      throw err;
+      if (asApiError(err).status !== 401) throw err;
+      onSessionLost();
+      return false;
     }
+  }
+
+  // A new baby (the first, or another from the menu) is added and selected: App then mounts the app for them, on
+  // their Recipe ideas. The baby showing's details are changed and the app goes back to the start screen for their age.
+  async function saveBaby(input: BabyInput): Promise<void> {
+    if (!baby) {
+      await babyWrite(() => babies.add(input));
+      return;
+    }
+    if (!(await babyWrite(() => babies.edit(baby.id, input)))) return;
     const next = await refresh();
     go(startScreen(input.name, next.birthdate, now()));
-    return undefined;
   }
+
+  const addBaby = (input: BabyInput) => babyWrite(() => babies.add(input));
+  // The baby showing goes; App then shows the first remaining baby on their Recipe ideas.
+  const removeBaby = (id: string) => babyWrite(() => babies.remove(id));
+
+  // The menu's baby actions, on every screen once a baby exists. Editing the baby showing opens their details here;
+  // editing another switches to them first. Add a baby is left out at the cap and on the add screen itself.
+  const editBaby = (id: string) => (id === babies.babyId ? go('baby') : onPickBaby(id, 'edit'));
+  const canAdd = baby !== null && babies.babies.length < MAX_BABIES && screen !== 'add';
+  function openAdd() {
+    if (screen) setBeforeAdd(screen);
+    go('add');
+  }
+  const babyActions = {
+    onEditBaby: baby ? editBaby : undefined,
+    onAddBaby: canAdd ? openAdd : undefined,
+  };
 
   async function suggest() {
     const id = ++requestId.current;
@@ -196,7 +235,7 @@ export default function MainApp({
     await api.dislike(recipe);
     setSaved(false);
     await refresh();
-    suggest();
+    if (live.current) suggest();
   });
 
   function open(opened: ApiRecipe, from: Origin = 'liked') {
@@ -216,8 +255,18 @@ export default function MainApp({
     await refresh();
   });
 
-  const account = <Menu user={user} babies={babies.babies} babyId={babies.babyId} onAdmin={onAdmin} onLogout={onLogout} onDelete={onDelete} />;
+  const account = (
+    <Menu user={user} babies={babies.babies} babyId={babies.babyId} {...babyActions} onAdmin={onAdmin} onLogout={onLogout} onDelete={onDelete} />
+  );
   if (loadError) return <>{account}<Notice kind="error">{errorText(loadError)}</Notice></>;
+  if (screen === 'add') {
+    return (
+      <>
+        {account}
+        <BabyScreen key="add" now={now} onSave={addBaby} onCancel={() => go(beforeAdd)} />
+      </>
+    );
+  }
   if (screen === 'baby') {
     // A baby whose details are complete can cancel back to their start screen; a missing name or birthdate must be filled in.
     const back = baby && server ? startScreen(baby.name, server.birthdate, now()) : 'baby';
@@ -225,11 +274,14 @@ export default function MainApp({
       <>
         {account}
         <BabyScreen
+          key="baby"
           baby={baby ?? undefined}
           first={!baby}
           now={now}
           onSave={saveBaby}
           onCancel={back !== 'baby' ? () => go(back) : undefined}
+          // The last baby cannot be removed: the account's own Delete is the way out for them.
+          onRemove={baby && babies.babies.length >= 2 ? () => removeBaby(baby.id) : undefined}
         />
       </>
     );
@@ -311,21 +363,25 @@ export default function MainApp({
   };
 
   // The page links only make sense once the app proper has started; the recipe page marks no page as current.
-  // A page under the baby showing is just opened; one under another baby goes through App, which switches babies.
-  const inApp = ['home', 'liked', 'shared', 'recipe'].includes(screen);
-  const page = (target: 'home' | 'liked') => (id: string) => (
-    id === babies.babyId ? go(target) : onPickBaby(id, target === 'liked' ? 'liked' : null)
-  );
+  // A page under the baby showing is just opened (Recipe ideas is their start page, the too-young page for a baby
+  // under 6 months); one under another baby goes through App, which switches babies.
+  const inApp = ['too-young', 'home', 'liked', 'shared', 'recipe'].includes(screen);
+  const start = startScreen(baby?.name ?? null, server.birthdate, now());
+  const page = (target: 'home' | 'liked') => (id: string) => {
+    if (id !== babies.babyId) onPickBaby(id, target === 'liked' ? 'liked' : null);
+    else go(target === 'home' ? start : 'liked');
+  };
   return (
     <>
       <Menu
         user={user}
-        current={screen}
+        current={screen === 'too-young' ? 'home' : screen}
         babies={babies.babies}
         babyId={babies.babyId}
         onIdeas={inApp ? page('home') : undefined}
         onLiked={inApp ? page('liked') : undefined}
         onCommunity={inApp ? showCommunity : undefined}
+        {...babyActions}
         onAdmin={onAdmin}
         onLogout={onLogout}
         onDelete={onDelete}

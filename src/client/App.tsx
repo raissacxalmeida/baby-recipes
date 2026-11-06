@@ -12,7 +12,7 @@ import type { Api } from './api.js';
 import { asApiError } from './api.js';
 import type { ApiUser } from './apiTypes.js';
 import { errorText, getLanguage, setLanguage, t, useLanguage, type ErrorInfo } from './i18n/index.js';
-import { useBabies } from './useBabies.js';
+import { MAX_BABIES, useBabies } from './useBabies.js';
 import { isLanguage } from '../shared/languages.js';
 import type { Language } from '../shared/types.js';
 
@@ -42,7 +42,8 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   const [session, setSession] = useState<SessionState>({ status: 'loading', user: null });
   const [notice, setNotice] = useState<ErrorInfo | null>(null);
   const [accountError, setAccountError] = useState<ErrorInfo | null>(null);
-  // Which page the app should open on when it comes back from the admin page.
+  // Which page the app should open on when it comes back from the admin page or switches to another baby. The app
+  // reads it once when it mounts and clears it (onLanded), so it is never used twice.
   const [landOn, setLandOn] = useState<LandOn>(null);
 
   // App is the one component that follows the language: its re-render carries every screen below it.
@@ -120,12 +121,22 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
       },
       onAdmin: () => { setLandOn(null); go('/admin'); },
     };
+    // The admin page's menu has the same baby sections as the app: a page under a baby opens that baby's page.
     const land = (page: LandOn) => (babyId: string) => { pickBaby(babyId, page); go('/'); };
+    const leave = (page: LandOn) => () => { setLandOn(page); go('/'); };
     const menu = { ...account, babies: babies.babies, babyId: babies.babyId };
     if (path === '/admin') {
       body = (
         <>
-          <Menu {...menu} current="admin" onIdeas={land(null)} onLiked={land('liked')} onCommunity={() => { setLandOn('shared'); go('/'); }} />
+          <Menu
+            {...menu}
+            current="admin"
+            onIdeas={land(null)}
+            onLiked={land('liked')}
+            onEditBaby={land('edit')}
+            onAddBaby={babies.babies.length < MAX_BABIES ? leave('add') : undefined}
+            onCommunity={leave('shared')}
+          />
           {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
           <AdminScreen api={api} me={session.user} />
         </>
@@ -152,6 +163,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
             landOn={landOn}
             onSessionLost={sessionLost}
             onPickBaby={pickBaby}
+            onLanded={() => setLandOn(null)}
             {...account}
           />
         </>

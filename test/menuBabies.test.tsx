@@ -100,3 +100,13 @@ test('without page callbacks a baby shows only its header, and For everyone is l
   expect(within(group('Mia')).queryByRole('button', { name: 'Recipe ideas' })).toBeNull();
   expect(screen.queryByText('For everyone')).toBeNull();
 });
+
+test('each baby group is named by its visible heading, and the current baby is told to screen readers', () => {
+  openMenu();
+  const shownName = within(group('Mia')).getByText('Mia');
+  expect(group('Mia').getAttribute('aria-labelledby')).toBe(shownName.id);
+  expect(group('Mia').hasAttribute('aria-label')).toBe(false);
+  const current = within(group('Mia')).getByText('Current baby');
+  expect(current.classList.contains('sr-only')).toBe(true);
+  expect(within(group('Leo')).queryByText('Current baby')).toBeNull();
+});

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button.jsx';
 import { Card } from '@/components/ui/card.jsx';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
@@ -46,6 +46,7 @@ export default function Menu({
   user, current = null, babies = [], babyId = null, onIdeas, onLiked, onAddBaby, onEditBaby, onCommunity, onAdmin, onLogout, onDelete,
 }: MenuProps) {
   const [open, setOpen] = useState(false);
+  const idPrefix = useId();
 
   const closing = (action: () => void) => () => {
     setOpen(false);
@@ -66,12 +67,19 @@ export default function Menu({
           {babies.map((baby) => {
             const name = babyName(baby);
             const selected = baby.id === babyId;
+            // The group is named by the visible name, so a screen reader hears it once.
+            const nameId = `${idPrefix}-baby-${baby.id}`;
             return (
-              <div key={baby.id} role="group" aria-label={name} className="grid gap-1 border-t border-border pt-1">
+              <div key={baby.id} role="group" aria-labelledby={nameId} className="grid gap-1 border-t border-border pt-1">
                 <div className="flex min-h-9 items-center gap-2 px-3">
-                  {/* The current baby is marked; its page buttons carry aria-current for screen readers. */}
-                  {selected && <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
-                  <p className="m-0 min-w-0 flex-1 wrap-anywhere text-sm font-semibold">{name}</p>
+                  {/* The current baby is marked with a dot, and in words for screen readers. */}
+                  {selected && (
+                    <>
+                      <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-primary" />
+                      <span className="sr-only">{t('menu.currentBaby')}</span>
+                    </>
+                  )}
+                  <p id={nameId} className="m-0 min-w-0 flex-1 wrap-anywhere text-sm font-semibold">{name}</p>
                   {onEditBaby && (
                     <Button variant="ghost" size="icon" className="shrink-0" aria-label={t('menu.editBaby', { name })} onClick={closing(() => onEditBaby(baby.id))}>
                       <Emoji>✎</Emoji>
