@@ -9,7 +9,7 @@ const item = (title: string, extra: Partial<SharedItem> = {}): SharedItem => ({
 
 // The screen tests lean on the fake behaving like the server, so pin the rules they rely on.
 test('liking copies the recipe to the liked list and unliking removes only that copy', async () => {
-  const api = createFakeApi({ shared: [item('Pear mash')] });
+  const api = createFakeApi({ birthdate: '2026-02-14', shared: [item('Pear mash')] });
   await api.likeShared('s-Pear mash');
   expect((await api.listShared())[0]).toMatchObject({ likes: 3, liked: true });
   expect((await api.state()).copiedIds).toEqual(['pear-mash']);
@@ -19,7 +19,7 @@ test('liking copies the recipe to the liked list and unliking removes only that 
 });
 
 test('an own recipe with the same id is kept when its twin is liked and unliked', async () => {
-  const api = createFakeApi({ shared: [item('Pear mash')] });
+  const api = createFakeApi({ birthdate: '2026-02-14', shared: [item('Pear mash')] });
   await api.like(make('Pear mash'));
   await api.likeShared('s-Pear mash');
   expect((await api.state()).copiedIds).toEqual([]);
@@ -28,7 +28,7 @@ test('an own recipe with the same id is kept when its twin is liked and unliked'
 });
 
 test('share needs a liked recipe that is not a community copy, and unlike unshares', async () => {
-  const api = createFakeApi({ shared: [item('Pear mash')] });
+  const api = createFakeApi({ birthdate: '2026-02-14', shared: [item('Pear mash')] });
   await expect(api.share('banana-mash')).rejects.toMatchObject({ status: 404 });
   await api.like(make('Banana mash'));
   await api.share('banana-mash');
@@ -85,4 +85,13 @@ test('updateBaby and setLastBaby change the baby and the last one used', async (
   expect(await api.babies()).toEqual({
     babies: [twoBabies[0], { id: 'b', name: 'Leon', birthdate: '2026-06-01' }], lastBabyId: 'b',
   });
+});
+
+test('with no baby the baby routes refuse, as the server does, and the account routes still answer', async () => {
+  const api = createFakeApi({ shared: [item('Pear mash')] });
+  await expect(api.state()).rejects.toMatchObject({ status: 400, key: 'err.babyRequired' });
+  await expect(api.like(make('Banana mash'))).rejects.toMatchObject({ status: 400 });
+  expect(api.state_.birthdate).toBeNull();
+  expect(await api.listShared()).toHaveLength(1);
+  expect(await api.babies()).toEqual({ babies: [], lastBabyId: null });
 });

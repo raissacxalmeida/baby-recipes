@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AdminScreen from './screens/AdminScreen.jsx';
 import LoginScreen from './screens/LoginScreen.jsx';
 import ResetScreen from './screens/ResetScreen.jsx';
@@ -12,6 +12,7 @@ import type { Api } from './api.js';
 import { asApiError } from './api.js';
 import type { ApiUser } from './apiTypes.js';
 import { errorText, getLanguage, setLanguage, t, useLanguage, type ErrorInfo } from './i18n/index.js';
+import { useBabies } from './useBabies.js';
 import { isLanguage } from '../shared/languages.js';
 import type { Language } from '../shared/types.js';
 
@@ -81,6 +82,15 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
   const signedOut = () => { setLandOn(null); setSession({ status: 'anon', user: null }); };
   const sessionLost = () => { setNotice({ message: t('auth.sessionEnded'), key: 'auth.sessionEnded' }); signedOut(); };
 
+  // The babies belong to the account, so App holds them: the admin page's menu and the app both list them.
+  // The app gets an Api bound to the baby showing, and is remounted (keyed by that baby) when another is picked.
+  const babies = useBabies(api, session.status === 'ready', sessionLost);
+  const babyApi = useMemo(() => api.withBaby(babies.babyId), [api, babies.babyId]);
+  const pickBaby = (babyId: string, page: LandOn) => {
+    setLandOn(page);
+    if (babyId !== babies.babyId) babies.select(babyId);
+  };
+
   let body;
   if (invite) {
     body = <SignupScreen api={api} token={safeDecode(invite[1])} onDone={(user) => { signedIn(user); go('/'); }} />;
@@ -110,21 +120,43 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
       },
       onAdmin: () => { setLandOn(null); go('/admin'); },
     };
-    const land = (page: LandOn) => () => { setLandOn(page); go('/'); };
-    body = path === '/admin'
-      ? (
+    const land = (page: LandOn) => (babyId: string) => { pickBaby(babyId, page); go('/'); };
+    const menu = { ...account, babies: babies.babies, babyId: babies.babyId };
+    if (path === '/admin') {
+      body = (
         <>
-          <Menu {...account} current="admin" onHome={land(null)} onLiked={land('liked')} onCommunity={land('shared')} />
+          <Menu {...menu} current="admin" onIdeas={land(null)} onLiked={land('liked')} onCommunity={() => { setLandOn('shared'); go('/'); }} />
           {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
           <AdminScreen api={api} me={session.user} />
         </>
-      )
-      : (
+      );
+    } else if (babies.status === 'loading') {
+      // No menu yet: the app's own menu comes next, and one shown now would be replaced (and closed) under the person.
+      body = <Notice>{t('common.loading')}</Notice>;
+    } else if (babies.status === 'error') {
+      body = (
         <>
-          {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
-          <MainApp api={api} now={now} landOn={landOn} onSessionLost={sessionLost} {...account} />
+          <Menu {...menu} />
+          {babies.error && <Notice kind="error">{errorText(babies.error)}</Notice>}
         </>
       );
+    } else {
+      body = (
+        <>
+          {accountError && <Notice kind="error">{errorText(accountError)}</Notice>}
+          <MainApp
+            key={babies.babyId ?? 'none'}
+            api={babyApi}
+            babies={babies}
+            now={now}
+            landOn={landOn}
+            onSessionLost={sessionLost}
+            onPickBaby={pickBaby}
+            {...account}
+          />
+        </>
+      );
+    }
   }
 
   // The pages shown before logging in get the big logo; once in, the menu header carries the small one.

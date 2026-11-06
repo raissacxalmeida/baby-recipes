@@ -25,13 +25,14 @@ interface BabyData {
 }
 
 // `liked`, `disliked`, `shown`, `copied` and `birthdate` are the selected baby's (the first one until withBaby picks
-// another). `used`, `queue` and `shared` belong to the account.
+// another); with no baby, `birthdate` is null and the lists throw, as the server's baby routes refuse a request
+// without a baby. `used`, `queue` and `shared` belong to the account.
 export interface FakeState {
   user: FakeUser | null;
   babies: ApiBaby[];
   lastBabyId: string | null;
   selectedBabyId: string | null;
-  birthdate: string | null;
+  readonly birthdate: string | null;
   liked: ApiRecipe[];
   disliked: ApiRecipe[];
   shown: string[];
@@ -68,22 +69,26 @@ export function createFakeApi({
   user = null, birthdate = null, babies, lastBabyId = null, recipes = [], shared = [], overrides = {},
 }: FakeApiOptions = {}): FakeApi {
   const initial = babies ?? (birthdate !== null ? [{ id: 'baby-1', name: 'Mia', birthdate }] : []);
-  // The data of the baby with no id (an account with no babies) lives under ''.
   const data = new Map<string, BabyData>();
   const dataOf = (babyId: string): BabyData => {
     let found = data.get(babyId);
     if (!found) { found = { liked: [], disliked: [], shown: [], copied: new Set() }; data.set(babyId, found); }
     return found;
   };
-  const selectedId = () => (state.babies.find((b) => b.id === state.selectedBabyId) ?? state.babies[0])?.id ?? '';
-  const cur = () => dataOf(selectedId());
+  const selectedId = () => (state.babies.find((b) => b.id === state.selectedBabyId) ?? state.babies[0])?.id ?? null;
+  // The same answer as the server's requireBaby for a request that names no baby.
+  const babyRequired = () => Object.assign(new Error('Choose a baby first'), { status: 400, key: 'err.babyRequired' });
+  const cur = (): BabyData => {
+    const id = selectedId();
+    if (id === null) throw babyRequired();
+    return dataOf(id);
+  };
   const state: FakeState = {
     user,
     babies: initial.map((b) => ({ ...b })),
     lastBabyId,
     selectedBabyId: null,
     get birthdate() { return state.babies.find((b) => b.id === selectedId())?.birthdate ?? null; },
-    set birthdate(value) { setSelectedBirthdate(value); },
     get liked() { return cur().liked; },
     set liked(value) { cur().liked = value; },
     get disliked() { return cur().disliked; },
@@ -95,11 +100,6 @@ export function createFakeApi({
     queue: [...recipes],
     shared: [...shared],
   };
-  function setSelectedBirthdate(value: string | null) {
-    const baby = state.babies.find((b) => b.id === selectedId());
-    if (baby) baby.birthdate = value;
-    else if (value !== null) state.babies.push({ id: 'baby-1', name: 'Mia', birthdate: value });
-  }
   const notFound = () => Object.assign(new Error('That baby is not available'), { status: 404 });
   const by = (list: ApiRecipe[], id: string) => list.filter((r) => r.id !== id);
   const unshareOwn = (recipeId: string) => { state.shared = state.shared.filter((s) => !(s.mine && s.recipe.id === recipeId)); };
@@ -132,8 +132,6 @@ export function createFakeApi({
       copiedIds: [...state.copied],
       usage: state.user?.isAdmin ? null : { recipesToday: state.used, limit: LIMIT, resetsAt: '2026-10-16T00:00:00.000Z' },
     })),
-    // Deprecated with the real one (Task 6 removes both): sets the selected baby's birthdate, making the default baby if none exists.
-    setBirthdate: vi.fn<Api['setBirthdate']>(async (d) => { state.birthdate = d; return ok; }),
     setLanguage: vi.fn<Api['setLanguage']>(async (language) => { if (state.user) state.user = { ...state.user, language }; return ok; }),
     suggest: vi.fn<Api['suggest']>(async () => {
       const skip = new Set([...state.shown, ...state.disliked.map((r) => r.title)]);

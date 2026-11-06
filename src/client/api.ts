@@ -41,8 +41,6 @@ export interface Api {
   resetInfo(token: string): Promise<LinkOwner>;
   reset(token: string, password: string): Promise<Ok>;
   state(): Promise<ApiState>;
-  // Deprecated: the birthdate belongs to a baby now (addBaby, updateBaby). Task 6 removes this.
-  setBirthdate(birthdate: string): Promise<Ok>;
   setLanguage(language: Language): Promise<Ok>;
   suggest(ingredients: string[]): Promise<ApiRecipe>;
   translateTitles(language: TranslatedLanguage, titles: string[]): Promise<Record<string, string>>;
@@ -119,8 +117,6 @@ export function createApi(fetchImpl: FetchImpl = (url, init) => fetch(url, init)
     resetInfo: (token: string) => request<LinkOwner>('GET', `/api/reset/${id(token)}`),
     reset: (token: string, password: string) => request<Ok>('POST', '/api/reset', { token, password }),
     state: () => request<ApiState>('GET', '/api/state'),
-    // Deprecated: the birthdate belongs to a baby now. Task 6 removes this with its last caller.
-    setBirthdate: (birthdate: string) => request<Ok>('PUT', '/api/birthdate', { birthdate }),
     setLanguage: (language: Language) => request<Ok>('PUT', '/api/language', { language }),
     // Ingredients are typed in the language showing, so the server is told which one.
     suggest: async (ingredients: string[]): Promise<ApiRecipe> =>

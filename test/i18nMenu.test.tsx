@@ -54,18 +54,38 @@ test.each(OTHER_LANGUAGES)('the delete-account dialog is fully in %s', async (la
   expect(englishLeft(dialog, language, ['menu.', 'common.cancel'])).toEqual([]);
 });
 
-test.each(OTHER_LANGUAGES)('the birthday screen is fully in %s', async (language) => {
+test.each(OTHER_LANGUAGES)('the first baby screen is fully in %s', async (language) => {
   await start(language, { birthdate: null });
-  await screen.findByRole('heading', { name: word(language, 'setup.title') });
-  expect(screen.getByLabelText(word(language, 'setup.birthday'))).not.toBeNull();
-  expect(englishLeft(document.body, language, ['setup.'])).toEqual([]);
+  await screen.findByRole('heading', { name: word(language, 'baby.titleFirst') });
+  expect(screen.getByLabelText(word(language, 'baby.name'))).not.toBeNull();
+  expect(screen.getByLabelText(word(language, 'baby.birthday'))).not.toBeNull();
+  expect(englishLeft(document.body, language, ['baby.', 'menu.'])).toEqual([]);
+});
+
+test.each(OTHER_LANGUAGES)('a baby with no name is asked for it in %s, and the menu calls it by the unnamed text', async (language) => {
+  setLanguage(language);
+  const api = createFakeApi({ user: { email: 'ana@example.com', isAdmin: false, language }, babies: [{ id: 'baby-1', name: null, birthdate: '2026-02-14' }] });
+  render(<App api={api} now={now} path="/" navigate={vi.fn()} />);
+  await screen.findByRole('heading', { name: word(language, 'baby.titleEdit') });
+  openMenu(language);
+  expect(screen.getByRole('group', { name: word(language, 'baby.unnamed') })).not.toBeNull();
+  expect(englishLeft(document.body, language, ['baby.', 'menu.'])).toEqual([]);
 });
 
 test('a future birthday is refused in German', async () => {
   await start('de', { birthdate: null });
-  fireEvent.change(await screen.findByLabelText(word('de', 'setup.birthday')), { target: { value: '2099-01-01' } });
-  fireEvent.click(screen.getByRole('button', { name: word('de', 'setup.continue') }));
+  fireEvent.change(await screen.findByLabelText(word('de', 'baby.name')), { target: { value: 'Mia' } });
+  fireEvent.change(screen.getByLabelText(word('de', 'baby.birthday')), { target: { value: '2099-01-01' } });
+  fireEvent.click(screen.getByRole('button', { name: word('de', 'baby.save') }));
   expect((await screen.findByRole('alert')).textContent).toBe('Der Geburtstag muss vor heute liegen');
+});
+
+test('a name that is too long is refused in Portuguese', async () => {
+  await start('pt', { birthdate: null });
+  fireEvent.change(await screen.findByLabelText(word('pt', 'baby.name')), { target: { value: 'M'.repeat(31) } });
+  fireEvent.change(screen.getByLabelText(word('pt', 'baby.birthday')), { target: { value: '2026-02-14' } });
+  fireEvent.click(screen.getByRole('button', { name: word('pt', 'baby.save') }));
+  expect((await screen.findByRole('alert')).textContent).toBe('Informe um nome de 1 a 30 caracteres');
 });
 
 test.each(OTHER_LANGUAGES)('the too-young screen is fully in %s', async (language) => {

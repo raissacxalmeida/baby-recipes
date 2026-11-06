@@ -5,6 +5,7 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog.jsx';
 import { Emoji } from '@/components/ui/emoji.jsx';
 import type { ApiBaby, ApiUser } from '../apiTypes.js';
 import { t } from '../i18n/index.js';
+import { babyName } from '../useBabies.js';
 import Logo from './Logo.jsx';
 
 interface MenuItemProps {
@@ -22,9 +23,6 @@ function MenuItem({ emoji, label, active, onClick }: MenuItemProps) {
     </Button>
   );
 }
-
-// A baby's name as shown; a baby made before names existed has none yet.
-export const babyName = (baby: ApiBaby): string => baby.name ?? t('baby.unnamed');
 
 // The page links only show for the pages whose handler is passed, so screens that come before the app proper
 // (a baby's details, too young) get just the babies' names and the account actions. Each baby is a group with its
