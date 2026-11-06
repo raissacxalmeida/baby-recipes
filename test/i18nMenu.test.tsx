@@ -37,7 +37,7 @@ test('the German menu button is Menü', async () => {
 test.each(OTHER_LANGUAGES)('the open menu is fully in %s', async (language) => {
   await start(language);
   openMenu(language);
-  for (const key of ['menu.home', 'menu.liked', 'menu.community', 'menu.logout', 'menu.delete'] satisfies CatalogKey[]) {
+  for (const key of ['menu.ideas', 'menu.liked', 'menu.community', 'menu.logout', 'menu.delete'] satisfies CatalogKey[]) {
     expect(screen.getByRole('button', { name: word(language, key) }), key).not.toBeNull();
   }
   expect(englishLeft(document.body, language, ['menu.', 'common.cancel'])).toEqual([]);
