@@ -69,6 +69,7 @@ const en = {
   'menu.liked': 'Liked recipes',
   'menu.addBaby': 'Add a baby',
   'menu.editBaby': 'Edit {name}',
+  'menu.editUnnamed': 'Edit your baby',
   'menu.currentBaby': 'Current baby',
   'menu.community': 'Community recipes',
   'menu.forEveryone': 'For everyone',

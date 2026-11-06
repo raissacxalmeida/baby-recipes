@@ -103,25 +103,38 @@ export default function MainApp({
     return next;
   }
 
+  // The page to open once the baby's state is loaded: `landOn` at first, then the page picked to try a failed load again.
+  const landing = useRef<LandOn>(landOn);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!baby) return undefined;
-    let live = true;
+    let current = true;
+    const wanted = landing.current;
     api.state()
       .then(async (s) => {
         const start = startScreen(baby.name, s.birthdate, now());
         // Arriving from another page (the admin page) can ask for the liked or community page instead of Recipe ideas,
         // or for the baby's details.
-        const target: Screen = landOn === 'edit' ? 'baby' : landOn === 'add' ? 'add' : start === 'home' && landOn ? landOn : start;
+        const target: Screen = wanted === 'edit' ? 'baby' : wanted === 'add' ? 'add' : start === 'home' && wanted ? wanted : start;
         const list = target === 'shared' ? await api.listShared() : null;
-        if (!live) return;
+        if (!current) return;
         setServer(s);
         if (list) setCommunity(list);
         setBeforeAdd(start);
-        setScreen(target);
+        // A baby form opened from the menu while this was loading stays, with what was typed in it.
+        setScreen((shown) => (shown === 'baby' || shown === 'add' ? shown : target));
       })
-      .catch((err: unknown) => live && (asApiError(err).status === 401 ? onSessionLost() : setLoadError(asApiError(err))));
-    return () => { live = false; };
-  }, [api]);
+      .catch((err: unknown) => current && (asApiError(err).status === 401 ? onSessionLost() : setLoadError(asApiError(err))));
+    return () => { current = false; };
+  }, [api, attempt]);
+
+  // After a failed load, a page picked under the same baby loads them again and opens that page.
+  function retry(page: LandOn) {
+    landing.current = page;
+    setLoadError(null);
+    setScreen(null);
+    setAttempt((n) => n + 1);
+  }
 
   // The lists show every title in the chosen language, so their titles are translated together, once per language.
   // A failure leaves the English titles and is tried again the next time the list is shown.
@@ -255,10 +268,18 @@ export default function MainApp({
     await refresh();
   });
 
+  // A page under the baby showing is just opened (Recipe ideas is their start page, the too-young page for a baby
+  // under 6 months), or loaded again after a failed load; one under another baby goes through App, which switches babies.
+  const page = (target: 'home' | 'liked') => (id: string) => {
+    const wanted: LandOn = target === 'liked' ? 'liked' : null;
+    if (id !== babies.babyId) onPickBaby(id, wanted);
+    else if (!server) retry(wanted);
+    else go(target === 'home' ? startScreen(baby?.name ?? null, server.birthdate, now()) : 'liked');
+  };
+
   const account = (
     <Menu user={user} babies={babies.babies} babyId={babies.babyId} {...babyActions} onAdmin={onAdmin} onLogout={onLogout} onDelete={onDelete} />
   );
-  if (loadError) return <>{account}<Notice kind="error">{errorText(loadError)}</Notice></>;
   if (screen === 'add') {
     return (
       <>
@@ -269,7 +290,9 @@ export default function MainApp({
   }
   if (screen === 'baby') {
     // A baby whose details are complete can cancel back to their start screen; a missing name or birthdate must be filled in.
+    // Opened over a failed load, Cancel goes back to the error.
     const back = baby && server ? startScreen(baby.name, server.birthdate, now()) : 'baby';
+    const cancel = back !== 'baby' ? () => go(back) : loadError ? () => setScreen(null) : undefined;
     return (
       <>
         {account}
@@ -279,10 +302,29 @@ export default function MainApp({
           first={!baby}
           now={now}
           onSave={saveBaby}
-          onCancel={back !== 'baby' ? () => go(back) : undefined}
+          onCancel={cancel}
           // The last baby cannot be removed: the account's own Delete is the way out for them.
           onRemove={baby && babies.babies.length >= 2 ? () => removeBaby(baby.id) : undefined}
         />
+      </>
+    );
+  }
+  // A failed load keeps the menu's pages: the other babies' open them, the same baby's tries the load again.
+  if (loadError) {
+    return (
+      <>
+        <Menu
+          user={user}
+          babies={babies.babies}
+          babyId={babies.babyId}
+          onIdeas={page('home')}
+          onLiked={page('liked')}
+          {...babyActions}
+          onAdmin={onAdmin}
+          onLogout={onLogout}
+          onDelete={onDelete}
+        />
+        <Notice kind="error">{errorText(loadError)}</Notice>
       </>
     );
   }
@@ -363,14 +405,7 @@ export default function MainApp({
   };
 
   // The page links only make sense once the app proper has started; the recipe page marks no page as current.
-  // A page under the baby showing is just opened (Recipe ideas is their start page, the too-young page for a baby
-  // under 6 months); one under another baby goes through App, which switches babies.
   const inApp = ['too-young', 'home', 'liked', 'shared', 'recipe'].includes(screen);
-  const start = startScreen(baby?.name ?? null, server.birthdate, now());
-  const page = (target: 'home' | 'liked') => (id: string) => {
-    if (id !== babies.babyId) onPickBaby(id, target === 'liked' ? 'liked' : null);
-    else go(target === 'home' ? start : 'liked');
-  };
   return (
     <>
       <Menu

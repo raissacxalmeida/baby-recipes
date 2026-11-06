@@ -81,7 +81,7 @@ export default function Menu({
                   )}
                   <p id={nameId} className="m-0 min-w-0 flex-1 wrap-anywhere text-sm font-semibold">{name}</p>
                   {onEditBaby && (
-                    <Button variant="ghost" size="icon" className="shrink-0" aria-label={t('menu.editBaby', { name })} onClick={closing(() => onEditBaby(baby.id))}>
+                    <Button variant="ghost" size="icon" className="shrink-0" aria-label={baby.name ? t('menu.editBaby', { name }) : t('menu.editUnnamed')} onClick={closing(() => onEditBaby(baby.id))}>
                       <Emoji>✎</Emoji>
                     </Button>
                   )}

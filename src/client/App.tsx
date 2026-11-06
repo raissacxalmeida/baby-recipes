@@ -119,7 +119,7 @@ export default function App({ api, now = () => new Date(), path: initialPath, na
           setAccountError(asApiError(err));
         }
       },
-      onAdmin: () => { setLandOn(null); go('/admin'); },
+      onAdmin: () => go('/admin'),
     };
     // The admin page's menu has the same baby sections as the app: a page under a baby opens that baby's page.
     const land = (page: LandOn) => (babyId: string) => { pickBaby(babyId, page); go('/'); };

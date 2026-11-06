@@ -417,3 +417,100 @@ test('the whole app reopens on the baby picked last', async () => {
   render(<App api={api} now={now} path="/" navigate={vi.fn()} />);
   expect(await screen.findByText(/11 months/)).not.toBeNull();
 });
+
+// The state of one baby fails to load: the parent is not stuck on the error.
+async function failingFor(babyId: string, { times = Infinity } = {}) {
+  const api = await startApp({ babies: [mia, leo] });
+  const real = api.state.getMockImplementation();
+  if (!real) throw new Error('no state');
+  let failures = 0;
+  api.state.mockImplementation(async () => {
+    if (api.state_.selectedBabyId === babyId && failures < times) {
+      failures += 1;
+      throw new Error('Could not reach the server');
+    }
+    return real();
+  });
+  return api;
+}
+
+test('when a baby\'s page fails to load, the menu still opens the other baby\'s pages, and the same baby\'s page tries again', async () => {
+  await failingFor('baby-2', { times: 1 });
+  pick('Leo', 'Recipe ideas');
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Could not reach/);
+  pick('Mia', 'Liked recipes');
+  await shown('Liked recipes');
+  pick('Leo', 'Liked recipes');
+  // The first failure is spent; picking Leo again loads him.
+  await shown('Liked recipes');
+  cleanup();
+  await failingFor('baby-2', { times: 1 });
+  pick('Leo', 'Recipe ideas');
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Could not reach/);
+  pick('Leo', 'Recipe ideas');
+  expect(await screen.findByText(/11 months/)).not.toBeNull();
+  expect(screen.queryByRole('alert')).toBeNull();
+});
+
+test('on a load error, Edit and Add a baby open their forms and Cancel goes back to the error', async () => {
+  await failingFor('baby-2');
+  pick('Leo', 'Recipe ideas');
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Could not reach/);
+  pick('Leo', 'Edit Leo');
+  await shown('Edit baby');
+  expect(field("Baby's name").value).toBe('Leo');
+  click('Cancel');
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Could not reach/);
+  click('Menu');
+  click('Add a baby');
+  await shown('Add a baby');
+  click('Cancel');
+  expect((await screen.findByRole('alert')).textContent).toMatch(/Could not reach/);
+  pick('Mia', 'Edit Mia');
+  await shown('Edit baby');
+  expect(field("Baby's name").value).toBe('Mia');
+});
+
+test('Edit or Add a baby tapped while the baby\'s page is loading keeps the form when the page arrives', async () => {
+  for (const [item, heading] of [['Edit Mia', 'Edit baby'], ['Add a baby', 'Add a baby']]) {
+    const api = createFakeApi({ user: signedIn, babies: [mia, leo], recipes: [first, second] });
+    const real = api.state.getMockImplementation();
+    if (!real) throw new Error('no state');
+    const gate = deferred();
+    api.state.mockImplementationOnce(async () => { await gate.promise; return real(); });
+    render(<App api={api} now={now} path="/" navigate={vi.fn()} />);
+    await screen.findByRole('button', { name: 'Menu' });
+    click('Menu');
+    click(item);
+    await shown(heading);
+    type("Baby's name", 'Mimi');
+    await act(async () => { gate.resolve(); });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByRole('heading', { name: heading })).not.toBeNull();
+    expect(field("Baby's name").value).toBe('Mimi');
+    click('Cancel');
+    await fridge();
+    cleanup();
+  }
+});
+
+test('a nameless last-used baby is asked for a name, the other baby stays reachable, and the name then shows in the menu', async () => {
+  const nameless: ApiBaby = { id: 'baby-2', name: null, birthdate: '2025-11-01' };
+  await startApp({ babies: [mia, nameless], lastBabyId: 'baby-2' });
+  await shown('Edit baby');
+  expect(field("Baby's name").value).toBe('');
+  expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull();
+  pick('Mia', 'Edit Mia');
+  await waitFor(() => expect(field("Baby's name").value).toBe('Mia'));
+  click('Cancel');
+  expect(await screen.findByText(/8 months/)).not.toBeNull();
+  pick('Your baby', 'Recipe ideas');
+  await shown('Edit baby');
+  expect(field("Baby's name").value).toBe('');
+  type("Baby's name", 'Bia');
+  click('Save');
+  expect(await screen.findByText(/11 months/)).not.toBeNull();
+  click('Menu');
+  expect(screen.queryByRole('group', { name: 'Your baby' })).toBeNull();
+  expect(markedPage()).toEqual([within(group('Bia')).getByRole('button', { name: 'Recipe ideas' })]);
+});

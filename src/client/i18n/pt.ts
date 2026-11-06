@@ -71,6 +71,7 @@ export default {
   'menu.liked': 'Receitas curtidas',
   'menu.addBaby': 'Adicionar um bebê',
   'menu.editBaby': 'Editar {name}',
+  'menu.editUnnamed': 'Editar seu bebê',
   'menu.currentBaby': 'Bebê atual',
   'menu.community': 'Receitas da comunidade',
   'menu.forEveryone': 'Para todos',

@@ -59,3 +59,30 @@ test('migrations 7, 8 and 9 give each user with a birthdate or saved data one ba
   expect(both.rows).toEqual([{ baby_id: second, status: 'disliked' }, { baby_id: byUser.get(ids[0])?.id, status: 'liked' }]);
   await db.close();
 });
+
+// Migration 8 drops recipes.user_id and shown.user_id, which drops their old primary keys; it then adds new ones.
+test('after the migrations recipes are keyed on exactly (baby_id, id) and shown on (baby_id, title)', async () => {
+  const db = await createTestDb();
+  const keys = await db.query<{ table_name: string; column_name: string; position: number }>(`
+    select tc.table_name, kcu.column_name, kcu.ordinal_position as position
+    from information_schema.table_constraints tc
+    join information_schema.key_column_usage kcu
+      on kcu.constraint_name = tc.constraint_name and kcu.table_schema = tc.table_schema and kcu.table_name = tc.table_name
+    where tc.constraint_type = 'PRIMARY KEY' and tc.table_name in ('recipes', 'shown')
+    order by tc.table_name, kcu.ordinal_position`);
+  expect(keys.rows).toEqual([
+    { table_name: 'recipes', column_name: 'baby_id', position: 1 },
+    { table_name: 'recipes', column_name: 'id', position: 2 },
+    { table_name: 'shown', column_name: 'baby_id', position: 1 },
+    { table_name: 'shown', column_name: 'title', position: 2 },
+  ]);
+  const user = (await db.query<Pick<UserRow, 'id'>>("insert into users (email, password_hash) values ('a@example.com', 'x') returning id")).rows[0].id;
+  const baby = (await db.query<Pick<BabyRow, 'id'>>("insert into babies (user_id, name) values ($1, 'Mia') returning id", [user])).rows[0].id;
+  const data = JSON.stringify({ id: 'a', title: 'a' });
+  await db.query("insert into recipes (baby_id, id, data, status) values ($1, 'a', $2, 'liked')", [baby, data]);
+  await expect(db.query("insert into recipes (baby_id, id, data, status) values ($1, 'a', $2, 'disliked')", [baby, data]))
+    .rejects.toThrow(/duplicate key|unique/i);
+  await db.query("insert into shown (baby_id, title) values ($1, 'Banana mash')", [baby]);
+  await expect(db.query("insert into shown (baby_id, title) values ($1, 'Banana mash')", [baby])).rejects.toThrow(/duplicate key|unique/i);
+  await db.close();
+});

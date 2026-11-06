@@ -72,7 +72,7 @@ test('Add a baby and Edit Mia call their callbacks; Add a baby is absent without
 test('a baby with no name is called "Your baby"', () => {
   openMenu({ babies: [{ id: 'baby-1', name: null, birthdate: '2026-02-14' }] });
   expect(within(group('Your baby')).getByText('Your baby')).not.toBeNull();
-  expect(button(group('Your baby'), 'Edit Your baby')).not.toBeNull();
+  expect(button(group('Your baby'), 'Edit your baby')).not.toBeNull();
 });
 
 test('a 60-character name without spaces renders in full and its element has the wrap-anywhere class', () => {
