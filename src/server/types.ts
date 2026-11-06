@@ -30,10 +30,18 @@ export interface UserRow {
   email: string;
   password_hash: string;
   is_admin: boolean;
-  birthdate: Date | null;
   created_at: Date;
   last_login_at: Date | null;
   language: Language | null;
+  last_baby_id: string | null;
+}
+
+export interface BabyRow {
+  id: string;
+  user_id: string;
+  name: string | null;
+  birthdate: Date | null;
+  created_at: Date;
 }
 
 export interface InviteRow {
@@ -63,7 +71,7 @@ export interface SessionRow {
 }
 
 export interface RecipeRow {
-  user_id: string;
+  baby_id: string;
   id: string;
   data: unknown;
   status: 'liked' | 'disliked';
@@ -72,7 +80,7 @@ export interface RecipeRow {
 }
 
 export interface ShownRow {
-  user_id: string;
+  baby_id: string;
   title: string;
   shown_at: Date;
 }
@@ -96,6 +104,7 @@ export interface SharedRecipeRow {
   id: string;
   user_id: string;
   recipe_id: string;
+  baby_id: string | null;
   data: unknown;
   grp: GroupName;
   baby_months: number;
@@ -175,6 +184,8 @@ export interface RouteContext {
   callModel: ModelCall;
   callTranslate: TranslateCall;
   sessionToken: string | undefined;
+  // The baby the request is for, from the X-Baby-Id header; baby-scoped handlers check it belongs to the person.
+  babyId: string | undefined;
 }
 // Public routes can be reached signed out; user and admin routes always have the signed-in person.
 export type PublicContext = RouteContext & { user: null };

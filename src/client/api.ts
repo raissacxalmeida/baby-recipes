@@ -1,6 +1,6 @@
 import type { Language, TranslatedLanguage } from '../shared/types.js';
 import type {
-  AdminOverview, ApiRecipe, ApiState, ApiUser, IssuedLink, LinkOwner, Ok,
+  AdminOverview, ApiBaby, ApiRecipe, ApiState, ApiUser, BabyInput, IssuedLink, LinkOwner, Ok,
   RecipeTranslation, Session, SharedItem,
 } from './apiTypes.js';
 import { getLanguage, hasKey, t } from './i18n/index.js';
@@ -30,7 +30,48 @@ interface ErrorBody {
 
 type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
-export function createApi(fetchImpl: FetchImpl = (url, init) => fetch(url, init)) {
+// Every call the browser makes. `withBaby` hands back a copy bound to one baby, so a screen holds the instance of the
+// baby it shows and a request still in flight keeps its own baby after the parent switches.
+export interface Api {
+  session(): Promise<Session | null>;
+  login(email: string, password: string): Promise<ApiUser>;
+  logout(): Promise<Ok>;
+  invite(token: string): Promise<LinkOwner>;
+  signup(token: string, password: string): Promise<ApiUser>;
+  resetInfo(token: string): Promise<LinkOwner>;
+  reset(token: string, password: string): Promise<Ok>;
+  state(): Promise<ApiState>;
+  setLanguage(language: Language): Promise<Ok>;
+  suggest(ingredients: string[]): Promise<ApiRecipe>;
+  translateTitles(language: TranslatedLanguage, titles: string[]): Promise<Record<string, string>>;
+  translateRecipe(language: TranslatedLanguage, recipe: ApiRecipe): Promise<RecipeTranslation>;
+  like(recipe: ApiRecipe): Promise<Ok>;
+  unlike(recipeId: string): Promise<Ok>;
+  dislike(recipe: ApiRecipe): Promise<Ok>;
+  restore(recipeId: string): Promise<Ok>;
+  listShared(): Promise<SharedItem[]>;
+  share(recipeId: string): Promise<Ok>;
+  unshare(recipeId: string): Promise<Ok>;
+  likeShared(sharedId: string): Promise<Ok>;
+  unlikeShared(sharedId: string): Promise<Ok>;
+  babies(): Promise<{ babies: ApiBaby[]; lastBabyId: string | null }>;
+  addBaby(input: BabyInput): Promise<ApiBaby>;
+  updateBaby(babyId: string, input: BabyInput): Promise<Ok>;
+  removeBaby(babyId: string): Promise<Ok>;
+  setLastBaby(babyId: string): Promise<Ok>;
+  withBaby(babyId: string | null): Api;
+  deleteAccount(): Promise<Ok>;
+  admin: {
+    overview(): Promise<AdminOverview>;
+    createInvite(email: string): Promise<IssuedLink>;
+    revokeInvite(inviteId: string): Promise<Ok>;
+    reset(userId: string): Promise<IssuedLink>;
+    remove(userId: string): Promise<Ok>;
+  };
+}
+
+// With a `babyId`, every request names that baby in the X-Baby-Id header; the baby-scoped routes read it there.
+export function createApi(fetchImpl: FetchImpl = (url, init) => fetch(url, init), babyId: string | null = null): Api {
   async function request<T>(method: Method, path: string, body?: unknown): Promise<T> {
     let res: FetchResponse;
     try {
@@ -39,6 +80,7 @@ export function createApi(fetchImpl: FetchImpl = (url, init) => fetch(url, init)
         credentials: 'same-origin',
         headers: {
           'X-Requested-With': 'fetch',
+          ...(babyId ? { 'X-Baby-Id': babyId } : {}),
           ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         },
         body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -75,7 +117,6 @@ export function createApi(fetchImpl: FetchImpl = (url, init) => fetch(url, init)
     resetInfo: (token: string) => request<LinkOwner>('GET', `/api/reset/${id(token)}`),
     reset: (token: string, password: string) => request<Ok>('POST', '/api/reset', { token, password }),
     state: () => request<ApiState>('GET', '/api/state'),
-    setBirthdate: (birthdate: string) => request<Ok>('PUT', '/api/birthdate', { birthdate }),
     setLanguage: (language: Language) => request<Ok>('PUT', '/api/language', { language }),
     // Ingredients are typed in the language showing, so the server is told which one.
     suggest: async (ingredients: string[]): Promise<ApiRecipe> =>
@@ -93,6 +134,12 @@ export function createApi(fetchImpl: FetchImpl = (url, init) => fetch(url, init)
     unshare: (recipeId: string) => request<Ok>('DELETE', `/api/shared/${id(recipeId)}`),
     likeShared: (sharedId: string) => request<Ok>('POST', `/api/shared/${id(sharedId)}/like`, {}),
     unlikeShared: (sharedId: string) => request<Ok>('DELETE', `/api/shared/${id(sharedId)}/like`),
+    babies: () => request<{ babies: ApiBaby[]; lastBabyId: string | null }>('GET', '/api/babies'),
+    addBaby: async (input: BabyInput): Promise<ApiBaby> => (await request<{ baby: ApiBaby }>('POST', '/api/babies', input)).baby,
+    updateBaby: (babyId: string, input: BabyInput) => request<Ok>('PUT', `/api/babies/${id(babyId)}`, input),
+    removeBaby: (babyId: string) => request<Ok>('DELETE', `/api/babies/${id(babyId)}`),
+    setLastBaby: (babyId: string) => request<Ok>('PUT', '/api/last-baby', { id: babyId }),
+    withBaby: (other: string | null): Api => createApi(fetchImpl, other),
     deleteAccount: () => request<Ok>('DELETE', '/api/account'),
     admin: {
       overview: () => request<AdminOverview>('GET', '/api/admin/overview'),
@@ -103,5 +150,3 @@ export function createApi(fetchImpl: FetchImpl = (url, init) => fetch(url, init)
     },
   };
 }
-
-export type Api = ReturnType<typeof createApi>;

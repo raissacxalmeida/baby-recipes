@@ -1,7 +1,7 @@
 import { test, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import App from '../src/client/App.jsx';
-import SetupScreen from '../src/client/screens/SetupScreen.jsx';
+import BabyScreen from '../src/client/screens/BabyScreen.jsx';
 import { createApi } from '../src/client/api.js';
 import { t, setLanguage } from '../src/client/i18n/index.js';
 import { createFakeApi } from './helpers/fakeApi.js';
@@ -41,11 +41,12 @@ test('a short-password error on the signup page changes language with the page',
   expect(screen.getByRole('alert').textContent).toBe('Use uma senha com pelo menos 10 caracteres');
 });
 
-test('the birthday screen shows the English message for a key this browser does not know, never the key', async () => {
+test('the baby screen shows the English message for a key this browser does not know, never the key', async () => {
   const unknown = Object.assign(new Error('Plain English'), { key: 'err.fromANewerServer' });
-  render(<SetupScreen onSave={vi.fn().mockRejectedValue(unknown)} now={now} />);
+  render(<BabyScreen first onSave={vi.fn().mockRejectedValue(unknown)} now={now} />);
+  fireEvent.change(screen.getByLabelText("Baby's name"), { target: { value: 'Mia' } });
   fireEvent.change(screen.getByLabelText("Baby's birthday"), { target: { value: '2026-03-14' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save' }));
   expect((await screen.findByRole('alert')).textContent).toBe('Plain English');
 });
 

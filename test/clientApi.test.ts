@@ -80,7 +80,6 @@ test('feedback and account calls use the documented paths', async () => {
   const api = createApi(fetchImpl);
   // Only the id and title matter to these requests.
   const recipe = { id: 'banana-mash', title: 'Banana mash' } as ApiRecipe;
-  await api.setBirthdate('2026-03-14');
   await api.like(recipe);
   await api.unlike('banana-mash');
   await api.dislike(recipe);
@@ -88,7 +87,7 @@ test('feedback and account calls use the documented paths', async () => {
   await api.deleteAccount();
   await api.logout();
   expect(fetchImpl.mock.calls.map(([url, init]) => `${init.method} ${url}`)).toEqual([
-    'PUT /api/birthdate', 'POST /api/liked', 'DELETE /api/liked/banana-mash', 'POST /api/disliked',
+    'POST /api/liked', 'DELETE /api/liked/banana-mash', 'POST /api/disliked',
     'POST /api/disliked/banana-mash/restore', 'DELETE /api/account', 'POST /api/logout',
   ]);
 });
@@ -164,4 +163,57 @@ test('a network failure is shown in the current language', async () => {
   setLanguage('de');
   const api = createApi(async () => { throw new TypeError('Failed to fetch'); });
   await expect(api.state()).rejects.toThrow('Der Server ist nicht erreichbar');
+});
+
+test('a bound instance sends X-Baby-Id on every request and the root instance sends none', async () => {
+  const fetchImpl = reply(200, { ok: true });
+  const root = createApi(fetchImpl);
+  await root.state();
+  const bound = root.withBaby('baby-a');
+  await bound.state();
+  await bound.like({ id: 'banana-mash', title: 'Banana mash' } as ApiRecipe);
+  await bound.listShared();
+  expect(fetchImpl.mock.calls[0][1].headers['X-Baby-Id']).toBeUndefined();
+  expect(fetchImpl.mock.calls.slice(1).map(([, init]) => init.headers['X-Baby-Id'])).toEqual(['baby-a', 'baby-a', 'baby-a']);
+  // A request made through the root afterwards still carries none, and a baby of null unbinds again.
+  await root.state();
+  await bound.withBaby(null).state();
+  expect(fetchImpl.mock.calls[4][1].headers['X-Baby-Id']).toBeUndefined();
+  expect(fetchImpl.mock.calls[5][1].headers['X-Baby-Id']).toBeUndefined();
+  // The bound instance can also be made directly.
+  await createRealApi(fetchImpl as unknown as FetchImpl, 'baby-b').state();
+  expect(fetchImpl.mock.calls[6][1].headers['X-Baby-Id']).toBe('baby-b');
+});
+
+test('two bound instances used at the same time each send their own baby', async () => {
+  const fetchImpl = reply(200, { ok: true });
+  const root = createApi(fetchImpl);
+  const a = root.withBaby('baby-a');
+  const b = root.withBaby('baby-b');
+  await Promise.all([a.state(), b.state(), a.listShared(), b.listShared()]);
+  expect(fetchImpl.mock.calls.map(([url, init]) => `${url} ${init.headers['X-Baby-Id']}`)).toEqual([
+    '/api/state baby-a', '/api/state baby-b', '/api/shared baby-a', '/api/shared baby-b',
+  ]);
+});
+
+test('babies, addBaby, updateBaby, removeBaby and setLastBaby call the baby routes with the bodies from Task 1', async () => {
+  const fetchImpl = vi.fn<FakeFetch>()
+    .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ babies: [{ id: 'b1', name: 'Mia', birthdate: '2026-02-14' }], lastBabyId: 'b1' }) })
+    .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ baby: { id: 'b2', name: 'Leo', birthdate: '2026-05-01' } }) })
+    .mockResolvedValue({ ok: true, status: 200, json: async () => ({ ok: true }) });
+  const api = createApi(fetchImpl);
+  expect(await api.babies()).toEqual({ babies: [{ id: 'b1', name: 'Mia', birthdate: '2026-02-14' }], lastBabyId: 'b1' });
+  expect(await api.addBaby({ name: 'Leo', birthdate: '2026-05-01' })).toEqual({ id: 'b2', name: 'Leo', birthdate: '2026-05-01' });
+  await api.updateBaby('b 2', { name: 'Leon', birthdate: '2026-05-02' });
+  await api.removeBaby('b 2');
+  await api.setLastBaby('b1');
+  expect(fetchImpl.mock.calls.map(([url, init]) => `${init.method} ${url}`)).toEqual([
+    'GET /api/babies', 'POST /api/babies', 'PUT /api/babies/b%202', 'DELETE /api/babies/b%202', 'PUT /api/last-baby',
+  ]);
+  const body = (i: number) => JSON.parse(fetchImpl.mock.calls[i][1].body as string);
+  expect(fetchImpl.mock.calls[0][1].body).toBeUndefined();
+  expect(body(1)).toEqual({ name: 'Leo', birthdate: '2026-05-01' });
+  expect(body(2)).toEqual({ name: 'Leon', birthdate: '2026-05-02' });
+  expect(fetchImpl.mock.calls[3][1].body).toBeUndefined();
+  expect(body(4)).toEqual({ id: 'b1' });
 });

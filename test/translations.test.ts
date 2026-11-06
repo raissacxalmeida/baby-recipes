@@ -3,6 +3,7 @@ import { createTestDb, type TestDb } from './helpers/db.js';
 import { createFakeTranslator } from './helpers/fakeTranslate.js';
 import { createInvite, acceptInvite, createAdmin } from '../src/server/users.js';
 import { like } from '../src/server/userData.js';
+import { addTestBaby } from './helpers/babies.js';
 import { saveToCatalogue } from '../src/server/catalogue.js';
 import { LIMITS } from '../src/server/usage.js';
 import { callTranslate as callOpenAi } from '../src/server/openai.js';
@@ -76,7 +77,7 @@ test('a title that exists nowhere is left out and never reaches the translator',
 });
 
 test("a title that is only in someone else's liked list is unknown to this user", async () => {
-  await like(db, other.id, served('Secret stew'));
+  await like(db, await addTestBaby(db, other.id), served('Secret stew'));
   const ct = createFakeTranslator();
   expect(await translateTitles(db, user, 'pt', ['Secret stew'], deps(ct))).toEqual({});
   expect(await translateTitles(db, other, 'pt', ['Secret stew'], deps(ct))).toEqual({ 'Secret stew': 'pt:Secret stew' });
@@ -201,7 +202,7 @@ test('a recipe over 6000 characters or in a language outside pt, es, de is refus
 
 test('translating leaves the stored English recipes untouched', async () => {
   await catalogue('Banana mash');
-  await like(db, user.id, served());
+  await like(db, await addTestBaby(db, user.id), served());
   const before = {
     catalogue: (await db.query('select data from catalogue_recipes')).rows,
     recipes: (await db.query('select data from recipes')).rows,

@@ -16,9 +16,9 @@ test('a Portuguese parent types batata, gets the recipe, reads it in Portuguese 
   const translator = createFakeTranslator({ ingredients: { batata: 'potato' } });
   t.setTranslator(translator);
   const ana = await t.loginAsNew('ana@example.com');
-  await t.call('PUT', '/api/birthdate', { birthdate: '2026-03-14' }, ana);
+  const { headers } = await t.addBaby(ana);
 
-  const made = await t.call('POST', '/api/recipe', { ingredients: ['batata'], language: 'pt' }, ana);
+  const made = await t.call('POST', '/api/recipe', { ingredients: ['batata'], language: 'pt' }, ana, headers);
   expect(made.status).toBe(200);
   const { recipe } = made.body;
   expect(recipe.title).toBe('Potato mash');
@@ -29,11 +29,11 @@ test('a Portuguese parent types batata, gets the recipe, reads it in Portuguese 
     title: 'pt:Potato mash', ingredients: ['pt:potato', 'pt:water'], steps: ['pt:Boil the potato.', 'pt:Mash it with the water.'],
   });
 
-  expect((await t.call('POST', '/api/liked', { recipe }, ana)).status).toBe(200);
+  expect((await t.call('POST', '/api/liked', { recipe }, ana, headers)).status).toBe(200);
   const titles = await t.call('POST', '/api/translate/titles', { language: 'pt', titles: ['Potato mash'] }, ana);
   expect(titles.body.titles['Potato mash']).toBe(translated.body.translation.title);
 
-  const state = await t.call('GET', '/api/state', undefined, ana);
+  const state = await t.call('GET', '/api/state', undefined, ana, headers);
   expect(state.body.liked[0]).toMatchObject({ title: 'Potato mash', steps: ['Boil the potato.', 'Mash it with the water.'] });
   expect(state.body.liked[0].ingredients.map((i: { name: string }) => i.name)).toEqual(['potato', 'water']);
 });

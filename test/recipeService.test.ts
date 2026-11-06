@@ -1,13 +1,17 @@
 import { test, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import { createTestDb, type TestDb } from './helpers/db.js';
 import { createInvite, acceptInvite, createAdmin } from '../src/server/users.js';
-import { setBirthdate, excludeTitles, addShown, like, dislike } from '../src/server/userData.js';
+import { excludeTitles, addShown, like, dislike } from '../src/server/userData.js';
+import { requireBaby } from '../src/server/babies.js';
+import { addTestBaby } from './helpers/babies.js';
+import { present } from './helpers/present.js';
 import { saveToCatalogue } from '../src/server/catalogue.js';
 import { presentRecipe } from '../src/server/generate.js';
 import { usageToday } from '../src/server/usage.js';
 import { requestRecipe as serveRecipe } from '../src/server/recipeService.js';
 import { createFakeTranslator } from './helpers/fakeTranslate.js';
 import { AppError } from '../src/server/errors.js';
+import type { Baby } from '../src/server/babies.js';
 import type { ModelCall, Row, SessionUser, StoredRecipe } from '../src/server/types.js';
 
 let db: TestDb;
@@ -26,6 +30,8 @@ const model = (...answers: unknown[]) => vi.fn<ModelCall>(async () => {
 });
 let user: SessionUser;
 let admin: SessionUser;
+// The baby the person asks for; recipes, shown titles and the age belong to it.
+let baby: Baby;
 
 // requestRecipe takes the signed-in person (SessionUser); acceptInvite's answer has all of it but `language`,
 // which requestRecipe does not read.
@@ -34,25 +40,34 @@ async function signUp(email: string, isAdmin = false): Promise<SessionUser> {
   return acceptInvite(db, { token, password: 'a long enough password' }, now()) as Promise<SessionUser>;
 }
 
-type RecipeDeps = Parameters<typeof serveRecipe>[3];
+type RecipeDeps = Parameters<typeof serveRecipe>[4];
+// The baby each person's requests are for, unless a test names another.
+const babies = new Map<string, Baby>();
 // An English request never reaches the translator, so most tests leave callTranslate out of the deps the real
 // function requires; the tests that give a language pass one.
-const requestRecipe = (db: TestDb, user: SessionUser, ingredients: unknown, deps: Omit<RecipeDeps, 'callTranslate'> & Partial<RecipeDeps>) =>
-  serveRecipe(db, user, ingredients, deps as RecipeDeps);
+const requestRecipe = (db: TestDb, user: SessionUser, ingredients: unknown, deps: Omit<RecipeDeps, 'callTranslate'> & Partial<RecipeDeps>, forBaby?: Baby) =>
+  serveRecipe(db, user, forBaby ?? present(babies.get(user.id)), ingredients, deps as RecipeDeps);
+// A baby for the person, born on the given day; it becomes the one their requests are for.
+async function babyFor(person: SessionUser, birthdate = '2026-03-14'): Promise<Baby> {
+  const found = await requireBaby(db, person.id, await addTestBaby(db, person.id, birthdate));
+  babies.set(person.id, found);
+  return found;
+}
 
 beforeEach(async () => {
   await db.reset();
   admin = await signUp('me@example.com', true);
   user = await signUp('ana@example.com');
-  await setBirthdate(db, user.id, '2026-03-14', now());
-  await setBirthdate(db, admin.id, '2026-03-14', now());
+  babies.clear();
+  baby = await babyFor(user);
+  await babyFor(admin);
 });
 
 test('a normal request returns a recipe, counts once and is remembered', async () => {
   const recipe = await requestRecipe(db, user, ['banana'], { callModel: model(raw()), now });
   expect(recipe.title).toBe('Banana mash');
   expect((await usageToday(db, user.id, now())).recipes).toBe(1);
-  expect(await excludeTitles(db, user.id)).toEqual(['Banana mash']);
+  expect(await excludeTitles(db, baby.id)).toEqual(['Banana mash']);
 });
 
 test('the model is told which titles to avoid', async () => {
@@ -63,13 +78,14 @@ test('the model is told which titles to avoid', async () => {
 });
 
 test('no birthdate is invalid-input and uses nothing', async () => {
-  await db.query('update users set birthdate = null where id = $1', [user.id]);
-  await expect(requestRecipe(db, user, ['banana'], { callModel: model(raw()), now })).rejects.toMatchObject({ code: 'invalid-input' });
+  await db.query('update babies set birthdate = null where id = $1', [baby.id]);
+  const unborn = await requireBaby(db, user.id, baby.id);
+  await expect(requestRecipe(db, user, ['banana'], { callModel: model(raw()), now }, unborn)).rejects.toMatchObject({ code: 'invalid-input', key: 'err.birthdayFirst' });
   expect(await usageToday(db, user.id, now())).toEqual({ recipes: 0, calls: 0 });
 });
 
 test('a baby under 6 months is too-young and the recipe slot is given back', async () => {
-  await setBirthdate(db, user.id, '2026-07-14', now());
+  await babyFor(user, '2026-07-14');
   const cm = model(raw());
   await expect(requestRecipe(db, user, ['banana'], { callModel: cm, now })).rejects.toMatchObject({ code: 'too-young' });
   expect(cm).not.toHaveBeenCalled();
@@ -125,7 +141,7 @@ test('a matching catalogue recipe is served with no model call and no usage', as
   expect(recipe.ingredients[0].inList).toBe(true);
   expect(cm).not.toHaveBeenCalled();
   expect(await usageToday(db, user.id, now())).toEqual({ recipes: 0, calls: 0 });
-  expect(await excludeTitles(db, user.id)).toEqual(['Banana mash']);
+  expect(await excludeTitles(db, baby.id)).toEqual(['Banana mash']);
 });
 
 test('the daily limits do not block catalogue recipes, only the OpenAI path', async () => {
@@ -142,15 +158,15 @@ test('a catalogue recipe is served once per parent', async () => {
   expect((await requestRecipe(db, user, ['banana'], { callModel: cm, now })).title).toBe('Other');
   expect(cm).toHaveBeenCalledTimes(1);
   const other = await signUp('bo@example.com');
-  await setBirthdate(db, other.id, '2026-03-14', now());
+  await babyFor(other);
   expect((await requestRecipe(db, other, ['banana'], { callModel: model(raw('Other')), now })).title).toBe('Banana mash');
 });
 
 test('liked and disliked catalogue titles are skipped', async () => {
   await catalogue('Banana mash', ['banana', 100]);
   await catalogue('Banana bowl', ['banana', 100]);
-  await like(db, user.id, presentRecipe(raw('Banana mash'), ['banana']));
-  await dislike(db, user.id, presentRecipe(raw('Banana bowl'), ['banana']));
+  await like(db, baby.id, presentRecipe(raw('Banana mash'), ['banana']));
+  await dislike(db, user.id, baby.id, presentRecipe(raw('Banana bowl'), ['banana']));
   const cm = model(raw('Other'));
   expect((await requestRecipe(db, user, ['banana'], { callModel: cm, now })).title).toBe('Other');
 });
@@ -158,7 +174,7 @@ test('liked and disliked catalogue titles are skipped', async () => {
 test('invalid ingredients and a too-young baby are rejected before any lookup', async () => {
   await catalogue('Banana mash', ['banana', 100]);
   await expect(requestRecipe(db, user, [], { callModel: model(raw()), now })).rejects.toMatchObject({ code: 'invalid-input' });
-  await setBirthdate(db, user.id, '2026-07-14', now());
+  await babyFor(user, '2026-07-14');
   await expect(requestRecipe(db, user, ['banana'], { callModel: model(raw()), now })).rejects.toMatchObject({ code: 'too-young' });
 });
 
@@ -170,7 +186,7 @@ test('the admin gets catalogue recipes and leaves no usage row', async () => {
 
 test('the model is told which catalogue titles overlap, without duplicates', async () => {
   await catalogue('Banana oat mash', ['banana', 100], ['oat', 60]);
-  await addShown(db, user.id, 'Banana Mash', now());
+  await addShown(db, baby.id, 'Banana Mash', now());
   await catalogue('Banana mash', ['banana', 100]);
   const cm = model(raw('Other'));
   await requestRecipe(db, user, ['banana'], { callModel: cm, now });
@@ -190,7 +206,7 @@ test('a recipe from OpenAI is saved and served to the next parent for free', asy
   expect(row).toMatchObject({ source: 'ai', age_from_months: 7 });
   expect(row.data.ingredients[0].inList).toBeUndefined();
   const other = await signUp('bo@example.com');
-  await setBirthdate(db, other.id, '2026-03-14', now());
+  await babyFor(other);
   const cm = model(raw('Other'));
   expect((await requestRecipe(db, other, ['banana'], { callModel: cm, now })).title).toBe('Banana mash');
   expect(cm).not.toHaveBeenCalled();
@@ -245,4 +261,26 @@ test('English never calls the translator', async () => {
   await requestRecipe(db, user, ['banana'], { callModel: model(raw()), callTranslate, now });
   await requestRecipe(db, user, ['banana'], { callModel: model(raw('Banana pudding')), callTranslate, now, language: 'en' });
   expect(callTranslate).not.toHaveBeenCalled();
+});
+
+test("suggestions use the given baby's age", async () => {
+  const older = await babyFor(user, '2026-02-14');
+  const younger = await babyFor(user, '2026-07-14');
+  const cm = model(raw());
+  await requestRecipe(db, user, ['banana'], { callModel: cm, now }, older);
+  expect(cm.mock.calls[0][0].ageMonths).toBe(8);
+  await expect(requestRecipe(db, user, ['banana'], { callModel: cm, now }, younger)).rejects.toMatchObject({ code: 'too-young' });
+  expect(cm).toHaveBeenCalledTimes(1);
+});
+
+test('a recipe shown to one baby can be suggested to the other', async () => {
+  const sibling = await babyFor(user);
+  await catalogue('Banana mash', ['banana', 100]);
+  const cm = model(raw('Other'));
+  expect((await requestRecipe(db, user, ['banana'], { callModel: cm, now }, baby)).title).toBe('Banana mash');
+  expect((await requestRecipe(db, user, ['banana'], { callModel: cm, now }, sibling)).title).toBe('Banana mash');
+  expect(cm).not.toHaveBeenCalled();
+  expect((await requestRecipe(db, user, ['banana'], { callModel: cm, now }, baby)).title).toBe('Other');
+  expect(await excludeTitles(db, baby.id)).toEqual(['Banana mash', 'Other']);
+  expect(await excludeTitles(db, sibling.id)).toEqual(['Banana mash']);
 });

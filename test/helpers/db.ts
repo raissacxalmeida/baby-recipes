@@ -6,7 +6,7 @@ import type { Db, Queryable, Row } from '../../src/server/types.js';
 export type TestDb = Db & { reset(): Promise<unknown> };
 
 // In-process Postgres for tests; same SQL as production.
-export async function createTestDb(): Promise<TestDb> {
+export async function createTestDb({ upTo }: { upTo?: number } = {}): Promise<TestDb> {
   const lite = new PGlite();
   const db: TestDb = {
     query: <R = Row>(text: string, params?: unknown[]) => lite.query<R>(text, params),
@@ -15,6 +15,6 @@ export async function createTestDb(): Promise<TestDb> {
     close: () => lite.close(),
     reset: () => lite.query(`truncate ${APP_TABLES.join(', ')} restart identity cascade`),
   };
-  await migrate(db);
+  await migrate(db, upTo);
   return db;
 }

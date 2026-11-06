@@ -157,7 +157,9 @@ export function createServer({ db, config, callModel, callTranslate, now = () =>
       }
     }
     const sessionToken: string | undefined = parseCookies(req.headers.cookie).session;
-    const context = { db, params, body, now, config, callModel, callTranslate, sessionToken };
+    // Which baby the request is for; a repeated header counts by its first value.
+    const babyId: string | undefined = req.headersDistinct['x-baby-id']?.[0];
+    const context = { db, params, body, now, config, callModel, callTranslate, sessionToken, babyId };
     let result: RouteResult;
     if (route.access === 'public') {
       result = await route.handler({ ...context, user: null });

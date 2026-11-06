@@ -113,8 +113,23 @@ test('reset flow changes the password', async () => {
   expect((await t.call('POST', '/api/login', { email: 'ana@example.com', password: 'another long password' })).status).toBe(200);
 });
 
+test('deleting an account with two babies leaves no babies, recipes or shown rows for it', async () => {
+  const ana = await t.loginAsNew('ana@example.com');
+  for (const name of ['Mia', 'Leo']) {
+    const baby = await t.addBaby(ana, { name });
+    const recipe = { id: 'banana-mash', title: 'Banana mash', basePortions: 2, ingredients: [{ name: 'banana', grams: 100, inList: true }], steps: ['Mash it.'], texture: 'mashed', allergens: [] };
+    expect((await t.call('POST', '/api/liked', { recipe }, ana, baby.headers)).status).toBe(200);
+    await t.db.query("insert into shown (baby_id, title) values ($1, 'Oat porridge')", [baby.id]);
+  }
+  for (const table of ['babies', 'recipes', 'shown']) expect((await t.db.query(`select 1 from ${table}`)).rows.length, table).toBe(2);
+  expect((await t.call('DELETE', '/api/account', undefined, ana)).status).toBe(200);
+  for (const table of ['babies', 'recipes', 'shown']) {
+    expect((await t.db.query(`select 1 from ${table}`)).rows, table).toEqual([]);
+  }
+});
+
 test('PUT and DELETE also need X-Requested-With', async () => {
-  const put = await fetch(`${t.base}/api/birthdate`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: '{}' });
+  const put = await fetch(`${t.base}/api/language`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: '{}' });
   expect(put.status).toBe(400);
   expect((await fetch(`${t.base}/api/account`, { method: 'DELETE' })).status).toBe(400);
 });

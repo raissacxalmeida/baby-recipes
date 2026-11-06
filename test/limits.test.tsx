@@ -4,13 +4,13 @@ import { addIngredient, click, goTo, shown, startApp } from './helpers/app.jsx';
 
 afterEach(cleanup);
 
-test('Home shows how many recipes were used today', async () => {
+test('Recipe ideas shows how many recipes were used today', async () => {
   const api = await startApp();
   expect(screen.getByText('Recipes today: 0 of 10')).not.toBeNull();
   addIngredient('banana');
   click('Suggest a recipe');
   await shown('Banana mash');
-  goTo('Home');
+  goTo('Recipe ideas');
   await waitFor(() => expect(screen.getByText('Recipes today: 1 of 10')).not.toBeNull());
   expect(api.state).toHaveBeenCalledTimes(2);
 });

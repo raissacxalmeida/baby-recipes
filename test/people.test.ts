@@ -4,6 +4,7 @@ import {
   createInvite, acceptInvite, createAdmin, createReset, getReset, useReset, listPeople, removeUser,
 } from '../src/server/users.js';
 import { login, sessionUser } from '../src/server/sessions.js';
+import { addTestBaby } from './helpers/babies.js';
 
 let db: TestDb;
 beforeAll(async () => { db = await createTestDb(); });
@@ -74,20 +75,22 @@ test('listPeople shows requests today and hides the figure for the admin', async
 
 test('removing a person deletes everything they had', async () => {
   const { token: session } = await login(db, { email: 'ana@example.com', password: PASSWORD }, now);
-  await db.query("insert into recipes (user_id, id, data, status) values ($1, 'r1', '{}', 'liked')", [ana.id]);
+  await db.query("insert into recipes (baby_id, id, data, status) values ($1, 'r1', '{}', 'liked')", [await addTestBaby(db, ana.id)]);
   const reset = await createReset(db, ana.id, now);
   await removeUser(db, ana.id);
   expect(await sessionUser(db, session, now)).toBeNull();
   await expect(getReset(db, reset.token, now)).rejects.toMatchObject({ code: 'not-found' });
   expect((await db.query('select * from recipes')).rows).toHaveLength(0);
+  expect((await db.query('select * from babies')).rows).toHaveLength(0);
 });
 
 test('a removed email can be invited again as a clean account', async () => {
-  await db.query("insert into recipes (user_id, id, data, status) values ($1, 'r1', '{}', 'liked')", [ana.id]);
+  await db.query("insert into recipes (baby_id, id, data, status) values ($1, 'r1', '{}', 'liked')", [await addTestBaby(db, ana.id)]);
   await removeUser(db, ana.id);
   const again = await signUp('ana@example.com');
   expect(again.id).not.toBe(ana.id);
-  expect((await db.query('select * from recipes where user_id = $1', [again.id])).rows).toHaveLength(0);
+  expect((await db.query('select r.* from recipes r join babies b on b.id = r.baby_id where b.user_id = $1', [again.id])).rows).toHaveLength(0);
+  expect((await db.query('select * from babies where user_id = $1', [again.id])).rows).toHaveLength(0);
 });
 
 test('removing a person also clears their lockout record', async () => {

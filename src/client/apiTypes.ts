@@ -29,7 +29,20 @@ export interface Usage {
   resetsAt: string;
 }
 
-// GET /api/state
+// One baby of the account (GET /api/babies). The name and birthdate are null for a baby made before names existed.
+export interface ApiBaby {
+  id: string;
+  name: string | null;
+  birthdate: string | null;
+}
+
+// What a baby is added or changed with (POST /api/babies, PUT /api/babies/:id).
+export interface BabyInput {
+  name: string;
+  birthdate: string;
+}
+
+// GET /api/state; the birthdate is the selected baby's.
 export interface ApiState {
   birthdate: string | null;
   liked: ApiRecipe[];

@@ -27,7 +27,7 @@ test('the menu is closed until the button is pressed', async () => {
   expect(item('Log out')).toBeNull();
   openMenu();
   expect(screen.getByRole('button', { name: 'Menu' }).getAttribute('aria-expanded')).toBe('true');
-  ['Home', 'Liked recipes', 'Community recipes', 'Log out'].forEach((name) => expect(item(name)).not.toBeNull());
+  ['Recipe ideas', 'Liked recipes', 'Community recipes', 'Log out'].forEach((name) => expect(item(name)).not.toBeNull());
   expect(screen.getByText('ana@example.com')).not.toBeNull();
   expect(item('Admin')).toBeNull();
 });
@@ -64,18 +64,18 @@ test('picking a page closes the menu', async () => {
 test('the menu marks the page you are on', async () => {
   await startApp();
   openMenu();
-  expect(present(item('Home')).getAttribute('aria-current')).toBe('page');
+  expect(present(item('Recipe ideas')).getAttribute('aria-current')).toBe('page');
   expect(present(item('Liked recipes')).getAttribute('aria-current')).toBeNull();
   click('Liked recipes');
   await screen.findByRole('heading', { name: 'Liked recipes' });
   openMenu();
   expect(present(item('Liked recipes')).getAttribute('aria-current')).toBe('page');
-  expect(present(item('Home')).getAttribute('aria-current')).toBeNull();
+  expect(present(item('Recipe ideas')).getAttribute('aria-current')).toBeNull();
 });
 
-test('Home starts a fresh ingredient list', async () => {
+test('Recipe ideas starts a fresh ingredient list', async () => {
   await readingARecipe();
-  goTo('Home');
+  goTo('Recipe ideas');
   expect(await screen.findByRole('heading', { name: "What's in the fridge?" })).not.toBeNull();
   expect(screen.queryByText('banana')).toBeNull();
 });
@@ -111,7 +111,7 @@ test('before the birthday is set the menu only has the account actions', async (
   await startApp({ birthdate: null });
   openMenu();
   expect(item('Log out')).not.toBeNull();
-  expect(item('Home')).toBeNull();
+  expect(item('Recipe ideas')).toBeNull();
   expect(item('Liked recipes')).toBeNull();
   expect(item('Community recipes')).toBeNull();
 });
@@ -121,7 +121,7 @@ test('the admin page menu has the same page links as the rest of the app', async
   goTo('Admin');
   await screen.findByRole('heading', { name: 'Admin' });
   openMenu();
-  ['Home', 'Liked recipes', 'Community recipes', 'Admin', 'Log out'].forEach((name) => expect(item(name)).not.toBeNull());
+  ['Recipe ideas', 'Liked recipes', 'Community recipes', 'Admin', 'Log out'].forEach((name) => expect(item(name)).not.toBeNull());
 });
 
 test('from the admin page the menu goes straight to the community page', async () => {
@@ -142,13 +142,13 @@ test('from the admin page the menu goes straight to the liked page', async () =>
   expect(await screen.findByRole('heading', { name: 'Liked recipes' })).not.toBeNull();
 });
 
-test('an admin reaches the admin page from the menu and Home brings them back', async () => {
+test('an admin reaches the admin page from the menu and Recipe ideas brings them back', async () => {
   await startApp({ user: { email: 'me@example.com', isAdmin: true } });
   goTo('Admin');
   expect(await screen.findByRole('heading', { name: 'Admin' })).not.toBeNull();
   openMenu();
   expect(present(item('Admin')).getAttribute('aria-current')).toBe('page');
-  click('Home');
+  click('Recipe ideas');
   expect(await screen.findByRole('heading', { name: "What's in the fridge?" })).not.toBeNull();
   await waitFor(() => expect(screen.queryByRole('heading', { name: 'Admin' })).toBeNull());
 });

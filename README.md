@@ -1,6 +1,6 @@
 # Tiny Pantry
 
-A small website that suggests baby-friendly recipes from the ingredients you have, for your baby's age. Invite-only accounts keep each person's data (birthday, liked recipes, not-liked recipes) on the server. It runs on your own computer with Docker Compose and is meant for your **home network**.
+A small website that suggests baby-friendly recipes from the ingredients you have, for your baby's age. Invite-only accounts keep each person's data on the server: one or more babies (up to 5), each with a name, a birthday, liked recipes and not-liked recipes. It runs on your own computer with Docker Compose and is meant for your **home network**.
 
 ## What you need
 
@@ -70,7 +70,7 @@ The database changes itself when the app starts. Your data stays in the Docker v
 
 ## Privacy
 
-The site keeps, for each person: email, a hashed password, the baby's birthday, liked and not-liked recipes, and a short list of recently shown recipe titles. Nothing else about the baby is stored. Backups contain the same data, including birthdays, so keep the `backups/` folder private. Removing a person on the admin page deletes all of it. Recipe requests send the ingredients and the baby's age in months (not the birthday) to OpenAI.
+The site keeps, for each person: email and a hashed password. For each baby on the account (1 to 5): the name, the birthday, liked and not-liked recipes, and a short list of recently shown recipe titles. Nothing else about the baby is stored. The daily recipe limit is counted per person, not per baby. Backups contain the same data, including baby names and birthdays, so keep the `backups/` folder private. Removing a baby in the app deletes that baby's name, birthday, liked and not-liked lists and shown titles (and recipes it shared that nobody else liked); the last baby on an account cannot be removed. Removing a person on the admin page deletes all of it, for every baby. Recipe requests send the ingredients and the baby's age in months (not the birthday) to OpenAI.
 
 ## Warnings
 
