@@ -20,7 +20,8 @@ test('migrate twice is safe and records each migration once', async () => {
 test('deleting a user cascades to their recipes', async () => {
   await db.reset();
   const id = await addUser();
-  await db.query("insert into recipes (user_id, id, data, status) values ($1, 'r1', '{}', 'liked')", [id]);
+  const baby = (await db.query<{ id: string }>('insert into babies (user_id) values ($1) returning id', [id])).rows[0].id;
+  await db.query("insert into recipes (baby_id, id, data, status) values ($1, 'r1', '{}', 'liked')", [baby]);
   await db.query('delete from users where id = $1', [id]);
   expect((await db.query('select * from recipes')).rows).toHaveLength(0);
 });

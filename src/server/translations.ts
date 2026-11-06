@@ -30,12 +30,12 @@ function checkLanguage(language: unknown): asserts language is TranslatedLanguag
 export const recipeHash = (recipe: Pick<Recipe, 'title' | 'ingredients' | 'steps'>): string =>
   createHash('sha256').update(JSON.stringify([recipe.title, recipe.ingredients.map((i) => i.name), recipe.steps])).digest('hex');
 
-// Only text the server already holds is translated: the catalogue, this person's own recipes and the community's.
+// Only text the server already holds is translated: the catalogue, the recipes of this person's babies and the community's.
 async function knownTitles(db: Db, user: SessionUser, titles: string[]): Promise<string[]> {
   const { rows } = await db.query<{ title: string }>(
     `select distinct t as title from (
        select data->>'title' as t from catalogue_recipes
-       union all select data->>'title' from recipes where user_id = $1
+       union all select r.data->>'title' from recipes r join babies b on b.id = r.baby_id where b.user_id = $1
        union all select data->>'title' from shared_recipes
      ) known where t = any($2::text[])`,
     [user.id, titles],

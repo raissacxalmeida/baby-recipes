@@ -1,12 +1,13 @@
 import { AppError } from '../errors.js';
 import type { Route } from '../types.js';
 import { isLanguage } from '../../shared/languages.js';
+import { requireBaby } from '../babies.js';
 import { requestRecipe } from '../recipeService.js';
 import {
   likeShared, listShared, shareRecipe, unlikeShared, unshareRecipe,
 } from '../sharedRecipes.js';
 import {
-  dislike, getState, like, restore, setBirthdate, setLanguage, unlike,
+  dislike, getState, like, restore, setLanguage, unlike,
 } from '../userData.js';
 import { LIMITS, nextReset, usageToday } from '../usage.js';
 import { removeUser } from '../users.js';
@@ -16,8 +17,8 @@ const ok = (): { body: { ok: true } } => ({ body: { ok: true } });
 export const dataRoutes: Route[] = [
   {
     method: 'GET', pattern: '/api/state', access: 'user',
-    async handler({ db, user, now }) {
-      const state = await getState(db, user.id);
+    async handler({ db, user, now, babyId }) {
+      const state = await getState(db, user.id, await requireBaby(db, user.id, babyId));
       const usage = user.isAdmin
         ? null
         : {
@@ -29,13 +30,6 @@ export const dataRoutes: Route[] = [
     },
   },
   {
-    method: 'PUT', pattern: '/api/birthdate', access: 'user',
-    async handler({ db, user, body, now }) {
-      await setBirthdate(db, user.id, body.birthdate, now());
-      return ok();
-    },
-  },
-  {
     method: 'PUT', pattern: '/api/language', access: 'user',
     async handler({ db, user, body }) {
       await setLanguage(db, user.id, body.language);
@@ -44,39 +38,44 @@ export const dataRoutes: Route[] = [
   },
   {
     method: 'POST', pattern: '/api/recipe', access: 'user',
-    async handler({ db, user, body, now, callModel, callTranslate }) {
+    async handler({ db, user, body, now, callModel, callTranslate, babyId }) {
+      const baby = await requireBaby(db, user.id, babyId);
       // The language the browser is showing: typed ingredients are written in it.
       const language = body.language ?? 'en';
       if (!isLanguage(language)) throw new AppError('invalid-input', 'Choose a supported language', { key: 'err.language' });
-      const recipe = await requestRecipe(db, user, body.ingredients, { callModel, callTranslate, now, language });
+      const recipe = await requestRecipe(db, user, baby, body.ingredients, { callModel, callTranslate, now, language });
       return { body: { recipe } };
     },
   },
   {
     method: 'POST', pattern: '/api/liked', access: 'user',
-    async handler({ db, user, body }) {
-      await like(db, user.id, body.recipe);
+    async handler({ db, user, body, babyId }) {
+      const baby = await requireBaby(db, user.id, babyId);
+      await like(db, baby.id, body.recipe);
       return ok();
     },
   },
   {
     method: 'DELETE', pattern: '/api/liked/:id', access: 'user',
-    async handler({ db, user, params }) {
-      await unlike(db, user.id, params.id);
+    async handler({ db, user, params, babyId }) {
+      const baby = await requireBaby(db, user.id, babyId);
+      await unlike(db, user.id, baby.id, params.id);
       return ok();
     },
   },
   {
     method: 'POST', pattern: '/api/disliked', access: 'user',
-    async handler({ db, user, body }) {
-      await dislike(db, user.id, body.recipe);
+    async handler({ db, user, body, babyId }) {
+      const baby = await requireBaby(db, user.id, babyId);
+      await dislike(db, user.id, baby.id, body.recipe);
       return ok();
     },
   },
   {
     method: 'POST', pattern: '/api/disliked/:id/restore', access: 'user',
-    async handler({ db, user, params }) {
-      await restore(db, user.id, params.id);
+    async handler({ db, user, params, babyId }) {
+      const baby = await requireBaby(db, user.id, babyId);
+      await restore(db, baby.id, params.id);
       return ok();
     },
   },
@@ -88,9 +87,10 @@ export const dataRoutes: Route[] = [
   },
   {
     method: 'POST', pattern: '/api/shared', access: 'user',
-    async handler({ db, user, body, now }) {
+    async handler({ db, user, body, now, babyId }) {
+      const baby = await requireBaby(db, user.id, babyId);
       if (typeof body.id !== 'string') throw new AppError('invalid-input', 'Choose a recipe to share', { key: 'err.chooseRecipe' });
-      await shareRecipe(db, user.id, body.id, now());
+      await shareRecipe(db, user.id, baby.id, body.id, now());
       return ok();
     },
   },
@@ -103,8 +103,9 @@ export const dataRoutes: Route[] = [
   },
   {
     method: 'POST', pattern: '/api/shared/:sharedId/like', access: 'user',
-    async handler({ db, user, params }) {
-      await likeShared(db, user.id, params.sharedId);
+    async handler({ db, user, params, babyId }) {
+      const baby = await requireBaby(db, user.id, babyId);
+      await likeShared(db, user.id, baby.id, params.sharedId);
       return ok();
     },
   },

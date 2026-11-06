@@ -1,6 +1,6 @@
 import { AppError } from './errors.js';
+import { ageInMonths } from '../shared/age.js';
 import { isUuid } from './users.js';
-import { checkBirthdate } from './userData.js';
 import type { Db, Queryable } from './types.js';
 
 export const MAX_BABIES = 5;
@@ -21,6 +21,19 @@ interface BabyInput {
 const COLUMNS = "id, name, to_char(birthdate, 'YYYY-MM-DD') as birthdate";
 
 const missing = (): AppError => new AppError('not-found', 'That baby is not available', { key: 'err.babyMissing' });
+
+// The birthdate the body sent, or an invalid-input error carrying the key for what is wrong with it.
+export function checkBirthdate(birthdate: unknown, now: Date): string {
+  try {
+    // The body value is untrusted: like the regex inside ageInMonths, this reads it as text (null and undefined as empty).
+    ageInMonths(String(birthdate ?? ''), now);
+  } catch (err) {
+    // A caught value is untyped at this edge; ageInMonths throws a RangeError that carries an i18n key.
+    const { message, key } = err as { message: string; key?: string };
+    throw new AppError('invalid-input', message, { key });
+  }
+  return String(birthdate);
+}
 
 // The values to store: the trimmed name and the birthdate, or an invalid-input error carrying the key for what is wrong.
 function checkInput(input: BabyInput, now: Date): { name: string; birthdate: string } {

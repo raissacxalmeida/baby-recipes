@@ -78,9 +78,18 @@ export async function startTestServer(overrides: TestServerOptions = {}) {
     if (res.status !== 200) throw new Error(`login failed for ${email}: ${res.status}`);
     return jar;
   }
+  // A baby for the signed-in person, added through the API; `headers` select it on a baby-scoped call.
+  async function addBaby(
+    jar: Jar, { name = 'Mia', birthdate = '2026-03-14' }: { name?: string; birthdate?: string } = {},
+  ): Promise<{ id: string; headers: Record<string, string> }> {
+    const res = await call('POST', '/api/babies', { name, birthdate }, jar);
+    if (res.status !== 200) throw new Error(`adding a baby failed: ${res.status}`);
+    const id: string = res.body.baby.id;
+    return { id, headers: { 'X-Baby-Id': id } };
+  }
 
   return {
-    base, db, config, staticDir, port, newJar, call, addUser, loginAs,
+    base, db, config, staticDir, port, newJar, call, addUser, loginAs, addBaby,
     loginAsNew: async (email: string, admin = false) => { await addUser(email, { admin }); return loginAs(email); },
     get now() { return clock; },
     setNow: (d: Date) => { clock = d; },

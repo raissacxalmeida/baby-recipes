@@ -114,7 +114,7 @@ test('reset flow changes the password', async () => {
 });
 
 test('PUT and DELETE also need X-Requested-With', async () => {
-  const put = await fetch(`${t.base}/api/birthdate`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: '{}' });
+  const put = await fetch(`${t.base}/api/language`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: '{}' });
   expect(put.status).toBe(400);
   expect((await fetch(`${t.base}/api/account`, { method: 'DELETE' })).status).toBe(400);
 });

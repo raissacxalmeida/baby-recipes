@@ -31,16 +31,16 @@ test('a short password answers with the key and the minimum length', async () =>
 
 test('a bad birthday keeps the key of the shared age check', async () => {
   const jar = await t.loginAsNew('ana@example.com');
-  const res = await t.call('PUT', '/api/birthdate', { birthdate: 'not-a-date' }, jar);
+  const res = await t.call('POST', '/api/babies', { name: 'Mia', birthdate: 'not-a-date' }, jar);
   expect(res.status).toBe(400);
   expect(res.body.key).toBe('err.birthdayFormat');
-  const future = await t.call('PUT', '/api/birthdate', { birthdate: '2099-01-01' }, jar);
+  const future = await t.call('POST', '/api/babies', { name: 'Mia', birthdate: '2099-01-01' }, jar);
   expect(future.body.key).toBe('err.birthdayFuture');
 });
 
 test('the daily limit message names the reset time as a value', async () => {
   const jar = await t.loginAsNew('ana@example.com');
-  await t.call('PUT', '/api/birthdate', { birthdate: '2026-03-14' }, jar);
+  const { headers } = await t.addBaby(jar);
   t.setModel(async () => ({
     title: 'Banana mash', basePortions: 2, ingredients: [{ name: 'banana', grams: 100 }],
     steps: ['Mash the banana.'], texture: 'mashed', allergens: [],
@@ -52,7 +52,7 @@ test('the daily limit message names the reset time as a value', async () => {
       title: `Recipe ${n}`, basePortions: 2, ingredients: [{ name: 'banana', grams: 100 }],
       steps: ['Mash the banana.'], texture: 'mashed', allergens: [],
     }));
-    res = await t.call('POST', '/api/recipe', { ingredients: [`fruit${n}`] }, jar);
+    res = await t.call('POST', '/api/recipe', { ingredients: [`fruit${n}`] }, jar, headers);
     if (res.status === 429) break;
   }
   expect(res.status).toBe(429);
