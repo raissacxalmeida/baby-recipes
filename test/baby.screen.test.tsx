@@ -1,4 +1,5 @@
 import { test, expect, vi, afterEach } from 'vitest';
+import { useState } from 'react';
 import { render, screen, fireEvent, cleanup, within } from '@testing-library/react';
 import BabyScreen, { type BabyScreenProps } from '../src/client/screens/BabyScreen.jsx';
 import type { ApiBaby } from '../src/client/apiTypes.js';
@@ -143,4 +144,76 @@ test('the screen is a section with the heading as its first h1', () => {
   const root = container.firstElementChild;
   expect(root?.tagName).toBe('SECTION');
   expect(root?.querySelectorAll('h1')).toHaveLength(1);
+});
+
+// A promise the test settles by hand, to hold onSave or onRemove pending.
+function deferred() {
+  let resolve: () => void = () => {};
+  let reject: (err: Error) => void = () => {};
+  const promise = new Promise<void>((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+const saveButton = () => screen.getByRole<HTMLButtonElement>('button', { name: 'Save' });
+const formOf = (el: HTMLElement) => {
+  const form = el.closest('form');
+  if (!form) throw new Error('no form');
+  return form;
+};
+
+test('a second submit while saving is ignored, Save is disabled until it settles, and a failure lets the parent retry', async () => {
+  const pending = deferred();
+  const onSave = vi.fn<BabyScreenProps['onSave']>(() => pending.promise);
+  show({ first: true, onSave, onCancel: vi.fn() });
+  fill("Baby's name", 'Mia');
+  fill("Baby's birthday", '2026-02-14');
+  save();
+  // Both a click and a direct submit (which a disabled button does not stop) are ignored while the first is pending.
+  save();
+  fireEvent.submit(formOf(saveButton()));
+  expect(onSave).toHaveBeenCalledTimes(1);
+  expect(saveButton().disabled).toBe(true);
+  expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Cancel' }).disabled).toBe(true);
+  pending.reject(new Error('Could not reach the server'));
+  expect((await screen.findByRole('alert')).textContent).toMatch(/reach the server/);
+  expect(saveButton().disabled).toBe(false);
+  save();
+  await vi.waitFor(() => expect(onSave).toHaveBeenCalledTimes(2));
+});
+
+test('Remove runs once while pending, and the form cannot be used until it settles', async () => {
+  const pending = deferred();
+  const onRemove = vi.fn(() => pending.promise);
+  const onSave = show({ baby: mia, onCancel: vi.fn(), onRemove });
+  fireEvent.click(screen.getByRole('button', { name: 'Remove this baby' }));
+  fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Yes, remove' }));
+  expect(onRemove).toHaveBeenCalledTimes(1);
+  await vi.waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull());
+  const remove = screen.getByRole<HTMLButtonElement>('button', { name: 'Remove this baby' });
+  expect(remove.disabled).toBe(true);
+  expect(screen.getByRole<HTMLButtonElement>('button', { name: 'Cancel' }).disabled).toBe(true);
+  expect(saveButton().disabled).toBe(true);
+  fireEvent.click(remove);
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+  fireEvent.submit(formOf(saveButton()));
+  expect(onSave).not.toHaveBeenCalled();
+  pending.reject(Object.assign(new Error('You cannot remove your only baby'), { status: 409 }));
+  expect((await screen.findByRole('alert')).textContent).toMatch(/only baby/);
+  expect(remove.disabled).toBe(false);
+  expect(onRemove).toHaveBeenCalledTimes(1);
+});
+
+test('a save that unmounts the screen (the parent moves on) leaves no warning behind', async () => {
+  const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+  function Parent() {
+    const [done, setDone] = useState(false);
+    return done ? <p>Saved</p> : <BabyScreen first now={now} onSave={async () => { setDone(true); }} />;
+  }
+  render(<Parent />);
+  fill("Baby's name", 'Mia');
+  fill("Baby's birthday", '2026-02-14');
+  save();
+  expect(await screen.findByText('Saved')).not.toBeNull();
+  await new Promise((r) => setTimeout(r, 0));
+  expect(errors).not.toHaveBeenCalled();
+  errors.mockRestore();
 });
