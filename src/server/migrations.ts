@@ -147,6 +147,11 @@ export const MIGRATIONS: string[][] = [
     'alter table shown add primary key (baby_id, title)',
     'alter table users drop column birthdate',
   ],
+  // A shared recipe records the baby that shared it; if that baby is removed but the recipe stays in the community, the link is cleared.
+  [
+    'alter table shared_recipes add column baby_id uuid references babies(id) on delete set null',
+    'update shared_recipes s set baby_id = (select b.id from babies b where b.user_id = s.user_id order by b.created_at, b.id limit 1)',
+  ],
 ];
 
 export const APP_TABLES: string[] = ['users', 'invites', 'resets', 'sessions', 'recipes', 'shown', 'usage', 'login_attempts', 'shared_recipes', 'shared_likes', 'catalogue_recipes', 'title_translations', 'recipe_translations', 'babies'];

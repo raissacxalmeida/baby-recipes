@@ -104,6 +104,7 @@ export interface SharedRecipeRow {
   id: string;
   user_id: string;
   recipe_id: string;
+  baby_id: string | null;
   data: unknown;
   grp: GroupName;
   baby_months: number;

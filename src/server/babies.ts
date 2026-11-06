@@ -90,3 +90,26 @@ export async function setLastBaby(db: Db, userId: string, babyId: unknown): Prom
   const baby = await requireBaby(db, userId, babyId);
   await db.query('update users set last_baby_id = $2 where id = $1', [userId, baby.id]);
 }
+
+// Removes the baby with their lists. What they shared goes unless another parent liked it; the Community likes behind their saved copies go unless a sibling baby still holds a copy.
+export async function removeBaby(db: Db, userId: string, babyId: unknown): Promise<void> {
+  const baby = await requireBaby(db, userId, babyId);
+  await db.transaction(async (tx) => {
+    // Locking the account's row makes two simultaneous removals count one after the other.
+    await tx.query('select id from users where id = $1 for update', [userId]);
+    const { rows: count } = await tx.query<{ n: number }>('select count(*)::int as n from babies where user_id = $1', [userId]);
+    if (count[0].n <= 1) throw new AppError('conflict', 'You cannot remove your only baby', { key: 'err.babyLast' });
+    await tx.query(
+      'delete from shared_recipes s where s.baby_id = $1 and not exists (select 1 from shared_likes l where l.shared_id = s.id)',
+      [baby.id],
+    );
+    await tx.query(
+      `delete from shared_likes l where l.user_id = $1
+       and l.shared_id in (select copied_from from recipes where baby_id = $2 and status = 'liked' and copied_from is not null)
+       and not exists (select 1 from recipes r join babies b on b.id = r.baby_id
+                       where b.user_id = $1 and b.id <> $2 and r.copied_from = l.shared_id and r.status = 'liked')`,
+      [userId, baby.id],
+    );
+    await tx.query('delete from babies where id = $1', [baby.id]);
+  });
+}

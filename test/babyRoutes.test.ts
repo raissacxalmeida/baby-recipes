@@ -18,6 +18,7 @@ test('every baby route is 401 without a cookie', async () => {
   const calls: [method: string, path: string, body?: unknown][] = [
     ['GET', '/api/babies'], ['POST', '/api/babies', { name: 'Mia', birthdate: '2026-02-14' }],
     ['PUT', '/api/babies/6f1c1d3e-0b1a-4c55-9a53-1f2b3c4d5e6f', { name: 'Mia', birthdate: '2026-02-14' }],
+    ['DELETE', '/api/babies/6f1c1d3e-0b1a-4c55-9a53-1f2b3c4d5e6f'],
     ['PUT', '/api/last-baby', { id: '6f1c1d3e-0b1a-4c55-9a53-1f2b3c4d5e6f' }],
   ];
   for (const [method, path, body] of calls) expect((await t.call(method, path, body)).status, `${method} ${path}`).toBe(401);
@@ -57,4 +58,16 @@ test('the admin can add babies too', async () => {
   const added = await t.call('POST', '/api/babies', { name: 'Zoe', birthdate: '2026-02-14' }, admin);
   expect(added.status).toBe(200);
   expect((await t.call('GET', '/api/babies', undefined, admin)).body.babies).toHaveLength(1);
+});
+
+test('DELETE /api/babies/:id removes a baby, refuses the only baby, and another account gets 404', async () => {
+  const mia = await t.addBaby(ana);
+  const leo = await t.addBaby(ana, { name: 'Leo' });
+  const bia = await t.loginAsNew('bia@example.com');
+  expect((await t.call('DELETE', `/api/babies/${mia.id}`, undefined, bia)).status).toBe(404);
+  expect(await t.call('DELETE', `/api/babies/${mia.id}`, undefined, ana)).toMatchObject({ status: 200, body: { ok: true } });
+  expect((await t.call('GET', '/api/babies', undefined, ana)).body.babies.map((b: { id: string }) => b.id)).toEqual([leo.id]);
+  const last = await t.call('DELETE', `/api/babies/${leo.id}`, undefined, ana);
+  expect(last.status).toBe(409);
+  expect(last.body).toMatchObject({ key: 'err.babyLast' });
 });

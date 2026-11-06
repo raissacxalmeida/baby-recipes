@@ -59,11 +59,11 @@ export async function like(db: Db, babyId: string, recipe: unknown): Promise<voi
 }
 export async function dislike(db: Db, userId: string, babyId: string, recipe: unknown): Promise<void> {
   const saved = await save(db, babyId, recipe, 'disliked');
-  // A recipe that is no longer liked cannot stay shared.
-  await db.query('delete from shared_recipes where user_id = $1 and recipe_id = $2', [userId, saved.id]);
+  // A recipe that is no longer liked cannot stay shared by this baby.
+  await db.query('delete from shared_recipes where user_id = $1 and baby_id = $2 and recipe_id = $3', [userId, babyId, saved.id]);
 }
 
-// Removing a liked recipe also unshares it, and takes back the like if it was saved from the community
+// Removing a liked recipe also unshares it (if this baby shared it), and takes back the like if it was saved from the community
 // and no other baby of the account still holds a copy of it.
 export async function unlike(db: Db, userId: string, babyId: string, id: unknown): Promise<void> {
   await db.transaction(async (tx) => {
@@ -72,7 +72,7 @@ export async function unlike(db: Db, userId: string, babyId: string, id: unknown
       [babyId, String(id)],
     );
     if (!removed.rows.length) return;
-    await tx.query('delete from shared_recipes where user_id = $1 and recipe_id = $2', [userId, String(id)]);
+    await tx.query('delete from shared_recipes where user_id = $1 and baby_id = $2 and recipe_id = $3', [userId, babyId, String(id)]);
     if (removed.rows[0].copied_from) {
       await tx.query(
         `delete from shared_likes where user_id = $1 and shared_id = $2

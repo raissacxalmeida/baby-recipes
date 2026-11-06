@@ -1,6 +1,6 @@
 import type { Route } from '../types.js';
 import {
-  addBaby, getLastBabyId, listBabies, setLastBaby, updateBaby,
+  addBaby, getLastBabyId, listBabies, removeBaby, setLastBaby, updateBaby,
 } from '../babies.js';
 
 const ok = (): { body: { ok: true } } => ({ body: { ok: true } });
@@ -22,6 +22,13 @@ export const babyRoutes: Route[] = [
     method: 'PUT', pattern: '/api/babies/:id', access: 'user',
     async handler({ db, user, params, body, now }) {
       await updateBaby(db, user.id, params.id, { name: body.name, birthdate: body.birthdate }, now());
+      return ok();
+    },
+  },
+  {
+    method: 'DELETE', pattern: '/api/babies/:id', access: 'user',
+    async handler({ db, user, params }) {
+      await removeBaby(db, user.id, params.id);
       return ok();
     },
   },

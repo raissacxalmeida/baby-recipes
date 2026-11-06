@@ -3,8 +3,10 @@ import { createTestDb, type TestDb } from './helpers/db.js';
 import { addTestBaby } from './helpers/babies.js';
 import { createInvite, acceptInvite } from '../src/server/users.js';
 import {
-  MAX_BABIES, MAX_NAME, addBaby, getLastBabyId, listBabies, requireBaby, setLastBaby, updateBaby,
+  MAX_BABIES, MAX_NAME, addBaby, getLastBabyId, listBabies, removeBaby, requireBaby, setLastBaby, updateBaby,
 } from '../src/server/babies.js';
+import { addShown, excludeTitles, getState, like, dislike } from '../src/server/userData.js';
+import { shareRecipe, listShared, likeShared } from '../src/server/sharedRecipes.js';
 
 let db: TestDb;
 beforeAll(async () => { db = await createTestDb(); });
@@ -96,4 +98,104 @@ test("setLastBaby remembers a baby, refuses another user's baby, and getLastBaby
   expect(await getLastBabyId(db, a)).toBe(id);
   await db.query('delete from babies where id = $1', [id]);
   expect(await getLastBabyId(db, a)).toBeNull();
+});
+
+const recipe = (title: string) => ({
+  id: title.toLowerCase().replace(/\s+/g, '-'), title, basePortions: 2, ingredients: [{ name: 'banana', grams: 100, inList: true }],
+  steps: ['Mash it.'], texture: 'mashed', allergens: [],
+});
+const banana = recipe('Banana mash');
+const sharedId = async (viewer: string, title: string): Promise<string> => {
+  const found = (await listShared(db, viewer)).find((r) => (r.recipe as { title: string }).title === title);
+  if (!found) throw new Error(`no shared recipe ${title}`);
+  return found.id;
+};
+const countRows = async (table: string, babyId: string): Promise<number> =>
+  (await db.query<{ n: number }>(`select count(*)::int as n from ${table} where baby_id = $1`, [babyId])).rows[0].n;
+
+test('the last baby cannot be removed: code conflict, key err.babyLast', async () => {
+  const only = await addTestBaby(db, a);
+  await expect(removeBaby(db, a, only)).rejects.toMatchObject({ code: 'conflict', key: 'err.babyLast' });
+  expect(await listBabies(db, a)).toHaveLength(1);
+});
+
+test("removing a baby deletes their recipes and shown titles and leaves the other baby's untouched", async () => {
+  const mia = await addTestBaby(db, a);
+  const leo = await addTestBaby(db, a, '2025-12-01', 'Leo');
+  for (const id of [mia, leo]) {
+    await like(db, id, banana);
+    await dislike(db, a, id, recipe('Pear mash'));
+    await addShown(db, id, 'Oat porridge', now);
+  }
+  await removeBaby(db, a, mia);
+  expect((await listBabies(db, a)).map((x) => x.id)).toEqual([leo]);
+  expect(await countRows('recipes', mia)).toBe(0);
+  expect(await countRows('shown', mia)).toBe(0);
+  expect((await getState(db, a, await requireBaby(db, a, leo))).liked).toHaveLength(1);
+  expect(await excludeTitles(db, leo)).toEqual(['Banana mash', 'Oat porridge', 'Pear mash']);
+});
+
+test("their shared recipe that nobody else liked is deleted; one another parent liked stays in the community list with the owner's mine: true", async () => {
+  const mia = await addTestBaby(db, a);
+  await addTestBaby(db, a, '2025-12-01', 'Leo');
+  const theirs = await addTestBaby(db, b);
+  for (const r of [banana, recipe('Pear mash')]) {
+    await like(db, mia, r);
+    await shareRecipe(db, a, mia, r.id, now);
+  }
+  await likeShared(db, b, theirs, await sharedId(b, 'Pear mash'));
+  await removeBaby(db, a, mia);
+  const list = await listShared(db, a);
+  expect(list.map((r) => [(r.recipe as { title: string }).title, r.mine, r.likes])).toEqual([['Pear mash', true, 1]]);
+  const { rows } = await db.query<{ baby_id: string | null }>('select baby_id from shared_recipes');
+  expect(rows).toEqual([{ baby_id: null }]);
+  expect((await listShared(db, b))[0]).toMatchObject({ mine: false, liked: true });
+});
+
+test("Community likes behind the baby's copies are taken back, so listShared shows liked: false and the like count drops; the like stays when a sibling baby still holds a copy", async () => {
+  const sharer = await addTestBaby(db, b);
+  for (const r of [banana, recipe('Pear mash')]) {
+    await like(db, sharer, r);
+    await shareRecipe(db, b, sharer, r.id, now);
+  }
+  const mia = await addTestBaby(db, a);
+  const leo = await addTestBaby(db, a, '2025-12-01', 'Leo');
+  await likeShared(db, a, mia, await sharedId(a, 'Banana mash'));
+  await likeShared(db, a, mia, await sharedId(a, 'Pear mash'));
+  await likeShared(db, a, leo, await sharedId(a, 'Pear mash'));
+  await removeBaby(db, a, mia);
+  const byTitle = Object.fromEntries((await listShared(db, a)).map((r) => [(r.recipe as { title: string }).title, r]));
+  expect(byTitle['Banana mash']).toMatchObject({ liked: false, likes: 0 });
+  expect(byTitle['Pear mash']).toMatchObject({ liked: true, likes: 1 });
+});
+
+test('a copy another parent saved from this baby\'s shared recipe is unaffected', async () => {
+  const mia = await addTestBaby(db, a);
+  await addTestBaby(db, a, '2025-12-01', 'Leo');
+  const theirs = await addTestBaby(db, b);
+  await like(db, mia, banana);
+  await shareRecipe(db, a, mia, banana.id, now);
+  await likeShared(db, b, theirs, await sharedId(b, 'Banana mash'));
+  await removeBaby(db, a, mia);
+  expect((await getState(db, b, await requireBaby(db, b, theirs))).copiedIds).toEqual([banana.id]);
+});
+
+test('last_baby_id becomes null when the last-used baby is removed', async () => {
+  const mia = await addTestBaby(db, a);
+  const leo = await addTestBaby(db, a, '2025-12-01', 'Leo');
+  await setLastBaby(db, a, mia);
+  await removeBaby(db, a, leo);
+  expect(await getLastBabyId(db, a)).toBe(mia);
+  await addTestBaby(db, a);
+  await removeBaby(db, a, mia);
+  expect(await getLastBabyId(db, a)).toBeNull();
+});
+
+test("another account's baby id is not-found err.babyMissing", async () => {
+  await addTestBaby(db, a);
+  const theirs = await addTestBaby(db, b);
+  await addTestBaby(db, b);
+  await expect(removeBaby(db, a, theirs)).rejects.toMatchObject({ code: 'not-found', key: 'err.babyMissing' });
+  await expect(removeBaby(db, a, 'not-a-uuid')).rejects.toMatchObject({ code: 'not-found', key: 'err.babyMissing' });
+  expect(await listBabies(db, b)).toHaveLength(2);
 });

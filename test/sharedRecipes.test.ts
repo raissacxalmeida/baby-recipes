@@ -282,3 +282,30 @@ test('unliking in Community removes the copy from whichever baby holds it', asyn
   expect((await getState(db, b)).liked.map((r) => r.steps[0])).toEqual(['My own way.']);
   expect(await only(b)).toMatchObject({ likes: 0, liked: false });
 });
+
+test('one shared entry per recipe: a second baby sharing the same recipe changes nothing and the entry keeps the first baby', async () => {
+  const second = await addTestBaby(db, a, '2025-12-01', 'Leo');
+  await shareLiked(a);
+  await like(db, second, banana);
+  await shareRecipe(db, a, second, banana.id, now);
+  const { rows } = await db.query<{ baby_id: string; baby_months: number }>('select baby_id, baby_months from shared_recipes where user_id = $1', [a]);
+  expect(rows).toEqual([{ baby_id: kid[a], baby_months: 8 }]);
+  expect(await listShared(db, b)).toHaveLength(1);
+});
+
+test('a baby unliking or disliking a recipe unshares only entries that baby shared', async () => {
+  const second = await addTestBaby(db, a, '2025-12-01', 'Leo');
+  await shareLiked(a);
+  await like(db, second, banana);
+  await unlike(db, a, second, banana.id);
+  expect(await listShared(db, b)).toHaveLength(1);
+  await like(db, second, banana);
+  await dislike(db, a, second, banana);
+  expect(await listShared(db, b)).toHaveLength(1);
+  expect((await getState(db, a)).sharedIds).toEqual([banana.id]);
+  await dislike(db, a, kid[a], banana);
+  expect(await listShared(db, b)).toEqual([]);
+  await shareLiked(a, recipe('Pear mash'));
+  await unlike(db, a, kid[a], 'pear-mash');
+  expect(await listShared(db, b)).toEqual([]);
+});

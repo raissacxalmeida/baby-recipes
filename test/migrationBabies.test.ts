@@ -3,7 +3,7 @@ import { createTestDb } from './helpers/db.js';
 import { migrate } from '../src/server/migrate.js';
 import type { BabyRow, RecipeRow, ShownRow, UserRow } from '../src/server/types.js';
 
-test('migrations 7 and 8 give each user with a birthdate or saved data one baby, remember it and move the data onto it', async () => {
+test('migrations 7, 8 and 9 give each user with a birthdate or saved data one baby, remember it and move the data onto it', async () => {
   const db = await createTestDb({ upTo: 6 });
   const ids: string[] = [];
   for (const [email, birthdate] of [['one@example.com', '2026-02-14'], ['two@example.com', null], ['three@example.com', null]]) {
@@ -15,6 +15,7 @@ test('migrations 7 and 8 give each user with a birthdate or saved data one baby,
   const recipe = (id: string) => JSON.stringify({ id, title: id });
   await db.query("insert into recipes (user_id, id, data, status) values ($1, 'a', $2, 'liked'), ($1, 'b', $3, 'disliked')", [ids[0], recipe('a'), recipe('b')]);
   await db.query("insert into shown (user_id, title) values ($1, 'Banana mash')", [ids[0]]);
+  await db.query("insert into shared_recipes (user_id, recipe_id, data, grp, baby_months) values ($1, 'a', $2, 'Fruit', 8)", [ids[0], recipe('a')]);
   await db.query("insert into recipes (user_id, id, data, status) values ($1, 'c', $2, 'liked')", [ids[2], recipe('c')]);
 
   await migrate(db);
@@ -43,6 +44,9 @@ test('migrations 7 and 8 give each user with a birthdate or saved data one baby,
   ]);
   const shown = await db.query<Pick<ShownRow, 'baby_id' | 'title'>>('select baby_id, title from shown');
   expect(shown.rows).toEqual([{ baby_id: byUser.get(ids[0])?.id, title: 'Banana mash' }]);
+  // Migration 9: the shared recipe records the baby its owner now has.
+  const shared = await db.query<{ user_id: string; baby_id: string | null }>('select user_id, baby_id from shared_recipes');
+  expect(shared.rows).toEqual([{ user_id: ids[0], baby_id: byUser.get(ids[0])?.id }]);
   const columns = await db.query<{ table_name: string; column_name: string }>(
     "select table_name, column_name from information_schema.columns where table_name in ('users', 'recipes', 'shown') and column_name in ('birthdate', 'user_id')",
   );

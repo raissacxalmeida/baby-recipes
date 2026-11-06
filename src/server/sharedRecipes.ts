@@ -40,9 +40,9 @@ export async function shareRecipe(db: Db, userId: string, babyId: string, recipe
       throw new AppError('invalid-input', message, { key });
     }
     await tx.query(
-      `insert into shared_recipes (user_id, recipe_id, data, grp, baby_months) values ($1, $2, $3, $4, $5)
+      `insert into shared_recipes (user_id, baby_id, recipe_id, data, grp, baby_months) values ($1, $2, $3, $4, $5, $6)
        on conflict (user_id, recipe_id) do nothing`,
-      [userId, String(recipeId), JSON.stringify(saved.data), groupFor(saved.data as Recipe), months],
+      [userId, babyId, String(recipeId), JSON.stringify(saved.data), groupFor(saved.data as Recipe), months],
     );
   });
 }
